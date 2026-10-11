@@ -11,8 +11,10 @@ import { getLatestBlock, getFreshness } from '@/lib/data/snapshot';
 import { WORLD_H, WORLD_W } from '@/components/network/worldDots';
 import { num, pct } from '@/lib/format';
 import { getHalving } from '@/lib/data/reports';
+import { pageMetadata } from '@/lib/seo';
+import { SectionLd } from '@/components/seo/SectionLd';
 
-export const metadata: Metadata = { title: 'Network nodes', description: 'How many Zcash nodes are publicly reachable, where they are, and what software they run.' };
+export const metadata: Metadata = pageMetadata('/network');
 
 const CLIENT_ORDER = ['Zakura', 'Zebra', 'unknown', 'zcashd'];
 const proj = (lat: number, lon: number) => ({ x: ((lon + 180) * WORLD_W) / 360, y: ((75 - lat) * WORLD_H) / 135 });
@@ -89,6 +91,7 @@ export default async function NetworkPage() {
 
   return (
     <>
+      <SectionLd path="/network" />
       <Masthead
         title="Zcash network nodes"
         cadence="crawler runs continuously"

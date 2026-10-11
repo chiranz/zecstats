@@ -7,8 +7,10 @@ import { getPriceArrays, getBullRunSnapshot } from '@/lib/data/tools';
 import { getLive } from '@/lib/data/snapshot';
 import { one } from '@/components/reports/params';
 import { dateLong, delta, num, usd } from '@/lib/format';
+import { pageMetadata } from '@/lib/seo';
+import { SectionLd } from '@/components/seo/SectionLd';
 
-export const metadata: Metadata = { title: 'ZEC 2026 vs BTC 2017 — day by day', description: "Zcash's 2026 run and Bitcoin's 2017 run laid over each other, day for day from the day each left $800 behind." };
+export const metadata: Metadata = pageMetadata('/btc-bull-run');
 
 export default async function BullRunPage({ searchParams }: PageProps<'/btc-bull-run'>) {
   // ?at= is the anchor in dollars, as on the live page: any positive figure, $800 when absent or unreadable
@@ -27,6 +29,7 @@ export default async function BullRunPage({ searchParams }: PageProps<'/btc-bull
   }
   return (
     <>
+      <SectionLd path="/btc-bull-run" />
       <Masthead title="ZEC 2026 vs BTC 2017, day for day" lede={lede} />
       <Callout title="A sample of one, not a forecast." tone="warn">
         Built because people asked for it, not because the comparison means anything. Nothing here is a projection, a target or a number this site stands behind. The caveats are at the bottom of the page.

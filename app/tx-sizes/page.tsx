@@ -15,8 +15,10 @@ import { getTxValues, type TxValues } from '@/lib/data/reports';
 import { api, DATA_SOURCE } from '@/lib/data/core';
 import { getCompleteDailyStats } from '@/lib/data/snapshot';
 import { dateLong, num, pct, usd, usdCompact, zat } from '@/lib/format';
+import { pageMetadata } from '@/lib/seo';
+import { SectionLd } from '@/components/seo/SectionLd';
 
-export const metadata: Metadata = { title: 'Transaction sizes', description: 'How many dollars a typical transparent Zcash transaction moves, and where the money is concentrated.' };
+export const metadata: Metadata = pageMetadata('/tx-sizes');
 
 /** $0.0047 · $184 · $3,548 · $113K · $1.76M */
 const fmt = (v: number) => (v >= 1e4 ? usdCompact(v, 2) : v >= 100 ? usd(v, 0) : v >= 1 ? usd(v, 2) : `$${v.toPrecision(2)}`);
@@ -106,6 +108,7 @@ export default async function TxSizesPage({ searchParams }: PageProps<'/tx-sizes
 
   return (
     <>
+      <SectionLd path="/tx-sizes" />
       <Masthead
         title="How big is a transparent Zcash transaction?"
         lede={<>Half of the {num(N)} {tv.class === 'deshield' ? 'deshielding' : tv.class === 'all' ? 'transparent-output' : 'transparent'} transactions between {dateLong(first)} and {dateLong(last)} moved <b className="num value">{fmt(P.p50)}</b> or less. The average is far higher because a few giant transfers carry most of the money.</>}

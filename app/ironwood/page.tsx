@@ -9,11 +9,13 @@ import { getTurnstileIndex } from '@/lib/data/privacy';
 import { POOL_COLOR, POOL_LABEL } from '@/lib/data/snapshot';
 import { compact, dateLong, dateShort, num, pct, usd, usdCompact } from '@/lib/format';
 import s from './page.module.css';
+import { SectionLd } from '@/components/seo/SectionLd';
+import { pageMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = {
-  title: 'Ironwood migration',
-  description: 'How far the Orchard → Ironwood turnstile migration has progressed: share crossed, daily crossings, migration sizes and sources.',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const iw = await getIronwood();
+  return pageMetadata('/ironwood', { description: `Ironwood, Zcash's newest shielded pool, has taken in ${num(iw.pct, 2)}% of Orchard's coins in ${iw.liveDays} days; ${num(iw.orchardNow)} ZEC are yet to cross. Daily crossings and sources.` });
+}
 
 
 export default async function IronwoodPage() {
@@ -36,6 +38,7 @@ export default async function IronwoodPage() {
 
   return (
     <div className={`stack ${s.page}`} style={{ gap: 32 }}>
+      <SectionLd path="/ironwood" />
       <Masthead
         title="Zcash Ironwood Pool"
         cadence="balances refresh every block"

@@ -8,8 +8,9 @@ import s from '@/components/news/news.module.css';
 import { getNews } from '@/lib/data/news';
 import { getLive, getPools } from '@/lib/data/snapshot';
 import { dateLong, dateShort, delta, num, pct, zecCompact } from '@/lib/format';
+import { pageMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = { title: 'News — what just happened on Zcash', description: 'A feed the node writes by itself: all-time highs, big daily moves and anything far from its 30-day norm.' };
+export const metadata: Metadata = pageMetadata('/news');
 
 function SigmaScale({ z }: { z: number }) {
   // standard normal curve from −3σ to +3σ; the marker is clamped to the scale edge with its real value printed

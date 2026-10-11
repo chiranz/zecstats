@@ -7,8 +7,10 @@ import r from '@/components/reports/report.module.css';
 import { HALVING, getHalving } from '@/lib/data/reports';
 import { getDailyStats, getLatestBlock } from '@/lib/data/snapshot';
 import { compact, dateLong, num, pct, zat } from '@/lib/format';
+import { pageMetadata } from '@/lib/seo';
+import { SectionLd } from '@/components/seo/SectionLd';
 
-export const metadata: Metadata = { title: 'Halving', description: 'When the next Zcash halving is, and the full block-reward schedule.' };
+export const metadata: Metadata = pageMetadata('/halving');
 
 /** Dates the network actually halved: the UTC day on which the per-block coinbase in daily-stats dropped. */
 const HALVED_ON: Record<number, string> = { 1_046_400: '2020-11-18', 2_726_400: '2024-11-23' };
@@ -56,6 +58,7 @@ export default async function HalvingPage() {
 
   return (
     <>
+      <SectionLd path="/halving" />
       <Masthead
         title="When is the next Zcash halving?"
         lede={<>At block <b className="num value">{num(next.height)}</b>, about <b className="num value">{num(h.daysLeft)} days</b> away (around {dateLong(next.date!)}): the block reward drops from {rewardStr(h.reward)} to {rewardStr(after)}.</>}

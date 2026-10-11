@@ -10,11 +10,10 @@ import { zamt } from '@/components/privacy-tools/fmt';
 import { getActivity, getPrivacySuggestions, getShieldHops, getWallOfShame, type ShieldHops } from '@/lib/data/privacy-tools';
 import { api, DATA_SOURCE } from '@/lib/data/core';
 import { compact, num, zat } from '@/lib/format';
+import { pageMetadata } from '@/lib/seo';
+import { SectionLd } from '@/components/seo/SectionLd';
 
-export const metadata: Metadata = {
-  title: 'Shield-bound hops',
-  description: 'How much ZEC moves at a time when a transparent coin goes shielded: the median hop, its spread, and how much of it is one automated process.',
-};
+export const metadata: Metadata = pageMetadata('/shield-hops');
 
 export default async function ShieldHopsPage({ searchParams }: PageProps<'/shield-hops'>) {
   // live's params: ?class=all|single|sweep (default single) &days=90|365|1200|4000 (default 365) &repeat=drop|keep
@@ -33,6 +32,7 @@ export default async function ShieldHopsPage({ searchParams }: PageProps<'/shiel
 
   return (
     <>
+      <SectionLd path="/shield-hops" />
       <Masthead
         title="How much ZEC moves when a coin goes shielded?"
         lede={<>Usually not much: the median shield-bound hop is <b className="value">{zamt(med)} ZEC</b>. The mean is {zamt(mean)} ZEC, {num(mean / med, 0)}× higher, because a handful of very large hops pull the average up.</>}

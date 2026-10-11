@@ -9,8 +9,10 @@ import { hrefWith, one, pick } from '@/components/reports/params';
 import r from '@/components/reports/report.module.css';
 import { getWalletApps } from '@/lib/data/crosschain';
 import { dateLong, num, pct, usd, usdCompact } from '@/lib/format';
+import { pageMetadata } from '@/lib/seo';
+import { SectionLd } from '@/components/seo/SectionLd';
 
-export const metadata: Metadata = { title: 'Wallet apps', description: 'Which wallets and apps route ZEC swaps through NEAR Intents, and who leads.' };
+export const metadata: Metadata = pageMetadata('/wallet-apps');
 
 // ≤5 hues: the live chart's 9 series folded into 5 groups (same apps, summed).
 const GROUPS = [
@@ -56,6 +58,7 @@ export default async function WalletAppsPage({ searchParams }: PageProps<'/walle
 
   return (
     <>
+      <SectionLd path="/wallet-apps" />
       <Masthead
         title="Which wallet apps route ZEC swaps?"
         cadence="updates every 10 minutes"

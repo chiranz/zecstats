@@ -6,8 +6,10 @@ import t from '@/components/tools/tools.module.css';
 import { BTC_ISSUED, getWhatIfInputs, WHAT_IF_ASSETS, ZEC_MAX } from '@/lib/data/tools';
 import { getPools } from '@/lib/data/snapshot';
 import { dateLong, num, pct } from '@/lib/format';
+import { pageMetadata } from '@/lib/seo';
+import { SectionLd } from '@/components/seo/SectionLd';
 
-export const metadata: Metadata = { title: 'What if gold — ZEC at a share of other assets', description: "What one ZEC would be worth if all the Zcash there will ever be added up to 1%, 2%, 5% or 10% of gold, Bitcoin, offshore wealth or the world stock market." };
+export const metadata: Metadata = pageMetadata('/what-if');
 
 const big = (v: number) => (v >= 1e12 ? `$${num(v / 1e12, 1)}T` : `$${num(v / 1e9, 0)}B`);
 
@@ -28,6 +30,7 @@ export default async function WhatIfPage() {
   };
   return (
     <>
+      <SectionLd path="/what-if" />
       <Masthead
         title="What if Zcash took a share of gold?"
         lede={<>If every ZEC that will ever exist added up to 1% of gold&apos;s {big(WHAT_IF_ASSETS[0].size)}, one ZEC would be worth ${num(gold1, 0)} — {num(gold1 / w.zecUsd, 1)}× the ${num(w.zecUsd, 2)} it closed at on {dateLong(w.date)}. Pick another asset or share below.</>}

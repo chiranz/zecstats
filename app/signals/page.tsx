@@ -5,8 +5,10 @@ import { TimeSeriesChart } from '@/components/charts/TimeSeriesChart';
 import t from '@/components/tools/tools.module.css';
 import { getSignalsReplay, SIGNAL_CALLS } from '@/lib/data/tools';
 import { dateLong, num, usd } from '@/lib/format';
+import { pageMetadata } from '@/lib/seo';
+import { SectionLd } from '@/components/seo/SectionLd';
 
-export const metadata: Metadata = { title: 'Signals (beta) — when the model changed its mind', description: 'Every call the experimental allocation model has made, word for word, and what acting on each one would have done.' };
+export const metadata: Metadata = pageMetadata('/signals');
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const when = (iso: string) => { const d = new Date(iso); return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}, ${String(d.getUTCHours()).padStart(2, '0')}:00`; };
@@ -23,6 +25,7 @@ export default async function SignalsPage() {
   const gap = follow - hold;
   return (
     <>
+      <SectionLd path="/signals" />
       <Masthead
         title={<>When has the model changed its mind?<span className={t.beta}>BETA</span></>}
         lede={<>An allocation model run on our node&apos;s data sends a message when it changes its mind. Following its {SIGNAL_CALLS.length} calls since {dateLong(r.start)} turned $10,000 into {usd(r.followEnd, 0)} (<span className={dir(follow)}>{signed(follow)}</span>) — {gap < 0 ? 'less than' : 'more than'} simply holding ZEC, which made {usd(r.holdEnd, 0)} (<span className={dir(hold)}>{signed(hold)}</span>).</>}

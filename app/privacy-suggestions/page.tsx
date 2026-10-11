@@ -9,11 +9,10 @@ import { getPools } from '@/lib/data/snapshot';
 import { compact, dateLong, num, pct, zat } from '@/lib/format';
 import { ramt, zamt } from '@/components/privacy-tools/fmt';
 import s from './page.module.css';
+import { pageMetadata } from '@/lib/seo';
+import { SectionLd } from '@/components/seo/SectionLd';
 
-export const metadata: Metadata = {
-  title: 'Privacy tips',
-  description: 'Which round ZEC amounts have the biggest crowd to hide in when you shield or deshield — ranked from 1.6 million past transactions.',
-};
+export const metadata: Metadata = pageMetadata('/privacy-suggestions');
 
 const DIR_LABEL = { shield: 'Shielding · t→z', deshield: 'Deshielding · z→t' } as const;
 const amt = (a: number) => `${ramt(a)} ZEC`;
@@ -79,6 +78,7 @@ export default async function PrivacyTipsPage() {
 
   return (
     <>
+      <SectionLd path="/privacy-suggestions" />
       <Masthead
         title="Which ZEC amounts blend in best?"
         lede={<>Shield and deshield in common round amounts — <b className="value">{headline.slice(0, -1).join(', ')} or {headline.at(-1)} ZEC</b> — and you hide among tens of thousands of identical transactions. A distinctive amount fingerprints you: the inverse of the <Link href="/wall-of-shame">Wall of Shame</Link>.</>}

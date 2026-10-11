@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ChartActions, Kpi, KpiBand, Legend, Section } from '@/components/ui/blocks';
 import { Icon } from '@/components/ui/Icon';
@@ -12,7 +13,15 @@ import { getFreshness, POOL_COLOR, POOL_LABEL } from '@/lib/data/snapshot';
 import { getSearchIndex } from '@/lib/data/search-index';
 import { api } from '@/lib/data/core';
 import { compact, dateLong, delta, num, pct, usd, usdCompact } from '@/lib/format';
+import { getIronwood } from '@/lib/data/ironwood';
+import { organizationLd, pageMetadata, websiteLd } from '@/lib/seo';
+import { JsonLd } from '@/components/seo/JsonLd';
 import s from './page.module.css';
+
+export async function generateMetadata(): Promise<Metadata> {
+  const [h, iw, f] = await Promise.all([getHome(), getIronwood(), getFreshness()]);
+  return pageMetadata('/', { description: `Live Zcash statistics from our own Zebra node: ZEC at ${usd(h.live.zec_usd, 0)}, ${num(h.pools.shieldedPct, 1)}% of supply shielded, Ironwood ${num(iw.pct, 2)}% migrated. Data through ${dateLong(f.dataThrough)}.` });
+}
 
 // Most-viewed charts over the last 7 days, as listed on the live dashboard (server-rendered there; no API).
 const POPULAR = ['pool-profit', 'pool-usd', 'pool-residency', 'swap-assets', 'price', 'realized'];
@@ -38,6 +47,7 @@ export default async function Home() {
 
   return (
     <>
+      <JsonLd data={[websiteLd(), organizationLd()]} />
       {/* Landing top (composition A): the event tape is the page's first line (app/layout.tsx), so the header is
           slim — smaller H1, no kicker, freshness on one line — and the search field moves up. */}
       <div className={s.landTop}>

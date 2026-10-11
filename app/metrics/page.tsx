@@ -9,8 +9,10 @@ import { change } from '@/components/tools/metricFormat';
 import { COMPARE_PERIODS, getCorrelations, getMetricsTable, METRIC_GROUPS, metricId, pairIndex, type PeriodKey } from '@/lib/data/tools';
 import { getLive } from '@/lib/data/snapshot';
 import { dateLong, delta, num } from '@/lib/format';
+import { pageMetadata } from '@/lib/seo';
+import { SectionLd } from '@/components/seo/SectionLd';
 
-export const metadata: Metadata = { title: 'Metrics table — every headline number', description: 'Every headline Zcash number in one table, each set against 28 days and 12 months ago.' };
+export const metadata: Metadata = pageMetadata('/metrics');
 
 const PERIODS = COMPARE_PERIODS.map((p) => p.key);
 
@@ -43,6 +45,7 @@ export default async function MetricsPage({ searchParams }: PageProps<'/metrics'
 
   return (
     <>
+      <SectionLd path="/metrics" />
       <Masthead
         title="Every headline number, and how it moved"
         lede={<>{asOf ? <>As of <b className="value">{dateLong(asOf)}</b>: </> : null}{defaults} Zcash numbers in one table, each set against 28 days and 12 months {asOf ? 'before' : 'ago'}.{pc && tc ? <> Over 28 days the price-linked numbers {pc.dir === 'up' ? 'rose' : 'fell'} (ZEC <span className={pc.dir}>{pc.text}</span>) while on-chain activity {tc.dir === 'up' ? 'rose' : 'fell'} (transactions <span className={tc.dir}>{tc.text}</span>).</> : null}</>}

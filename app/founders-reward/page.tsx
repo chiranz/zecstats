@@ -5,8 +5,10 @@ import { TimeSeriesChart } from '@/components/charts/TimeSeriesChart';
 import r from '@/components/reports/report.module.css';
 import { getFoundersReward } from '@/lib/data/reports';
 import { dateLong, num, pct, usd, usdCompact } from '@/lib/format';
+import { pageMetadata } from '@/lib/seo';
+import { SectionLd } from '@/components/seo/SectionLd';
 
-export const metadata: Metadata = { title: "Founders' Reward", description: "What the 2016–2020 Zcash Founders' Reward was worth when it was paid, and what the same coins are worth today." };
+export const metadata: Metadata = pageMetadata('/founders-reward');
 
 export default async function FoundersRewardPage() {
   const fr = await getFoundersReward();
@@ -24,6 +26,7 @@ export default async function FoundersRewardPage() {
 
   return (
     <>
+      <SectionLd path="/founders-reward" />
       <Masthead
         title="What was the Founders' Reward worth?"
         lede={<>The 2.1M ZEC paid to Zcash’s builders from 2016 to 2020 was worth <b className="num value">{usdCompact(fr.total_usd, 1)}</b> on the days it arrived — and <b className="num value">{usdCompact(fr.value_today_usd, 2)}</b> at today’s price, {num(multiple, 1)}× more.</>}

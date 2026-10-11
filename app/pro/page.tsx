@@ -7,8 +7,9 @@ import { ProGate } from '@/components/tools/ProGate';
 import t from '@/components/tools/tools.module.css';
 import { SIGNAL_CALLS } from '@/lib/data/tools';
 import { dateLong } from '@/lib/format';
+import { pageMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = { title: 'ZEC Stats Pro', description: 'What the paid Signals channel and the research page add, and how to get in.' };
+export const metadata: Metadata = pageMetadata('/pro');
 
 const UNLOCKS = [
   { icon: 'bolt', title: 'A message when the model changes its mind', body: 'Not hourly, not daily. The model is checked every hour and only speaks when it has moved far enough to mean it and stayed there.' },

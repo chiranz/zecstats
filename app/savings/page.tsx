@@ -6,8 +6,10 @@ import s from '@/components/tools/calc.module.css';
 import { getPriceArrays, getMetricsTable, ZEC_MAX } from '@/lib/data/tools';
 import { getLive } from '@/lib/data/snapshot';
 import { dateLong, delta, num, usd } from '@/lib/format';
+import { pageMetadata } from '@/lib/seo';
+import { SectionLd } from '@/components/seo/SectionLd';
 
-export const metadata: Metadata = { title: 'Investment calculator — what if you had bought ZEC every month?', description: 'Dollar-cost average into Zcash from any start date, replayed on real daily closes, and set against Bitcoin bought on the same days.' };
+export const metadata: Metadata = pageMetadata('/savings');
 
 export default async function SavingsPage() {
   const [prices, live, table] = await Promise.all([getPriceArrays(), getLive(), getMetricsTable()]);
@@ -17,6 +19,7 @@ export default async function SavingsPage() {
   const goldOnePct = (20.0e12 * 0.01) / ZEC_MAX;
   return (
     <>
+      <SectionLd path="/savings" />
       <Masthead
         title="What if you had bought ZEC every month?"
         lede="Choose a start date, how often you buy and how much. We replay real daily closing prices, with no smoothing, and set Zcash against Bitcoin bought on the same days."

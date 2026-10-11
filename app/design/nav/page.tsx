@@ -4,7 +4,7 @@ import { DirSwitcher } from '@/components/navlab/DirectionView';
 import { CRITERIA, DIRECTIONS } from '@/components/navlab/meta';
 import s from './page.module.css';
 
-export const metadata: Metadata = { title: 'Navigation lab', robots: { index: false } };
+export const metadata: Metadata = { title: 'Navigation lab', robots: { index: false, follow: false } };
 
 // Where the page's first heading and its answer (hero / chart) start, in px from the top of the window.
 // Measured with puppeteer on this branch (today's chrome: the live pages; A–E: the prototype frames, ticker slot off).

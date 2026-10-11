@@ -8,8 +8,10 @@ import { getChartCatalogue } from '@/lib/data/tools';
 import { getFreshness } from '@/lib/data/snapshot';
 import { manifest } from '@/lib/data/core';
 import { dateLong, num } from '@/lib/format';
+import { pageMetadata } from '@/lib/seo';
+import { SectionLd } from '@/components/seo/SectionLd';
 
-export const metadata: Metadata = { title: 'Tools & methodology', description: 'Every tool on ZEC Stats, grouped by the question it answers, and how the numbers behind them are produced.' };
+export const metadata: Metadata = pageMetadata('/tools');
 
 const PRINCIPLES = [
   { h: 'Chain data comes from a full node we run.', p: 'A Zebra node, not a third-party API. Every supply, pool balance and transaction figure on this site is read from it directly.' },
@@ -25,6 +27,7 @@ export default async function ToolsPage() {
   const endpoints = Object.keys(man.endpoints).length;
   return (
     <>
+      <SectionLd path="/tools" />
       <Masthead
         title="Every tool, and how the numbers are made"
         lede={`${toolCount} tools in ${toolGroups.length} groups, by the question each answers, plus all ${charts.length} charts. Every figure comes from our own Zebra node, except price.`}

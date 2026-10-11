@@ -1,4 +1,8 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
+
+// Next adds noindex to every 404 on its own; it is stated here too so the page never inherits the site's index default.
+export const metadata: Metadata = { title: 'Page not found', description: 'That page isn’t on ZEC Stats. Start from the dashboard, the Privacy hub or the full list of Zcash charts.', robots: { index: false, follow: true } };
 
 export default function NotFound() {
   return (

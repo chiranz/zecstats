@@ -9,8 +9,10 @@ import r from '@/components/reports/report.module.css';
 import { getNearNetwork, getNearStats, getZecFlows, type NearNetwork } from '@/lib/data/crosschain';
 import { api, DATA_SOURCE } from '@/lib/data/core';
 import { dateLong, num, pct, usdCompact } from '@/lib/format';
+import { pageMetadata } from '@/lib/seo';
+import { SectionLd } from '@/components/seo/SectionLd';
 
-export const metadata: Metadata = { title: 'Swaps', description: 'How central ZEC is in the NEAR Intents cross-chain swap network, and what flows in and out.' };
+export const metadata: Metadata = pageMetadata('/swaps');
 
 const NAME: Record<string, string> = { USD: 'USD stablecoins', btc: 'BTC', eth: 'ETH', zec: 'ZEC', near: 'NEAR', sol: 'SOL', hypercore: 'Hypercore', xrp: 'XRP', base: 'Base', tron: 'TRON', ltc: 'LTC', arb: 'Arbitrum', bsc: 'BNB Chain', doge: 'DOGE', wbtc: 'WBTC', sui: 'SUI' };
 const nm = (id: string) => NAME[id] ?? id.toUpperCase();
@@ -62,6 +64,7 @@ export default async function SwapsPage({ searchParams }: PageProps<'/swaps'>) {
 
   return (
     <>
+      <SectionLd path="/swaps" />
       <Masthead
         title="Where does ZEC sit in cross-chain swaps?"
         lede={<>Over the last {net.days_covered} days on NEAR Intents, ZEC ranked <b className="num value">#{zec.rank} of {net.node_count}</b> assets by PageRank — <b className="num value">{num(zec.weight, 2)}×</b> its weight by market cap.</>}

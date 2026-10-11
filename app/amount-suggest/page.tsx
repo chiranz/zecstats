@@ -7,11 +7,10 @@ import { MoreCols, Prose } from '@/components/privacy-tools/parts';
 import { getPrivacySuggestions, getShieldingHistogram, getWallOfShame } from '@/lib/data/privacy-tools';
 import { getPools } from '@/lib/data/snapshot';
 import { compact, num, pct } from '@/lib/format';
+import { pageMetadata } from '@/lib/seo';
+import { SectionLd } from '@/components/seo/SectionLd';
 
-export const metadata: Metadata = {
-  title: 'Amount lookup',
-  description: 'How often has a ZEC amount been shielded or deshielded? Check an amount before you send it, and find a nearby amount with a bigger crowd.',
-};
+export const metadata: Metadata = pageMetadata('/amount-suggest');
 
 export default async function AmountLookupPage({ searchParams }: PageProps<'/amount-suggest'>) {
   const sp = await searchParams;
@@ -25,6 +24,7 @@ export default async function AmountLookupPage({ searchParams }: PageProps<'/amo
 
   return (
     <>
+      <SectionLd path="/amount-suggest" />
       <Masthead
         title="How common is your amount?"
         lede={<>Enter an amount you plan to shield or deshield. The more past transactions share it, the bigger the crowd you hide in — a rare amount can link both ends of your trip, as on the <Link href="/wall-of-shame">Wall of Shame</Link>.</>}

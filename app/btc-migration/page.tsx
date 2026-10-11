@@ -14,8 +14,10 @@ import { dateLong, dateShort, monthYear, num, pct, usd, usdCompact } from '@/lib
 import { MigrationTable, type By, type MigRow } from './MigrationTable';
 import { ParamSeg, type ParamOption } from './ParamSeg';
 import p from './page.module.css';
+import { pageMetadata } from '@/lib/seo';
+import { SectionLd } from '@/components/seo/SectionLd';
 
-export const metadata: Metadata = { title: 'Bitcoin → Zcash', description: 'How much BTC is being swapped into ZEC through NEAR Intents, and how long those coins had sat still.' };
+export const metadata: Metadata = pageMetadata('/btc-migration');
 
 // URL params are the live page's: days (7 · 30 · 90 · 400 = ALL), min_btc (0.1 · 1 · 5 · 0 = all sizes) choose the
 // data; gran (auto · day · week · month) and unit (btc · usd) the volume chart; by (swap · address) and rows (50 · 250 ·
@@ -123,6 +125,7 @@ export default async function BtcMigrationPage({ searchParams }: PageProps<'/btc
 
   return (
     <>
+      <SectionLd path="/btc-migration" />
       <Masthead
         title="How much Bitcoin is moving into Zcash?"
         lede={has

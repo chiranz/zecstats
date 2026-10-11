@@ -5,8 +5,10 @@ import { BarList, ShareBar } from '@/components/reports/BarList';
 import { ExchangeTable, type CountryRow } from '@/components/crosschain/ExchangeTable';
 import { getExchangeCoverage } from '@/lib/data/crosschain';
 import { dateLong, num, pct } from '@/lib/format';
+import { pageMetadata } from '@/lib/seo';
+import { SectionLd } from '@/components/seo/SectionLd';
 
-export const metadata: Metadata = { title: 'Exchanges', description: 'Where you can buy ZEC through a regulated exchange, by country, and how much of the world that reaches.' };
+export const metadata: Metadata = pageMetadata('/exchange-support');
 
 export default async function ExchangeSupportPage() {
   const ex = await getExchangeCoverage();
@@ -26,6 +28,7 @@ export default async function ExchangeSupportPage() {
 
   return (
     <>
+      <SectionLd path="/exchange-support" />
       <Masthead
         title="Where can you buy ZEC on a regulated exchange?"
         cadence="hand-checked monthly"

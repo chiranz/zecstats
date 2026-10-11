@@ -11,11 +11,10 @@ import { getInflation } from '@/lib/data/turnstile';
 import { getFreshness, getPools } from '@/lib/data/snapshot';
 import { compact, dateLong, iso, num, pct, usd } from '@/lib/format';
 import s from './page.module.css';
+import { pageMetadata } from '@/lib/seo';
+import { SectionLd } from '@/components/seo/SectionLd';
 
-export const metadata: Metadata = {
-  title: 'Wall of Shame',
-  description: 'Shield-and-deshield round trips that reused a near-identical amount, letting an observer link the transparent addresses on both sides of the shielded pool.',
-};
+export const metadata: Metadata = pageMetadata('/wall-of-shame');
 
 const DAY = 86400000;
 const weekStart = (ms: number) => { const d = new Date(ms); const dow = (d.getUTCDay() + 6) % 7; return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - dow); };
@@ -51,6 +50,7 @@ export default async function WallOfShamePage() {
 
   return (
     <>
+      <SectionLd path="/wall-of-shame" />
       <Masthead
         title="Wall of Shame"
         lede={<>Shield-and-deshield round trips that reused a near-identical amount — <b className="num value">{num(n)}</b> found so far. Each one lets an observer link the transparent addresses on both sides of the shielded pool.</>}

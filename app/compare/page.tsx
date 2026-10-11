@@ -10,8 +10,10 @@ import { CHARTS, chartBySlug } from '@/lib/charts';
 import { CHART_GROUPS, GROUP_SLUGS, type TimeSeriesPanel } from '@/lib/charts/types';
 import { getChartCatalogue, getMetricSeries } from '@/lib/data/tools';
 import { dateLong } from '@/lib/format';
+import { pageMetadata } from '@/lib/seo';
+import { SectionLd } from '@/components/seo/SectionLd';
 
-export const metadata: Metadata = { title: 'Compare charts — any charts on one time range', description: 'Stack any Zcash charts on one shared time range, one above the other, and keep the set in the link.' };
+export const metadata: Metadata = pageMetadata('/compare');
 
 const PRESETS = [
   { label: 'Price vs shielded supply', charts: ['price', 'pools'] },
@@ -92,6 +94,7 @@ export default async function ComparePage({ searchParams }: PageProps<'/compare'
 
   return (
     <>
+      <SectionLd path="/compare" />
       <Masthead
         title="Compare charts on one time range"
         lede={charts.length ? <>{charts.length} chart{charts.length === 1 ? '' : 's'} stacked on the same {windowWords}{to ? <>, {dateLong(from)} to {dateLong(to)}</> : null}. Add, reorder or remove charts; the set and the range are kept in the link.</> : 'Search for any of the 58 charts and stack them on one shared time range, one above the other. The set and the range are kept in the link.'}

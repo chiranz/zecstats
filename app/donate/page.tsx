@@ -6,8 +6,10 @@ import s from './page.module.css';
 import { DONATE, getPriceArrays } from '@/lib/data/tools';
 import { getFreshness, getLive } from '@/lib/data/snapshot';
 import { dateLong, num, usd } from '@/lib/format';
+import { pageMetadata } from '@/lib/seo';
+import { SectionLd } from '@/components/seo/SectionLd';
 
-export const metadata: Metadata = { title: 'Donate — keep the node running', description: 'ZEC Stats is free. It costs about $300 a month to run; a donation in ZEC helps cover it.' };
+export const metadata: Metadata = pageMetadata('/donate');
 
 export default async function DonatePage() {
   const [live, prices, f] = await Promise.all([getLive(), getPriceArrays(), getFreshness()]);
@@ -15,6 +17,7 @@ export default async function DonatePage() {
   const chunks = DONATE.address.match(/.{1,6}/g) ?? [DONATE.address];
   return (
     <>
+      <SectionLd path="/donate" />
       <Masthead
         title="Keep the node running"
         lede={<>ZEC Stats is free. Running the Zebra node, the servers and the tooling behind it costs about <b>{usd(DONATE.monthlyCostUsd, 0)} a month</b> — {num(DONATE.monthlyCostUsd / px, 2)} ZEC at today&apos;s ${num(px, 2)}. If the site is useful to you, a donation of any size helps cover it.</>}

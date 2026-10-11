@@ -12,11 +12,10 @@ import { getFreshness, getPools } from '@/lib/data/snapshot';
 import { dateLong, num, pct } from '@/lib/format';
 import { fz } from '@/components/privacy-tools/fmt';
 import s from './page.module.css';
+import { pageMetadata } from '@/lib/seo';
+import { SectionLd } from '@/components/seo/SectionLd';
 
-export const metadata: Metadata = {
-  title: 'Orchard turnstile watch',
-  description: 'Was the 2026 Orchard soundness bug used to mint counterfeit ZEC? Five tests on Orchard’s full flow history, and a composite suspicion index.',
-};
+export const metadata: Metadata = pageMetadata('/orchard-turnstile');
 
 const short = (d: string) => dateLong(d).replace(/ \d{4}$/, '');
 
@@ -40,6 +39,7 @@ export default async function TurnstilePage() {
 
   return (
     <>
+      <SectionLd path="/orchard-turnstile" />
       <Masthead
         title="Was the Orchard bug used to mint fake ZEC?"
         cadence="index recomputed as new blocks land"

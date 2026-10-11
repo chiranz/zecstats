@@ -13,7 +13,7 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps<'/design/nav/[direction]'>): Promise<Metadata> {
   const { direction } = await params;
   const d = DIRECTIONS.find((x) => x.id === direction);
-  return { title: d ? `Nav lab ${d.id.toUpperCase()}: ${d.name}` : 'Nav lab', robots: { index: false } };
+  return { title: d ? `Nav lab ${d.id.toUpperCase()}: ${d.name}` : 'Nav lab', robots: { index: false, follow: false } };
 }
 
 export default async function Page({ params }: PageProps<'/design/nav/[direction]'>) {

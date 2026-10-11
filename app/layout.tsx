@@ -7,6 +7,8 @@ import { Marquee } from '@/components/ticker/Marquee';
 import { getTicker } from '@/lib/data/ticker';
 import { getSearchIndex } from '@/lib/data/search-index';
 import { getNavData } from '@/lib/data/nav';
+import { DEFAULT_OG_IMAGE, INDEXABLE, PAGES, SITE_URL } from '@/lib/seo';
+import { SITE } from '@/lib/site';
 import './globals.css';
 import './chrome.css';
 
@@ -16,11 +18,26 @@ const jetbrains = JetBrains_Mono({ subsets: ['latin'], weight: ['400', '500', '6
 const plex = IBM_Plex_Sans({ subsets: ['latin'], weight: 'variable', variable: '--font-plex', display: 'swap' });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: { default: 'ZEC Stats — Zcash network statistics', template: '%s — ZEC Stats' },
-  description: 'Every Zcash number, computed from a Zebra full node: price, shielded supply, pools, Ironwood migration, network and more.',
+  description: PAGES['/'].description,
+  applicationName: SITE.name,
+  authors: [{ name: SITE.author, url: SITE.authorUrl }],
+  creator: SITE.author,
+  publisher: SITE.name,
+  keywords: ['Zcash', 'ZEC', 'Zcash statistics', 'Zcash charts', 'shielded supply', 'Ironwood', 'Orchard', 'Zcash price', 'Zebra node', 'Zcash privacy'],
+  category: 'finance',
+  formatDetection: { telephone: false, address: false, email: false },
+  // defaults for any route that sets none of its own (every public page does: lib/seo.ts pageMetadata)
+  openGraph: { type: 'website', siteName: SITE.name, locale: 'en_US', title: 'ZEC Stats — Zcash network statistics', description: PAGES['/'].description, images: [DEFAULT_OG_IMAGE] },
+  twitter: { card: 'summary_large_image', site: '@zecstats_', creator: SITE.author },
+  robots: INDEXABLE ? { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1 } : { index: false, follow: false },
+  // icons: app/icon.svg + app/apple-icon.png; manifest: app/manifest.ts (file conventions add the tags)
 };
 
-export const viewport: Viewport = { themeColor: '#050a06', width: 'device-width', initialScale: 1 };
+// The site opens dark for everyone (the light theme is an explicit toggle, not the OS setting), so the browser chrome
+// colour is the dark ground; colour-scheme lists both because both themes exist.
+export const viewport: Viewport = { themeColor: '#050a06', colorScheme: 'dark light', width: 'device-width', initialScale: 1 };
 
 // Apply the saved theme before paint (same localStorage key the live site uses).
 const themeScript = `try{var t=localStorage.getItem('zec-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}`;

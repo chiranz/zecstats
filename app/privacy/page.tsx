@@ -13,11 +13,13 @@ import { getChartIndex } from '@/lib/data/home';
 import { POOL_COLOR, POOL_LABEL } from '@/lib/data/snapshot';
 import { compact, dateLong, dateShort, delta, num, pct, usd } from '@/lib/format';
 import s from './page.module.css';
+import { pageMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = {
-  title: 'Privacy',
-  description: 'How private Zcash is right now: shielded supply, pools, flows, the Ironwood migration, integrity checks and privacy hygiene.',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const pv = await getPrivacy();
+  const iwShare = (pv.now.ironwood / pv.now.shielded) * 100;
+  return pageMetadata('/privacy', { description: `${num(pv.now.shieldedPct, 1)}% of all ZEC is shielded, ${pv.now.shieldedPct >= pv.yearAgo.shieldedPct ? 'up' : 'down'} from ${num(pv.yearAgo.shieldedPct, 1)}% a year ago; ${num(iwShare, 0)}% of it is in Ironwood. Pools, daily flows, integrity checks and privacy hygiene.` });
+}
 
 
 const POOL_META = {

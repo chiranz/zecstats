@@ -11,11 +11,10 @@ import { hrefWith, one, pick } from '@/components/reports/params';
 import { ACTIVITY_RANGES, ACTIVITY_WINDOWS } from '@/components/reports/views';
 import { compact, dateLong, num, pct, zat } from '@/lib/format';
 import s from './page.module.css';
+import { pageMetadata } from '@/lib/seo';
+import { SectionLd } from '@/components/seo/SectionLd';
 
-export const metadata: Metadata = {
-  title: 'Transparent activity',
-  description: 'Where transparent ZEC goes, judged by what happens to each coin: exchange-shaped sweeps, shielded savings, or ordinary transparent movement — and which addresses hold the most.',
-};
+export const metadata: Metadata = pageMetadata('/activity');
 
 const BUCKETS: { key: BucketKey; label: string; color: string; sub: string }[] = [
   { key: 'transient_transparent', label: 'Transient transparent', color: 'var(--p-transparent)', sub: 'ordinary transparent movement — not parked anywhere' },
@@ -49,6 +48,7 @@ export default async function ActivityPage({ searchParams }: PageProps<'/activit
 
   return (
     <>
+      <SectionLd path="/activity" />
       <Masthead
         title="Where does transparent ZEC go?"
         lede={<>Most of it just keeps moving. In the last 7 days <b className="value">{compact(l7('transient_transparent'), 2)} ZEC</b> changed hands transparently, <b className="value">{compact(l7('exchanges'), 1)}</b> went through exchange-shaped sweeps and <b className="value">{compact(l7('shielded_savings'), 1)}</b> was parked in shielded savings.</>}

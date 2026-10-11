@@ -8,8 +8,10 @@ import { NODE_VERSION, getBackfill } from '@/lib/data/network';
 import { getCompleteDailyStats, getFreshness, getLatestBlock } from '@/lib/data/snapshot';
 import { manifest } from '@/lib/data/core';
 import { dateLong, num, pct } from '@/lib/format';
+import { pageMetadata } from '@/lib/seo';
+import { SectionLd } from '@/components/seo/SectionLd';
 
-export const metadata: Metadata = { title: 'Node status', description: 'Is the Zebra node behind every ZEC Stats number healthy and in sync?' };
+export const metadata: Metadata = pageMetadata('/node');
 
 const TARGET = 1152; // blocks per day at the 75-second target
 
@@ -37,6 +39,7 @@ export default async function NodePage() {
 
   return (
     <>
+      <SectionLd path="/node" />
       <Masthead
         title="Is our Zcash node healthy?"
         lede={<>{fresh.synced ? 'Yes' : 'Not quite'}: our Zebra node is <b className="value">{fresh.synced ? 'fully synced' : 'catching up'}</b> at block <b className="num value">{num(lb.height)}</b>, {behind <= 0 ? 'level with' : `${behind} block${behind === 1 ? '' : 's'} behind`} the network’s tip, and the last block arrived {ago} ago.</>}

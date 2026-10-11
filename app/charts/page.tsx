@@ -7,11 +7,9 @@ import { CHARTS, ALL_SLUGS } from '@/lib/charts';
 import { CHART_GROUPS, VS_BTC, type ChartGroupId } from '@/lib/charts/types';
 import { getLiveCharts, liveTitle } from '@/lib/data/charts-a';
 import { dateLong } from '@/lib/format';
+import { pageMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = {
-  title: `All ${ALL_SLUGS.length} Zcash charts`,
-  description: 'Every ZEC Stats chart, grouped by the question it answers: price, cost basis, privacy, usage, holders, supply and markets.',
-};
+export const metadata: Metadata = pageMetadata('/charts');
 
 const SYNONYMS: Record<string, string> = {
   'orchard-internal': 'z-to-z ztoz fully shielded internal',

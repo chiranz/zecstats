@@ -4,10 +4,12 @@ import { More, Tiles } from '@/components/ui/blocks';
 import { Correlate } from '@/components/tools/Correlate';
 import { CORR_DEFAULTS, getCorrelations, metricId, pairIndex } from '@/lib/data/tools';
 import { num } from '@/lib/format';
+import { pageMetadata } from '@/lib/seo';
+import { SectionLd } from '@/components/seo/SectionLd';
 
 const rTxt = (r: number | null) => (r == null ? '—' : `${r < 0 ? '−' : ''}${num(Math.abs(r), 2)}`);
 
-export const metadata: Metadata = { title: 'Correlations — which Zcash metrics move together', description: 'How closely any two Zcash metrics move together, from −1 to +1, over any window, with a scatter for every pair.' };
+export const metadata: Metadata = pageMetadata('/correlate');
 
 export default async function CorrelatePage() {
   const data = await getCorrelations();
@@ -20,6 +22,7 @@ export default async function CorrelatePage() {
   const priceShield = at('ZEC Price', 'Shielded Supply');
   return (
     <>
+      <SectionLd path="/correlate" />
       <Masthead
         title="Which Zcash metrics move together?"
         lede={<>Every pair of metrics, scored from −1 (opposite) to +1 (together). Over the last year ZEC&apos;s price tracked transactions per day at r {rTxt(priceTx)} and shielded supply at r {rTxt(priceShield)}. Pick any cell for its scatter.</>}

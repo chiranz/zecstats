@@ -11,8 +11,10 @@ import { getUsageClock, getUsageWeekly, type UsageClock } from '@/lib/data/repor
 import { api, DATA_SOURCE } from '@/lib/data/core';
 import { getExchangeCoverage } from '@/lib/data/crosschain';
 import { compact, dateLong, num, pct } from '@/lib/format';
+import { pageMetadata } from '@/lib/seo';
+import { SectionLd } from '@/components/seo/SectionLd';
 
-export const metadata: Metadata = { title: 'When the world uses Zcash', description: 'At which UTC hours Zcash is busiest, and which parts of the world are awake then.' };
+export const metadata: Metadata = pageMetadata('/world-usage');
 
 // The live page's own region list (centre longitudes) — used to say where it is daytime at a given UTC hour.
 const REGIONS = [
@@ -57,6 +59,7 @@ export default async function WorldUsagePage({ searchParams }: PageProps<'/world
 
   return (
     <>
+      <SectionLd path="/world-usage" />
       <Masthead
         title="When does the world use Zcash?"
         lede={<>Busiest at <b className="num value">{hh(peak.hour)} UTC</b>, quietest at <b className="num value">{hh(trough.hour)} UTC</b> — {num(ratio, 2)}× apart. The peak falls in daylight across {litPeak.slice(0, 3).join(', ')}{litPeak.length > 3 ? ' and beyond' : ''}.</>}
