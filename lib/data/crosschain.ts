@@ -5,7 +5,8 @@ import { api } from './core';
 // /swaps, /btc-migration, /wallet-apps, /exchange-support — ZEC across chains and venues.
 
 // ─── NEAR Intents swap network (PageRank over swap volume) ─────────────────────
-export type NearNode = { id: string; rank: number; pagerank: number; weight: number; total_usd: number; in_usd: number; out_usd: number; net_usd: number; market_cap: number | null; mcap_share: number | null; swaps: number };
+// weight (PageRank share ÷ market-cap share) is null for assets without a market cap.
+export type NearNode = { id: string; rank: number; pagerank: number; weight: number | null; total_usd: number; in_usd: number; out_usd: number; net_usd: number; market_cap: number | null; mcap_share: number | null; swaps: number };
 export type NearNetwork = {
   from: string; to: string; days_covered: number; node_count: number; priced_mcap: number;
   nodes: NearNode[]; edges: { from: string; to: string; usd: number }[];
@@ -36,9 +37,11 @@ export type NearStat = { date: string; wrapped_supply: number; daily_mint: numbe
 export const getNearStats = () => api<NearStat[]>('near-stats');
 
 // ─── Bitcoin → Zcash ───────────────────────────────────────────────────────────
+// Trace fields (age_days, held_years, cagr_pct, consolidation_inputs, hops) are null until the swapped BTC has been
+// traced back to where it rested.
 export type BtcSwap = {
   date: string; ts: number; btc: number; usd: number; zec: number; zec_price_paid: number; value_now: number; gain_usd: number; return_pct: number;
-  vs_btc_pct: number; cagr_pct: number | null; age_days: number; held_years: number; trace_status: string; consolidation_inputs: number; hops: number;
+  vs_btc_pct: number; cagr_pct: number | null; age_days: number | null; held_years: number | null; trace_status: string; consolidation_inputs: number | null; hops: number | null;
   btc_txid: string; sender_btc: string; deposit_address: string; btc_value_now: number;
 };
 export type BtcMigration = {

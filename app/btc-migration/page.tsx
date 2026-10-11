@@ -30,7 +30,7 @@ export default async function BtcMigrationPage() {
   const bigDay = perDay.indexOf(Math.max(...perDay));
 
   // scatter: every traced swap, x = time, y = how long the coins had sat still (log), size = BTC
-  const traced = swaps.filter((s) => s.age_days != null && s.age_days > 0).sort((a, b) => a.ts - b.ts);
+  const traced = swaps.filter((s): s is typeof s & { age_days: number } => s.age_days != null && s.age_days > 0).sort((a, b) => a.ts - b.ts);
   const maxBtc = Math.max(...traced.map((s) => s.btc));
   const oldest = traced.reduce((b, s) => (s.age_days > b.age_days ? s : b), traced[0]);
   const overYear = traced.filter((s) => s.age_days >= 365).length;
