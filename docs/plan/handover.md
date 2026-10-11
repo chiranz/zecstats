@@ -49,25 +49,38 @@
   - Show the snapshot's numbers, not BRIEF §7's. Transaction counts leave out coinbase.
 
 ## Route loading state (built, 11 Oct 2026)
-- Option E "answer skeleton": `app/loading.tsx` → `components/skeleton/RouteSkeleton.tsx` (+ `skeleton.module.css`).
-  The shape comes from `usePathname()` (`shapeFor`): dashboard `/` · chart `/chart/*` · news · charts index · report
-  (tx-sizes, swaps, wallet-apps, world-usage, btc-migration, shield-hops) · activity · metrics · btc-bull-run · compare ·
-  default (every static page without its own shape: header + answer hero + KPI band + first chart section).
+- Option E "answer skeleton": `components/skeleton/RouteFrame.tsx` (around `<main>` in `app/layout.tsx`) shows
+  `RouteSkeleton.tsx` (+ `skeleton.module.css`) while a click to another page is on its way: it starts on a same-site
+  link click (capture phase) or `startNavigation(href)` (the two search boxes), appears only after 120 ms (prefetched
+  pages never flash it), scrolls to the top, and ends when the pathname changes. The address and context bar switch
+  when the page lands, so the old breadcrumb shows above the skeleton meanwhile.
+  - **Not a `loading.tsx` (decided 11 Oct after the speed test):** a route-level Suspense boundary also wraps every
+    direct page load, and React holds a streamed boundary's reveal back (to ~2.3 s), so every page's first paint came at
+    ~2.5 s (Lighthouse, phone). Without it, pages are plain HTML again: first paint ~0.1 s on a local build.
+  - Shapes (`shapeFor`, from the destination path): dashboard `/` · chart `/chart/*` · news · charts index · report
+    (tx-sizes, swaps, wallet-apps, world-usage, btc-migration, shield-hops) · activity · metrics · btc-bull-run ·
+    compare · default (every other page: header + answer hero + KPI band + first chart section).
 - Page → shape: `components/skeleton/shape.ts` (one place; the compare script asks `/design/loading?path=`).
 - Built from the pages' own classes and CSS modules; each text line is a `T` bar (real font and wrap, invisible filler of
-  the real length, masked to letter height); plots follow TimeSeriesChart's narrow rule via a container query. Titles drop
+  the real length, masked to letter height); plots use the charts' own height rule (`.chart-box`/`.chart-h`, globals.css). Titles drop
   two characters for the signal mark (1.2em = two mono characters). No real `h1`–`h3` in the skeleton (no filler
-  headings in streamed HTML). One shimmer for the whole page (fixed background), a 2 px progress line on the window's top edge (grows from the
+  headings in the page). One shimmer for the whole page (fixed background), a 2 px progress line on the window's top edge (grows from the
   left to 85% over ~10 s, ease-out; user's pick on 11 Oct over "no line", "border glint" and "nav underline"),
   one polite "Loading" status, everything else `aria-hidden`; reduced motion stops all movement.
 - Preview a shape alone: `/design/loading?shape=chart` or `?path=/chart/pools` (noindex). Compare with the real page, same chrome:
   `node scripts/skeleton-compare.mjs <base> <outDir> [/route …] [--light] [--widths=…]` (real device windows:
   390×844, 768×1024, 1024×768, 1280×800, 1440×900, 1920×1080). 
 - When copy or layout of a page changes, re-run the compare for that route; filler strings live in RouteSkeleton.tsx.
-- Canvas v18: board `Loading-skeleton.dc.html` (anatomy running live + page vs skeleton at laptop, tablet, phone).
+- Canvas v19: board `Loading-skeleton.dc.html` (anatomy running live + page vs skeleton at laptop, tablet, phone).
 - References: `docs/design/refs/skeleton/*.png` (first screen, 390/768/1024/1280/1440/1920, dark) are local only, not in
   git (gitignored). Regenerate: `node scripts/shot.mjs <base> docs/design/refs/skeleton / /chart/pools /news /charts
   /privacy /tx-sizes /tools --widths=390,768,1024,1280,1440,1920` (add `--full` for whole pages).
+
+## Chart heights (11 Oct 2026)
+- Every TimeSeriesChart, both XYCharts, DayChart, SizeCdf and IssuanceChart get their plot height from CSS (`.chart-box`
+  container + `.chart-h` with `--h`, `--hk` % of width below 520 px, `--hmin`), the same rule as each chart's `h`, so the
+  server HTML already has the phone height and nothing moves when a chart measures itself. Checked: box height with JS
+  off = with JS on, and drawn chart = box, on 8 pages at 390 and 1440. Not converted yet: SwapAssets, Correlate.
 
 ## Pending, in suggested order
 1. ~~Route loading state~~ built (above). Possible follow-ups: per-page shapes for static pages (they rarely show a
