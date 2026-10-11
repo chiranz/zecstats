@@ -1,0 +1,214 @@
+{
+  "source": "https://zecstats.com",
+  "capturedAt": "2026-10-11T02:31:09.362Z",
+  "endpoints": {
+    "activity": {
+      "route": "/api/activity",
+      "bytes": 70917
+    },
+    "amount-suggest": {
+      "route": "/api/amount-suggest",
+      "bytes": 59
+    },
+    "backfill-status": {
+      "route": "/api/backfill-status",
+      "bytes": 587
+    },
+    "btc-bull-run": {
+      "route": "/api/btc-bull-run",
+      "bytes": 47007
+    },
+    "btc-migration": {
+      "route": "/api/btc-migration",
+      "bytes": 243521
+    },
+    "charts": {
+      "route": "/api/charts",
+      "bytes": 14504
+    },
+    "coin-age": {
+      "route": "/api/coin-age",
+      "bytes": 1744745
+    },
+    "daily-prices": {
+      "route": "/api/daily-prices",
+      "bytes": 206365
+    },
+    "daily-stats": {
+      "route": "/api/daily-stats",
+      "bytes": 3557283
+    },
+    "date-range": {
+      "route": "/api/date-range",
+      "bytes": 47269
+    },
+    "dca": {
+      "route": "/api/dca",
+      "bytes": 524289
+    },
+    "dev-fund": {
+      "route": "/api/dev-fund",
+      "bytes": 33363
+    },
+    "etf-holdings": {
+      "route": "/api/etf-holdings",
+      "bytes": 4431
+    },
+    "exchange-coverage": {
+      "route": "/api/exchange-coverage",
+      "bytes": 45509
+    },
+    "exchange-volume": {
+      "route": "/api/exchange-volume",
+      "bytes": 90303
+    },
+    "exchange-volume-status": {
+      "route": "/api/exchange-volume-status",
+      "bytes": 251
+    },
+    "fdv-vs-btc": {
+      "route": "/api/fdv-vs-btc",
+      "bytes": 430852
+    },
+    "fee-stats": {
+      "route": "/api/fee-stats",
+      "bytes": 916023
+    },
+    "five-year-price": {
+      "route": "/api/five-year-price",
+      "bytes": 6424
+    },
+    "founders-reward": {
+      "route": "/api/founders-reward",
+      "bytes": 183215
+    },
+    "hyperliquid": {
+      "route": "/api/hyperliquid",
+      "bytes": 278765
+    },
+    "implied-mcap": {
+      "route": "/api/implied-mcap",
+      "bytes": 471964
+    },
+    "inflation": {
+      "route": "/api/inflation",
+      "bytes": 211784
+    },
+    "ironwood-daily": {
+      "route": "/api/ironwood-daily",
+      "bytes": 7017
+    },
+    "ironwood-sources": {
+      "route": "/api/ironwood-sources",
+      "bytes": 224
+    },
+    "ironwood-tx-sizes": {
+      "route": "/api/ironwood-tx-sizes",
+      "bytes": 8714
+    },
+    "largest-wallets": {
+      "route": "/api/largest-wallets",
+      "bytes": 9287
+    },
+    "latest-block": {
+      "route": "/api/latest-block",
+      "bytes": 449
+    },
+    "live": {
+      "route": "/api/live",
+      "bytes": 220
+    },
+    "metric-series": {
+      "route": "/api/metric-series",
+      "bytes": 2293333
+    },
+    "mktcap-issuance": {
+      "route": "/api/mktcap-issuance",
+      "bytes": 132720
+    },
+    "near-network": {
+      "route": "/api/near-network",
+      "bytes": 18840
+    },
+    "near-stats": {
+      "route": "/api/near-stats",
+      "bytes": 14951
+    },
+    "near-swaps": {
+      "route": "/api/near-swaps",
+      "bytes": 5248816
+    },
+    "near-vol-mcap": {
+      "route": "/api/near-vol-mcap",
+      "bytes": 98962
+    },
+    "network": {
+      "route": "/api/network",
+      "bytes": 162501
+    },
+    "new-addresses": {
+      "route": "/api/new-addresses",
+      "bytes": 460230
+    },
+    "news": {
+      "route": "/api/news",
+      "bytes": 12336
+    },
+    "pool-balances": {
+      "route": "/api/pool-balances",
+      "bytes": 861842
+    },
+    "pool-cost-basis": {
+      "route": "/api/pool-cost-basis",
+      "bytes": 1176778
+    },
+    "pool-pnl": {
+      "route": "/api/pool-pnl",
+      "bytes": 26156
+    },
+    "prices": {
+      "route": "/api/prices",
+      "bytes": 2663014
+    },
+    "prices-hourly": {
+      "route": "/api/prices-hourly",
+      "bytes": 164543
+    },
+    "realized": {
+      "route": "/api/realized",
+      "bytes": 1182793
+    },
+    "shield-hops": {
+      "route": "/api/shield-hops",
+      "bytes": 152801
+    },
+    "shielding-histogram": {
+      "route": "/api/shielding-histogram",
+      "bytes": 8387
+    },
+    "tx-values": {
+      "route": "/api/tx-values",
+      "bytes": 152703
+    },
+    "usage-clock": {
+      "route": "/api/usage-clock",
+      "bytes": 9020
+    },
+    "usage-weekly": {
+      "route": "/api/usage-weekly",
+      "bytes": 5602
+    },
+    "utxo-cohorts": {
+      "route": "/api/utxo-cohorts",
+      "bytes": 108400
+    },
+    "utxo-depth": {
+      "route": "/api/utxo-depth",
+      "bytes": 96590
+    },
+    "utxo-survival": {
+      "route": "/api/utxo-survival",
+      "bytes": 16175257
+    }
+  }
+}
