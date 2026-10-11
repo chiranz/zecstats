@@ -1,0 +1,54 @@
+/* Route loading state, option E "answer skeleton" (docs/design/artboards/Loading-skeleton.dc.html).
+   The shapes reuse the pages' own layout classes; only the paint changes here. Text keeps its real font and wrapping
+   but is painted as a bar per line; one shimmer sweeps every bar together (the gradient is fixed to the window). */
+
+.root { display: contents; }
+
+.t, .b {
+  --sk: color-mix(in srgb, var(--text) 9%, transparent);
+  --sk-hi: color-mix(in srgb, var(--text) 17%, transparent);
+  background-color: var(--sk);
+  background-image: linear-gradient(100deg, transparent 35%, var(--sk-hi) 50%, transparent 65%);
+  background-size: 120vw 100%;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  animation: sweep 1.6s linear infinite;
+}
+@keyframes sweep { from { background-position: -120vw 0; } to { background-position: 100vw 0; } }
+
+/* text: a bar per line, same font, same wrap; the mask trims each bar from the em box to about the letters' height */
+.t {
+  color: transparent !important; border-radius: 4px; -webkit-box-decoration-break: clone; box-decoration-break: clone;
+  -webkit-mask-image: linear-gradient(transparent 16%, #000 16%, #000 84%, transparent 84%);
+  mask-image: linear-gradient(transparent 16%, #000 16%, #000 84%, transparent 84%);
+}
+.t * { color: transparent !important; }
+/* block: icons, swatches, sparklines, plots */
+.b { display: block; border-radius: var(--r-sm); }
+
+/* chart plot: TimeSeriesChart's height rule (narrow plots are 70% of their width — DayChart's 72%, as --k — at least 220px) */
+.plotBox { container-type: inline-size; }
+.plot { height: var(--h, 360px); border-radius: var(--r); opacity: .7; }
+@container (max-width: 519.98px) { .plot { height: max(220px, min(var(--h, 360px), calc(var(--k, 70) * 1cqw))); } }
+
+/* small signal-bars mark beside the title: the bars rise in turn (option A's loop) */
+.mark { display: inline-block; width: .78em; height: .78em; margin-right: .42em; vertical-align: -.06em; } /* 1.2em: two mono characters */
+.mark .tile { fill: var(--bg); }
+.mark .edge { fill: none; stroke: var(--line-strong); stroke-width: 1.5; }
+.mark .bar { fill: var(--accent); transform-box: fill-box; transform-origin: 50% 100%; animation: rise 1.2s cubic-bezier(.4, 0, .2, 1) infinite; }
+.mark .bar:nth-of-type(2) { animation-delay: .15s; }
+.mark .bar:nth-of-type(3) { animation-delay: .3s; }
+@keyframes rise { 0%, 100% { transform: scaleY(.3); opacity: .35; } 35%, 70% { transform: scaleY(1); opacity: 1; } }
+
+/* 2px progress line along the top edge of the window: grows from the left, fast then slower, and stops short of the end
+   (the page replaces it when it lands) */
+.prog { position: fixed; left: 0; right: 0; top: 0; z-index: 30; height: 2px; pointer-events: none; animation: show .2s ease-out .15s both; }
+.prog::before { content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 0; background: var(--accent); box-shadow: var(--glow); animation: trickle 10s cubic-bezier(.08, .8, .2, 1) .15s forwards; }
+@keyframes trickle { to { width: 85%; } }
+@keyframes show { from { opacity: 0; } to { opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .t, .b { animation: none; background-image: none; }
+  .mark .bar { animation: none; transform: none; opacity: 1; }
+  .prog::before { animation: none; width: 85%; opacity: .6; }
+}
