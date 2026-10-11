@@ -1,9 +1,11 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { Masthead } from '@/components/chrome/Masthead';
 import { Card, ChartActions, Kpi, KpiBand, More, Section, Tiles } from '@/components/ui/blocks';
-import { TimeSeriesChart } from '@/components/charts/TimeSeriesChart';
 import { BarList } from '@/components/reports/BarList';
-import { FixedSeg } from '@/components/reports/FixedSeg';
+import { LinkSeg } from '@/components/reports/LinkSeg';
+import { WalletAppsChart } from '@/components/reports/WalletAppsChart';
+import { hrefWith, one, pick } from '@/components/reports/params';
 import r from '@/components/reports/report.module.css';
 import { getWalletApps } from '@/lib/data/crosschain';
 import { dateLong, num, pct, usd, usdCompact } from '@/lib/format';
@@ -22,32 +24,34 @@ const GROUPS = [
 /** The live table's style: $20M · $6.5M · $954.8K · $147 */
 const money = (v: number) => (v >= 1e6 ? usdCompact(v, 1) : v >= 1e3 ? `$${(v / 1e3).toFixed(1)}K` : usd(v, 0));
 
-export default async function WalletAppsPage() {
+// ?p= is the live page's leaderboard window. The 7-day table is the full one (every app, swaps, direction, code);
+// the other windows are summed from each app's daily volume, so they cover the eight largest apps plus Other.
+const P = ['day', 'week', 'month', 'quarter', 'all'] as const;
+type Win = (typeof P)[number];
+const WIN: Record<Win, { label: string; days: number; phrase: string; title: string }> = {
+  day: { label: 'Today', days: 1, phrase: 'today so far', title: 'today' },
+  week: { label: '7 days', days: 7, phrase: 'the last 7 days', title: 'this week' },
+  month: { label: '30 days', days: 30, phrase: 'the last 30 days', title: 'in the last 30 days' },
+  quarter: { label: '90 days', days: 90, phrase: 'the last 90 days', title: 'in the last 90 days' },
+  all: { label: 'All time', days: Infinity, phrase: 'all time', title: 'of all time' },
+};
+
+export default async function WalletAppsPage({ searchParams }: PageProps<'/wallet-apps'>) {
+  const sp = await searchParams;
+  const p = pick(one(sp.p), P, 'week');
+  const w = WIN[p];
   const wa = await getWalletApps();
-  const board = wa.leaderboard;
+  const full = p === 'week';
+
+  // the window's leaderboard: the full 7-day table, or the eight named apps summed over the window
+  const start = Number.isFinite(w.days) ? Math.max(0, wa.dates.length - w.days) : 0;
+  const sums = wa.apps.map((app, i) => ({ app, usd: wa.usd[i].slice(start).reduce((a, v) => a + v, 0) }));
+  const winTotal = full ? wa.summary.usd : sums.reduce((a, x) => a + x.usd, 0);
+  const otherUsd = sums.find((x) => x.app === 'Other')?.usd ?? 0;
+  type Row = { rank: number; app: string; usd: number; share_pct: number; swaps?: number; into_usd?: number; out_usd?: number; code?: string };
+  const board: Row[] = full ? wa.leaderboard : sums.filter((x) => x.app !== 'Other' && x.usd > 0).sort((a, b) => b.usd - a.usd).map((x, i) => ({ rank: i + 1, app: x.app, usd: x.usd, share_pct: winTotal ? (x.usd / winTotal) * 100 : 0 }));
   const leader = board[0];
   const top3 = board.slice(0, 3).reduce((a, b) => a + b.share_pct, 0);
-
-  // weekly totals (weeks start Monday, UTC); the last week is still running
-  const weekOf = (d: string) => { const t = new Date(`${d}T00:00:00Z`); const dow = (t.getUTCDay() + 6) % 7; return new Date(t.getTime() - dow * 86400000).toISOString().slice(0, 10); };
-  const weeks = [...new Set(wa.dates.map(weekOf))];
-  const wIdx = new Map(weeks.map((w, i) => [w, i]));
-  const appWeekly = wa.apps.map(() => new Array(weeks.length).fill(0));
-  wa.dates.forEach((d, di) => { const wi = wIdx.get(weekOf(d))!; wa.usd.forEach((s, ai) => (appWeekly[ai][wi] += s[di])); });
-  const firstActive = appWeekly.reduce((acc, s) => Math.min(acc, s.findIndex((v) => v > 1000)), Infinity);
-  const from = Math.max(0, firstActive);
-  const series = GROUPS.map((g) => ({ key: g.key, label: g.label, color: g.color, type: 'bar' as const, values: weeks.map((_, wi) => g.apps.reduce((a, app) => a + (appWeekly[wa.apps.indexOf(app)]?.[wi] ?? 0), 0)).slice(from) }));
-
-  // which app led each of the last 12 full weeks (named apps only)
-  const named = wa.apps.map((a, i) => ({ a, i })).filter(({ a }) => a !== 'Other');
-  const full = weeks.slice(0, -1);
-  const leaders = full.slice(-12).reverse().map((w) => {
-    const wi = wIdx.get(w)!;
-    const total = wa.apps.reduce((a, _, ai) => a + appWeekly[ai][wi], 0);
-    const ranked = named.map(({ a, i }) => ({ a, v: appWeekly[i][wi] })).sort((x, y) => y.v - x.v);
-    return { w, total, first: ranked[0], second: ranked[1] };
-  });
-  const zodlWeeks = leaders.filter((l) => l.first.a === 'Zodl (Zashi)').length;
   const allTime = wa.usd.reduce((a, s) => a + s.reduce((x, v) => x + v, 0), 0);
 
   return (
@@ -55,7 +59,9 @@ export default async function WalletAppsPage() {
       <Masthead
         title="Which wallet apps route ZEC swaps?"
         cadence="updates every 10 minutes"
-        lede={<><b className="value">{leader.app}</b> led the last 7 days with <b className="num value">{money(leader.usd)}</b> — {pct(leader.share_pct, 1)} of the <b className="num value">{money(wa.summary.usd)}</b> in {num(wa.summary.swaps)} ZEC swaps on NEAR Intents.</>}
+        lede={leader
+          ? <><b className="value">{leader.app}</b> led {w.phrase} with <b className="num value">{money(leader.usd)}</b> — {pct(leader.share_pct, 1)} of the <b className="num value">{money(winTotal)}</b> in {full ? `${num(wa.summary.swaps)} ` : ''}ZEC swaps on NEAR Intents.</>
+          : <>No named app has sent a ZEC swap on NEAR Intents {w.phrase}.</>}
       >
         <p className={r.mastNote}>Each swap carries the code of the app that sent it; that is what is counted here. History is complete: all {num(wa.history.swaps)} ZEC swaps since {wa.history.since}.</p>
       </Masthead>
@@ -64,37 +70,43 @@ export default async function WalletAppsPage() {
         <div className={r.grp}>
           <span className={r.glbl} id="g-rng">Leaderboard range</span>
           <div className={r.grpRow}>
-            <FixedSeg labelledBy="g-rng" options={['Today', '7 days', '30 days', '90 days', 'All time']} active="7 days" />
-            <span className={r.count}><b>{money(wa.summary.usd)}</b> in {num(wa.summary.swaps)} swaps · last 7 days</span>
+            <LinkSeg labelledBy="g-rng" active={p} options={P.map((k) => ({ key: k, label: WIN[k].label, href: hrefWith('/wallet-apps', sp, { p: k }) }))} />
+            <span className={r.count}><b>{money(winTotal)}</b>{full ? ` in ${num(wa.summary.swaps)} swaps` : ''} · {w.phrase}</span>
           </div>
         </div>
         <p className="small" style={{ flex: '1 1 260px' }}>The range drives the leaderboard only; the chart below always covers all history.</p>
       </div>
 
-      <Card
-        title="Who sent the most ZEC swaps this week?"
-        takeaway={<>The top three apps carried <b>{pct(top3, 1)}</b> of the week’s volume; {leader.app} alone moved <b>{money(leader.usd)}</b> in {num(leader.swaps)} swaps.</>}
-        actions={<ChartActions name="wallet app leaderboard" />}
-        foot="Volume is the dollar value sent in, into or out of ZEC · last 7 days"
-      >
-        <BarList label="Share of 7-day ZEC swap volume by app" max={leader.usd} items={board.slice(0, 10).map((b) => ({
-          key: b.app, name: <>{b.rank}. {b.app}</>, value: money(b.usd), sub: `${pct(b.share_pct, 1)} · ${num(b.swaps)} swaps`, highlight: b.rank === 1, title: b.app,
-          parts: [{ key: 'v', value: b.usd, color: b.rank === 1 ? 'var(--s2)' : 'var(--p-transparent)' }],
-        }))} />
-      </Card>
+      {leader && (
+        <Card
+          title={`Who sent the most ZEC swaps ${w.title}?`}
+          takeaway={<>The top three apps carried <b>{pct(top3, 1)}</b> of the volume; {leader.app} alone moved <b>{money(leader.usd)}</b>{leader.swaps != null ? ` in ${num(leader.swaps)} swaps` : ''}.</>}
+          actions={<ChartActions name="wallet app leaderboard" />}
+          foot={`Volume is the dollar value sent in, into or out of ZEC · ${w.phrase}`}
+        >
+          <BarList label={`Share of ZEC swap volume by app, ${w.phrase}`} max={leader.usd} items={board.slice(0, 10).map((b) => ({
+            key: b.app, name: <>{b.rank}. {b.app}</>, value: money(b.usd), sub: b.swaps != null ? `${pct(b.share_pct, 1)} · ${num(b.swaps)} swaps` : pct(b.share_pct, 1), highlight: b.rank === 1, title: b.app,
+            parts: [{ key: 'v', value: b.usd, color: b.rank === 1 ? 'var(--s2)' : 'var(--p-transparent)' }],
+          }))} />
+        </Card>
+      )}
 
       <KpiBand label="Wallet apps summary">
-        <Kpi k="7-day volume" v={money(wa.summary.usd)} s={`${num(wa.summary.swaps)} ZEC swaps`} />
-        <Kpi k="Leader" v={pct(leader.share_pct, 1)} s={`${leader.app} · ${money(leader.usd)}`} />
-        <Kpi k="Apps with volume" v={board.length} s="this week, by referral code or fee account" />
-        <Kpi k="All-time volume" v={usdCompact(allTime, 2)} s={`since ${dateLong(wa.dates[0])}`} />
+        <Kpi k={p === 'all' ? 'All-time volume' : p === 'day' ? 'Volume today' : `${w.days}-day volume`} v={money(winTotal)} s={full ? `${num(wa.summary.swaps)} ZEC swaps` : w.phrase} />
+        <Kpi k="Leader" v={leader ? pct(leader.share_pct, 1) : '—'} s={leader ? `${leader.app} · ${money(leader.usd)}` : 'no volume yet'} />
+        {full
+          ? <Kpi k="Apps with volume" v={board.length} s="this week, by referral code or fee account" />
+          : <Kpi k="Other apps" v={money(otherUsd)} s={`${pct(winTotal ? (otherUsd / winTotal) * 100 : 0, 1)} · every app outside the eight largest`} />}
+        {p === 'all'
+          ? <Kpi k="7-day volume" v={money(wa.summary.usd)} s={`${num(wa.summary.swaps)} ZEC swaps`} />
+          : <Kpi k="All-time volume" v={usdCompact(allTime, 2)} s={`since ${dateLong(wa.dates[0])}`} />}
       </KpiBand>
 
-      <Section title="Every app this week">
+      <Section title={full ? 'Every app this week' : `Every named app, ${w.phrase}`}>
         <div className="tbl-wrap" style={{ maxHeight: 560, overflowY: 'auto' }}>
           <table className="t">
-            <caption className="sr-only">ZEC swap volume by app, last 7 days</caption>
-            <thead><tr><th scope="col">#</th><th scope="col" style={{ textAlign: 'left' }}>App</th><th scope="col">Volume</th><th scope="col">Share</th><th scope="col">Swaps</th><th scope="col">Into ZEC</th><th scope="col">Out of ZEC</th><th scope="col" style={{ textAlign: 'left' }}>Code / fee account</th></tr></thead>
+            <caption className="sr-only">{`ZEC swap volume by app, ${w.phrase}`}</caption>
+            <thead><tr><th scope="col">#</th><th scope="col" style={{ textAlign: 'left' }}>App</th><th scope="col">Volume</th><th scope="col">Share</th>{full && <><th scope="col">Swaps</th><th scope="col">Into ZEC</th><th scope="col">Out of ZEC</th><th scope="col" style={{ textAlign: 'left' }}>Code / fee account</th></>}</tr></thead>
             <tbody>
               {board.map((b) => (
                 <tr key={b.rank} className={b.rank === 1 ? r.focusRow : undefined}>
@@ -102,48 +114,31 @@ export default async function WalletAppsPage() {
                   <td className="l" style={{ textAlign: 'left', maxWidth: 260, overflow: 'hidden', textOverflow: 'ellipsis' }} title={b.app}>{b.app}</td>
                   <td>{money(b.usd)}</td>
                   <td><i className={r.minibar} style={{ width: Math.max(3, (b.share_pct / leader.share_pct) * 60), background: 'var(--s2)' }} />{pct(b.share_pct, 1)}</td>
-                  <td>{num(b.swaps)}</td>
-                  <td>{money(b.into_usd)}</td>
-                  <td>{money(b.out_usd)}</td>
-                  <td style={{ textAlign: 'left', maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis' }} title={b.code}>{b.code || <span className="muted">none</span>}</td>
+                  {full && <>
+                    <td>{num(b.swaps)}</td>
+                    <td>{money(b.into_usd ?? 0)}</td>
+                    <td>{money(b.out_usd ?? 0)}</td>
+                    <td style={{ textAlign: 'left', maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis' }} title={b.code}>{b.code || <span className="muted">none</span>}</td>
+                  </>}
                 </tr>
               ))}
+              {!full && otherUsd > 0 && (
+                <tr>
+                  <td><span className="muted">—</span></td>
+                  <td className="l muted" style={{ textAlign: 'left' }}>Other apps</td>
+                  <td>{money(otherUsd)}</td>
+                  <td>{pct(winTotal ? (otherUsd / winTotal) * 100 : 0, 1)}</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
-        <p className="small">“unlabeled …” = an app that sets no referral code, shown by its fee account until we know whose it is. Codes ending “…” are cut short in the source page.</p>
+        {full
+          ? <p className="small">“unlabeled …” = an app that sets no referral code, shown by its fee account until we know whose it is. Codes ending “…” are cut short in the source page.</p>
+          : <p className="small">Summed from each app’s daily volume. Swap counts, the into/out split and codes are listed for the <Link href={hrefWith('/wallet-apps', sp, { p: 'week' })} replace scroll={false}>7-day table</Link>. Apps outside the eight largest of all time are grouped as Other, so one of them can be bigger than the last app named here.</p>}
       </Section>
 
-      <Card
-        title="How has each app’s volume moved?"
-        takeaway={<>Zodl (Zashi) led <b>{zodlWeeks} of the last 12</b> full weeks; all apps together have moved <b>{usdCompact(allTime, 2)}</b> of ZEC swaps since March 2025.</>}
-        actions={<ChartActions name="weekly volume by app" />}
-        foot="Weekly totals, weeks starting Monday (UTC); the newest bar is the week so far. Nine apps are folded into five groups: SwapKit wallets = THORSwap, Trust Wallet and Ledger; referral codes = three near-intents referral accounts."
-      >
-        <TimeSeriesChart dates={weeks.slice(from)} series={series} format="usdCompact" stacked shareToggle ranges={['3M', '6M', '1Y', 'ALL']} defaultRange="1Y" height={320} ariaLabel="Weekly ZEC swap volume on NEAR Intents by app group, stacked." />
-      </Card>
-
-      <Section title="Which app led each week?">
-        <div className="tbl-wrap">
-          <table className="t">
-            <caption className="sr-only">Weekly leader among named apps, last 12 full weeks</caption>
-            <thead><tr><th scope="col">Week of</th><th scope="col" style={{ textAlign: 'left' }}>Leader</th><th scope="col">Share</th><th scope="col" style={{ textAlign: 'left' }}>Second</th><th scope="col">Share</th><th scope="col">Total</th></tr></thead>
-            <tbody>
-              {leaders.map((l) => (
-                <tr key={l.w}>
-                  <td>{dateLong(l.w)}</td>
-                  <td className="l" style={{ textAlign: 'left' }}>{l.first.a}</td>
-                  <td>{pct((l.first.v / l.total) * 100, 1)}</td>
-                  <td className="l" style={{ textAlign: 'left' }}>{l.second.a}</td>
-                  <td>{pct((l.second.v / l.total) * 100, 1)}</td>
-                  <td>{usdCompact(l.total, 1)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <p className="small">Among the eight apps the chart names; everything else is “Other” and is counted in the total only.</p>
-      </Section>
+      <WalletAppsChart dates={wa.dates} apps={wa.apps} usd={wa.usd} groups={GROUPS} />
 
       <More summary="Where these names come from">
         <p>Source: the NEAR Intents explorer, every successful swap into or out of ZEC. Volume is the dollar value sent in. App names come from each swap’s referral code or, for apps that route through SwapKit, from the wallet’s fee account (trustswapkit.near is Trust Wallet, ledgerswapkit.near is Ledger). near-intents.org is the protocol’s own swap page. A swap with ZEC on both sides (ZEC moved between chains) is counted once, as into ZEC.</p>

@@ -4,9 +4,11 @@ import { Card, ChartActions, Kpi, KpiBand, Legend, More, Tiles } from '@/compone
 import { XYChart } from '@/components/reports/XYChart';
 import { Heatmap } from '@/components/reports/Heatmap';
 import { dateTicks, dayMs } from '@/components/reports/ticks';
-import { FixedSeg } from '@/components/reports/FixedSeg';
+import { LinkSeg, ParamNote } from '@/components/reports/LinkSeg';
+import { hrefWith, one, pick } from '@/components/reports/params';
 import r from '@/components/reports/report.module.css';
-import { getUsageClock, getUsageWeekly } from '@/lib/data/reports';
+import { getUsageClock, getUsageWeekly, type UsageClock } from '@/lib/data/reports';
+import { api, DATA_SOURCE } from '@/lib/data/core';
 import { getExchangeCoverage } from '@/lib/data/crosschain';
 import { compact, dateLong, num, pct } from '@/lib/format';
 
@@ -23,8 +25,18 @@ const isDay = (utcHour: number, lon: number) => { const l = localSolar(utcHour, 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const DOW_ORDER = [1, 2, 3, 4, 5, 6, 0]; // API: 0 = Sunday
 
-export default async function WorldUsagePage() {
-  const [clock, weeks, ex] = await Promise.all([getUsageClock(), getUsageWeekly(), getExchangeCoverage()]);
+// Live's ?days= period: 30, 90, 180, 365 or 0 (all history)
+const PERIODS = [['30', '30D'], ['90', '90D'], ['180', '6M'], ['365', '1Y'], ['0', 'ALL']] as const;
+const PERIOD_PHRASE: Record<string, string> = { '30': 'the last 30 days', '90': 'the last 90 days', '180': 'the last 6 months', '365': 'the last year', '0': 'all history' };
+
+export default async function WorldUsagePage({ searchParams }: PageProps<'/world-usage'>) {
+  const sp = await searchParams;
+  const live = DATA_SOURCE === 'live';
+  const want = pick(one(sp.days)?.trim(), PERIODS.map((x) => x[0]), '' as (typeof PERIODS)[number][0]) || null;
+  const [clock, weeks, ex] = await Promise.all([live && want ? api<UsageClock>('usage-clock', { days: want }) : getUsageClock(), getUsageWeekly(), getExchangeCoverage()]);
+  const got = String(clock.days);
+  const unmet = want != null && want !== got;
+  const phrase = PERIOD_PHRASE[got] ?? `the last ${got} days`;
   const byHour = [...clock.by_hour].sort((a, b) => a.hour - b.hour);
   const total = byHour.reduce((a, h) => a + h.txs, 0);
   const peak = byHour.reduce((b, h) => (h.txs > b.txs ? h : b));
@@ -56,18 +68,20 @@ export default async function WorldUsagePage() {
         <div className={r.grp}>
           <span className={r.glbl} id="g-period">Period</span>
           <div className={r.grpRow}>
-            <FixedSeg labelledBy="g-period" options={['1M', '3M', '6M', '1Y', 'ALL']} active="ALL" />
+            <LinkSeg labelledBy="g-period" active={got} options={PERIODS.map(([k, l]) => ({ key: k, label: l, href: hrefWith('/world-usage', sp, { days: k }), disabled: !live }))} />
             <span className={r.count}><b>{dateLong(from)} – {dateLong(to)}</b> · {num(clock.blocks)} blocks · {compact(clock.txs, 2)} transactions</span>
           </div>
         </div>
       </div>
+
+      {unmet && <ParamNote>Usage for {PERIOD_PHRASE[want!]} isn’t available yet — showing {phrase}.</ParamNote>}
 
       <Card
         title="At what hour is Zcash busiest?"
         takeaway={<><b>{hh(peak.hour)} UTC</b> carries {pct(share(peak), 2)} of all transactions and <b>{hh(trough.hour)} UTC</b> only {pct(share(trough), 2)}: activity climbs through the European morning and peaks as the Americas wake up.</>}
         actions={<ChartActions api="usage-clock" name="activity by hour" />}
         legend={<Legend items={[{ label: 'Transactions in that UTC hour', color: 'var(--s2)' }, { label: 'Busiest hour', color: 'var(--zec)' }]} />}
-        foot={`Every block since ${dateLong(from)}, bucketed by its UTC timestamp · ${num(clock.txs)} transactions`}
+        foot={`Every block ${got === '0' ? 'since' : 'from'} ${dateLong(from)}${got === '0' ? '' : ` to ${dateLong(to)}`}, bucketed by its UTC timestamp · ${num(clock.txs)} transactions`}
       >
         <XYChart
           x={byHour.map((h) => h.hour)} xScale="band" xTicks={[0, 3, 6, 9, 12, 15, 18, 21].map((v) => ({ v, label: hh(v) }))}
@@ -89,7 +103,7 @@ export default async function WorldUsagePage() {
           title="Does the weekend look different?"
           takeaway={<><b>{DAYS[busiestDay]}</b> is the busiest day and <b>{DAYS[quietestDay]}</b> the quietest, but the daily rhythm barely changes: every day peaks in the same afternoon hours.</>}
           actions={<ChartActions api="usage-clock" name="day and hour heatmap" />}
-          foot="Monday to Sunday, UTC. Stronger colour = more transactions in that hour of that weekday, all history."
+          foot={`Monday to Sunday, UTC. Stronger colour = more transactions in that hour of that weekday, ${phrase}.`}
         >
           <Heatmap rows={DAYS} cols={Array.from({ length: 24 }, (_, i) => hh(i).slice(0, 2))} colTicks={[0, 6, 12, 18]} values={heat} unit="txs" ariaLabel={`Transactions by weekday and UTC hour. Busiest day ${DAYS[busiestDay]}, quietest ${DAYS[quietestDay]}.`} />
         </Card>

@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
 import { Icon } from '@/components/ui/Icon';
 import { dateLong } from '@/lib/format';
 import type { MetricGroupId, MetricRow, MetricsTable as Table, PeriodKey } from '@/lib/data/tools';
@@ -15,38 +16,48 @@ const PERIODS: PeriodKey[] = ['7D', '28D', '3M', '6M', '12M'];
 const PERIOD_WORD: Record<PeriodKey, string> = { '7D': '7 days', '28D': '28 days', '3M': '3 months', '6M': '6 months', '12M': '12 months' };
 const DEFAULT_CMP: PeriodKey[] = ['28D', '12M'];
 
-type Sort = { col: 0 | 1; dir: 'desc' | 'asc' };
+export type Sort = { col: 0 | 1; dir: 'desc' | 'asc' };
+/** View state read from the link on the server (?cmp=28D,12M&m=…&spark=0&sort=1a), so a shared link opens as sent. */
+export type MetricsView = { cmp: PeriodKey[] | null; m: string[] | null; spark: boolean; sort: Sort };
 
-export function MetricsTable({ table, groups }: { table: Table; groups: { id: MetricGroupId; title: string; desc: string }[] }) {
-  const defaults = useMemo(() => table.rows.filter((r) => r.def).map((r) => r.id), [table]);
-  const [cmp, setCmp] = useState<PeriodKey[]>(DEFAULT_CMP);
-  const [spark, setSpark] = useState(true);
-  const [sel, setSel] = useState<string[]>(defaults);
-  const [sort, setSort] = useState<Sort>({ col: 0, dir: 'desc' });
+export function MetricsTable({ table, groups, view, asOf, bounds, defaults }: {
+  table: Table; groups: { id: MetricGroupId; title: string; desc: string }[]; view: MetricsView;
+  /** the default rows, from the latest table (an early as-of day lacks some, which must not turn into a ?m= list) */
+  defaults: string[];
+  /** ?date= when the table is shown as of an earlier day (null = the latest complete day) */
+  asOf: string | null; bounds: { min: string; max: string };
+}) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [cmp, setCmp] = useState<PeriodKey[]>(view.cmp ?? DEFAULT_CMP);
+  const [spark, setSpark] = useState(view.spark);
+  const [sel, setSel] = useState<string[]>(view.m ?? defaults);
+  const [sort, setSort] = useState<Sort>(view.sort);
   const dlg = useRef<HTMLDialogElement>(null);
   const ready = useRef(false);
+  const dateTimer = useRef(0); // typing a date fires a change per segment; wait for a pause before loading it
 
-  // state <-> URL (?cmp=28D,12M&m=…&spark=0&sort=1a); short ids, no JSON blobs
+  // state -> URL; short ids, no JSON blobs. ?date= is the server's (it picks the data), so it is carried over as is.
   useEffect(() => {
-    const q = new URLSearchParams(window.location.search);
-    const c = q.get('cmp')?.split(',').filter((x): x is PeriodKey => PERIODS.includes(x as PeriodKey)).slice(0, 2);
-    if (c?.length) setCmp(c);
-    const m = q.get('m')?.split(',').filter((id) => table.rows.some((r) => r.id === id));
-    if (m?.length) setSel(m);
-    if (q.get('spark') === '0') setSpark(false);
-    const so = q.get('sort');
-    if (so && /^[01][ad]$/.test(so)) setSort({ col: Number(so[0]) as 0 | 1, dir: so[1] === 'a' ? 'asc' : 'desc' });
-    ready.current = true;
-  }, [table]);
-  useEffect(() => {
-    if (!ready.current) return;
+    if (!ready.current) { ready.current = true; return; }
     const q = new URLSearchParams();
+    const date = new URLSearchParams(window.location.search).get('date');
+    if (date) q.set('date', date);
     if (cmp.join() !== DEFAULT_CMP.join()) q.set('cmp', cmp.join(','));
     if ([...sel].sort().join() !== [...defaults].sort().join()) q.set('m', sel.join(','));
     if (!spark) q.set('spark', '0');
     if (sort.col !== 0 || sort.dir !== 'desc') q.set('sort', `${sort.col}${sort.dir[0]}`);
     replaceQuery(q);
   }, [cmp, sel, spark, sort, defaults]);
+
+  // a new as-of day is new data: replace (no history entry, no scroll jump) and let the server re-read the series
+  const pickDate = (d: string) => {
+    if (!d || d < bounds.min || d > bounds.max) return;
+    const q = new URLSearchParams(window.location.search);
+    if (d === bounds.max) q.delete('date'); else q.set('date', d);
+    const qs = q.toString();
+    router.replace(`${pathname}${qs ? `?${qs}` : ''}`, { scroll: false });
+  };
 
   const pickPeriod = (p: PeriodKey) => setCmp((c) => {
     if (c.includes(p)) return c.length > 1 ? c.filter((x) => x !== p) : c;
@@ -85,6 +96,13 @@ export function MetricsTable({ table, groups }: { table: Table; groups: { id: Me
   return (
     <>
       <div className={s.tbCard} role="toolbar" aria-label="Table options">
+        <div className={s.tg}>
+          <label className={s.lbl} htmlFor="asof">As of</label>
+          <input key={asOf ?? 'latest'} id="asof" className={s.date} type="date" min={bounds.min} max={bounds.max} defaultValue={asOf ?? table.date}
+            onChange={(e) => { const v = e.target.value; window.clearTimeout(dateTimer.current); dateTimer.current = window.setTimeout(() => pickDate(v), 450); }} />
+          {asOf && <button type="button" className={`btn ${s.sm}`} onClick={() => pickDate(bounds.max)}>Latest</button>}
+        </div>
+        <span className={s.sep} aria-hidden="true" />
         <div className={s.tg}>
           <span className={s.lbl} id="cmp-l">Compare against</span>
           <div className="seg" role="group" aria-labelledby="cmp-l">

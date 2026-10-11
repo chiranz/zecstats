@@ -1,11 +1,14 @@
 import type { Metadata } from 'next';
 import { Masthead } from '@/components/chrome/Masthead';
 import { More, Tiles } from '@/components/ui/blocks';
-import { HopsReport } from '@/components/privacy-tools/HopsReport';
+import { HopsReport } from '@/components/reports/HopsReport';
+import { HOP_CLASSES, HOP_RANGES, type HopClass } from '@/components/reports/views';
+import { ParamNote } from '@/components/reports/LinkSeg';
+import { one, pick } from '@/components/reports/params';
 import { MoreCols, Prose } from '@/components/privacy-tools/parts';
 import { zamt } from '@/components/privacy-tools/fmt';
-import { getActivity, getPrivacySuggestions, getShieldHops, getWallOfShame } from '@/lib/data/privacy-tools';
-import { DATA_SOURCE } from '@/lib/data/core';
+import { getActivity, getPrivacySuggestions, getShieldHops, getWallOfShame, type ShieldHops } from '@/lib/data/privacy-tools';
+import { api, DATA_SOURCE } from '@/lib/data/core';
 import { compact, num, zat } from '@/lib/format';
 
 export const metadata: Metadata = {
@@ -13,8 +16,17 @@ export const metadata: Metadata = {
   description: 'How much ZEC moves at a time when a transparent coin goes shielded: the median hop, its spread, and how much of it is one automated process.',
 };
 
-export default async function ShieldHopsPage() {
-  const [hops, act, ps, wall] = await Promise.all([getShieldHops(), getActivity(), getPrivacySuggestions(), getWallOfShame()]);
+export default async function ShieldHopsPage({ searchParams }: PageProps<'/shield-hops'>) {
+  // live's params: ?class=all|single|sweep (default single) &days=90|365|1200|4000 (default 365) &repeat=drop|keep
+  const sp = await searchParams;
+  const cls = pick(one(sp.class), HOP_CLASSES.map((c) => c[0]), 'single') as HopClass;
+  const days = Number(pick(one(sp.days), HOP_RANGES.map((r) => String(r[0])), '365'));
+  const repeat = one(sp.repeat) === 'drop' ? 'drop' : 'keep';
+  const live = DATA_SOURCE === 'live';
+  const [hops, act, ps, wall] = await Promise.all([live ? api<ShieldHops>('shield-hops', { class: cls, days, repeat }) : getShieldHops(), getActivity(), getPrivacySuggestions(), getWallOfShame()]);
+  // the view that came back (the only one there is, unless the data source is live)
+  const label = (c: string, r: string) => `${HOP_CLASSES.find((x) => x[0] === c)?.[1] ?? c}${r === 'drop' ? ', repeated amount dropped' : ''}`;
+  const unmet = hops.class !== cls || hops.repeat !== repeat;
   const sum = hops.summary[hops.class];
   const med = zat(sum.median_of_daily_medians_zat), mean = zat(sum.mean_zat);
   const savings = act.buckets.shielded_savings.last_7d;
@@ -26,7 +38,8 @@ export default async function ShieldHopsPage() {
         lede={<>Usually not much: the median shield-bound hop is <b className="value">{zamt(med)} ZEC</b>. The mean is {zamt(mean)} ZEC, {num(mean / med, 0)}× higher, because a handful of very large hops pull the average up.</>}
       />
 
-      <HopsReport initial={hops} fixed={DATA_SOURCE !== 'live'} />
+      {unmet && <ParamNote>The “{label(cls, repeat)}” view isn’t available yet — showing “{label(hops.class, hops.repeat)}”.</ParamNote>}
+      <HopsReport initial={hops} fixed={!live} initialDays={days} />
 
       <More summary="What this measures, and what it cannot">
         <MoreCols>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import { Kpi, KpiBand, Legend } from '@/components/ui/blocks';
 import { dateLong, num, usd } from '@/lib/format';
 import type { PriceArrays } from '@/lib/data/tools';
@@ -11,10 +12,22 @@ const ANCHORS = [500, 800, 1000];
 const WINDOWS: { key: string; days: number | 'zec' | 'full' }[] = [{ key: '60', days: 60 }, { key: '90', days: 90 }, { key: '180', days: 180 }, { key: '365', days: 365 }, { key: 'Full cycle', days: 'full' }];
 const usdAx = (v: number) => (v >= 1000 ? `$${num(v / 1000, v >= 10000 ? 0 : 1)}K` : `$${num(v, 0)}`);
 
-export function BullRun({ prices }: { prices: PriceArrays }) {
-  const [anchor, setAnchor] = useState(800);
+/** `initialAnchor` comes from ?at= (any positive dollar figure, as live); picking an anchor writes it back. */
+export function BullRun({ prices, initialAnchor = 800 }: { prices: PriceArrays; initialAnchor?: number }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [anchor, setAnchor] = useState(initialAnchor);
   const [win, setWin] = useState('90');
   const [log, setLog] = useState(false);
+  const [hidden, setHidden] = useState<Set<'zec' | 'btc'>>(() => new Set());
+  // replace, not push: the server re-renders the headline for the new anchor; no history entry, no scroll jump
+  const pickAnchor = (a: number) => {
+    setAnchor(a);
+    const q = new URLSearchParams(window.location.search);
+    q.set('at', String(a));
+    router.replace(`${pathname}?${q}`, { scroll: false });
+  };
+  const toggle = (k: 'zec' | 'btc') => setHidden((h) => { const n = new Set(h); if (n.has(k)) n.delete(k); else n.add(k); return n; });
 
   const runs = useMemo(() => ({
     zec: alignRun(prices.dates, prices.zec, anchor, null),
@@ -25,8 +38,9 @@ export function BullRun({ prices }: { prices: PriceArrays }) {
     <div className="toolbar">
       <span className="lbl" id="anc-l">Aligned at</span>
       <div className="seg" role="group" aria-labelledby="anc-l">
-        {ANCHORS.map((a) => <button key={a} type="button" aria-pressed={anchor === a} onClick={() => setAnchor(a)}>${num(a)}</button>)}
+        {ANCHORS.map((a) => <button key={a} type="button" aria-pressed={anchor === a} onClick={() => pickAnchor(a)}>${num(a)}</button>)}
       </div>
+      {!ANCHORS.includes(anchor) && <span className="small mono">custom: ${num(anchor)}</span>}
     </div>
   );
 
@@ -46,7 +60,9 @@ export function BullRun({ prices }: { prices: PriceArrays }) {
   const pace = btcSame ? today.mult / btcSame.mult : null;
   const { peak, trough } = peakAndTrough(btc.points);
   const fall = (trough.usd / peak.usd - 1) * 100;
-  const xMax = win === 'Full cycle' ? btc.points.at(-1)!.d : Number(win);
+  const showZ = !hidden.has('zec'), showB = !hidden.has('btc');
+  // Full cycle spans what is drawn: hiding Bitcoin shrinks it to Zcash's run (live does the same)
+  const xMax = win === 'Full cycle' ? Math.max(1, showB ? btc.points.at(-1)!.d : today.d) : Number(win);
   const paceSeries = zec.points.map((p) => { const b = atDay(btc.points, p.d); return b ? { x: p.d, y: p.mult / b.mult } : null; }).filter((v): v is { x: number; y: number } => v != null);
   const hotter = pace != null ? (pace - 1) * 100 : 0;
   const rows = [0, 30, today.d, 60, 90, 180, 270, peak.d, trough.d].filter((d, i, a) => a.indexOf(d) === i).sort((a, b) => a - b);
@@ -81,7 +97,17 @@ export function BullRun({ prices }: { prices: PriceArrays }) {
             <p className="takeaway">Zcash is <b>{today.d} days</b> into its run; Bitcoin&apos;s peaked on <b>day {peak.d}</b> at {num(peak.mult, 0)}× and then fell {num(Math.abs(fall), 0)}%.</p>
           </div>
         </div>
-        <Legend items={[{ label: 'Zcash 2026', color: 'var(--zec)', line: true }, { label: 'Bitcoin 2017', color: 'var(--btc)', line: true }, { label: `$${num(anchor)} anchor`, color: 'var(--axis)', line: true, dashed: true }]} />
+        <div className="row" style={{ gap: 6 }} role="group" aria-label="Series">
+          {([['zec', 'Zcash 2026', 'var(--zec)'], ['btc', 'Bitcoin 2017', 'var(--btc)']] as const).map(([k, l, c]) => {
+            const on = !hidden.has(k);
+            return (
+              <button key={k} type="button" className="chip" aria-pressed={on} onClick={() => toggle(k)} title={on ? `Hide ${l}` : `Show ${l}`} style={on ? undefined : { opacity: 0.55 }}>
+                <i className="ln" style={{ background: c, width: 14 }} />{l}
+              </button>
+            );
+          })}
+          <Legend items={[{ label: `$${num(anchor)} anchor`, color: 'var(--axis)', line: true, dashed: true }]} />
+        </div>
         <div className="toolbar">
           <span className="lbl" id="days-l">Days</span>
           <div className="seg" role="group" aria-labelledby="days-l">{WINDOWS.map((w) => <button key={w.key} type="button" aria-pressed={win === w.key} onClick={() => setWin(w.key)}>{w.key}</button>)}</div>
@@ -90,13 +116,14 @@ export function BullRun({ prices }: { prices: PriceArrays }) {
         <DayChart
           ariaLabel={`Zcash from ${dateLong(zec.anchorDate)} and Bitcoin from ${dateLong(btc.anchorDate)}, in dollars by day since each crossed $${anchor}, first ${xMax} days`}
           series={[
-            { key: 'btc', label: 'BTC', color: 'var(--btc)', points: btc.points.map((p) => ({ x: p.d, y: p.usd, date: p.date })) },
-            { key: 'zec', label: 'ZEC', color: 'var(--zec)', points: zec.points.map((p) => ({ x: p.d, y: p.usd, date: p.date })) },
+            ...(showB ? [{ key: 'btc', label: 'BTC', color: 'var(--btc)', points: btc.points.map((p) => ({ x: p.d, y: p.usd, date: p.date })) }] : []),
+            ...(showZ ? [{ key: 'zec', label: 'ZEC', color: 'var(--zec)', points: zec.points.map((p) => ({ x: p.d, y: p.usd, date: p.date })) }] : []),
           ]}
           xMax={xMax} log={log} zero={false} yFmt={usdAx} refY={anchor} refLabel={`$${num(anchor)}`}
           tipFmt={(_, p) => `${usd(p.y, 0)} · ${p.date ? dateLong(p.date) : ''}`}
-          markers={[{ x: peak.d, y: peak.usd, label: `peak ${usd(peak.usd, 0)}`, color: 'var(--btc)', anchor: 'end' }, { x: trough.d, y: trough.usd, label: `then ${usd(trough.usd, 0)}`, color: 'var(--btc)', anchor: 'end' }]}
+          markers={showB ? [{ x: peak.d, y: peak.usd, label: `peak ${usd(peak.usd, 0)}`, color: 'var(--btc)', anchor: 'end' }, { x: trough.d, y: trough.usd, label: `then ${usd(trough.usd, 0)}`, color: 'var(--btc)', anchor: 'end' }] : []}
         />
+        {!showZ && !showB && <p className="small" role="status">Both series are hidden — turn one back on above.</p>}
         <p className="small">Daily USD closes · Bitcoin searched inside its {BTC_CYCLE.from.slice(0, 4)}–{BTC_CYCLE.to.slice(0, 4)} cycle · data through {dateLong(prices.lastComplete)}. Day 0 is the day after each last closed below the anchor.</p>
       </div>
 

@@ -3,9 +3,11 @@ import { Masthead } from '@/components/chrome/Masthead';
 import { Card, ChartActions, Kpi, KpiBand, Legend, More, Section, Tiles } from '@/components/ui/blocks';
 import { TimeSeriesChart } from '@/components/charts/TimeSeriesChart';
 import { BarList } from '@/components/reports/BarList';
-import { FixedSeg } from '@/components/reports/FixedSeg';
+import { LinkSeg, ParamNote } from '@/components/reports/LinkSeg';
+import { hrefWith, one, pick } from '@/components/reports/params';
 import r from '@/components/reports/report.module.css';
-import { getNearNetwork, getNearStats, getZecFlows } from '@/lib/data/crosschain';
+import { getNearNetwork, getNearStats, getZecFlows, type NearNetwork } from '@/lib/data/crosschain';
+import { api, DATA_SOURCE } from '@/lib/data/core';
 import { dateLong, num, pct, usdCompact } from '@/lib/format';
 
 export const metadata: Metadata = { title: 'Swaps', description: 'How central ZEC is in the NEAR Intents cross-chain swap network, and what flows in and out.' };
@@ -14,10 +16,29 @@ const NAME: Record<string, string> = { USD: 'USD stablecoins', btc: 'BTC', eth: 
 const nm = (id: string) => NAME[id] ?? id.toUpperCase();
 const signed = (v: number) => `${v >= 0 ? '+' : '−'}${usdCompact(Math.abs(v), 1)}`;
 
-export default async function SwapsPage() {
-  const [net, flows, wrapped] = await Promise.all([getNearNetwork(), getZecFlows(), getNearStats()]);
+// Live's link state: ?days=7|14|30 (window) &gran=asset|token|chain (what a node is)
+const WINS = ['7', '14', '30'] as const;
+const GRANS = [['asset', 'Asset'], ['token', 'Token'], ['chain', 'Chain']] as const;
+type Net = NearNetwork & { days_requested?: number };
+const zecNode = (n: Net) => n.nodes.find((x) => x.id === 'zec') ?? n.nodes.find((x) => /zec|zcash/i.test(x.id));
+
+export default async function SwapsPage({ searchParams }: PageProps<'/swaps'>) {
+  const sp = await searchParams;
+  const live = DATA_SOURCE === 'live';
+  const wantDays = pick(one(sp.days), WINS, '' as (typeof WINS)[number]) || null;
+  const wantGran = pick(one(sp.gran), GRANS.map((g) => g[0]), 'asset');
+  const base = await getNearNetwork();
+  // a variant only when the data source is live and the link asks for one; the default view otherwise
+  let net: Net = base, gran = 'asset';
+  if (live && (wantDays || wantGran !== 'asset')) {
+    const v = await api<Net>('near-network', { days: wantDays ?? undefined, gran: wantGran });
+    if (zecNode(v) && (!wantDays || v.days_requested === Number(wantDays))) { net = v; gran = wantGran; }
+  }
+  const gotDays = net.days_requested ?? net.days_covered;
+  const unmet = (wantDays != null && Number(wantDays) !== gotDays) || gran !== wantGran;
+  const [flows, wrapped] = await Promise.all([getZecFlows(), getNearStats()]);
   const nodes = [...net.nodes].sort((a, b) => a.rank - b.rank);
-  const zec = nodes.find((n) => n.id === 'zec')!;
+  const zec = zecNode(net)!;
   const window = `${dateLong(net.from)} – ${dateLong(net.to)}`;
 
   // ZEC's counterparties in the window, from the edge list
@@ -52,16 +73,17 @@ export default async function SwapsPage() {
         <div className={r.grp}>
           <span className={r.glbl} id="g-win">Window</span>
           <div className={r.grpRow}>
-            <FixedSeg labelledBy="g-win" options={['7d', '14d', '30d']} active="14d" />
+            <LinkSeg labelledBy="g-win" active={String(gotDays)} options={WINS.map((d) => ({ key: d, label: `${d}d`, href: hrefWith('/swaps', sp, { days: d }), disabled: !live }))} />
             <span className={r.count}><b>{window}</b> · {num(net.sync.total_rows)} swap rows · {usdCompact(net.sync.total_volume_usd, 1)} volume</span>
           </div>
         </div>
         <div className={r.grp}>
           <span className={r.glbl} id="g-grp">Group by</span>
-          <FixedSeg labelledBy="g-grp" options={['Asset', 'Token', 'Chain']} active="Asset" />
+          <LinkSeg labelledBy="g-grp" active={gran} options={GRANS.map(([k, l]) => ({ key: k, label: l, href: hrefWith('/swaps', sp, { gran: k }), disabled: !live }))} />
         </div>
         <div className={r.end}><a className="btn" href="/api/near-network" download="zec-near-network.json">Download data</a></div>
       </div>
+      {unmet && <ParamNote>The {wantDays ?? gotDays}-day view grouped by {wantGran} isn’t available yet — showing {gotDays} days grouped by {gran}.</ParamNote>}
 
       <Card
         title="Which assets are most central to the swap network?"

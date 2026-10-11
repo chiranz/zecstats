@@ -5,9 +5,14 @@ import { TimeSeriesChart } from '@/components/charts/TimeSeriesChart';
 import { XYChart } from '@/components/reports/XYChart';
 import { PercentileStrip } from '@/components/reports/PercentileStrip';
 import { dateTicks, dayMs, usdDecades, usdTick } from '@/components/reports/ticks';
-import { FixedSeg } from '@/components/reports/FixedSeg';
+import { CsvButton } from '@/components/reports/CsvButton';
+import { LinkSeg, ParamNote } from '@/components/reports/LinkSeg';
+import { TxRange } from '@/components/reports/TxRange';
+import { hrefWith, one, pick } from '@/components/reports/params';
+import { customWindow, isRangeKey, presetFrom, RANGE_NAME, type RangeKey } from '@/components/charts/range';
 import r from '@/components/reports/report.module.css';
-import { getTxValues } from '@/lib/data/reports';
+import { getTxValues, type TxValues } from '@/lib/data/reports';
+import { api, DATA_SOURCE } from '@/lib/data/core';
 import { getCompleteDailyStats } from '@/lib/data/snapshot';
 import { dateLong, num, pct, usd, usdCompact, zat } from '@/lib/format';
 
@@ -16,8 +21,36 @@ export const metadata: Metadata = { title: 'Transaction sizes', description: 'Ho
 /** $0.0047 · $184 · $3,548 · $113K · $1.76M */
 const fmt = (v: number) => (v >= 1e4 ? usdCompact(v, 2) : v >= 100 ? usd(v, 0) : v >= 1 ? usd(v, 2) : `$${v.toPrecision(2)}`);
 
-export default async function TxSizesPage() {
-  const [tv, stats] = await Promise.all([getTxValues(), getCompleteDailyStats()]);
+// Live's link state: ?class=transparent|deshield|all, and the chart pages' window (?range=3M or ?from=&to=).
+const CLASSES = [['transparent', 'Transparent → transparent'], ['deshield', 'Leaving a shielded pool'], ['all', 'Everything']] as const;
+type Cls = (typeof CLASSES)[number][0];
+const PRESETS: RangeKey[] = ['1M', '3M', '6M', '9M', '1Y', '5Y', 'YTD', 'ALL'];
+const dayMinus = (d: string, n: number) => new Date(dayMs(d) - n * 86400000).toISOString().slice(0, 10);
+const near = (a: string, b: string) => Math.abs(dayMs(a) - dayMs(b)) <= 3 * 86400000;
+
+export default async function TxSizesPage({ searchParams }: PageProps<'/tx-sizes'>) {
+  const sp = await searchParams;
+  const live = DATA_SOURCE === 'live';
+  const stats = await getCompleteDailyStats();
+  const bounds = { from: stats[0].date, to: stats.at(-1)!.date };
+  const cls = pick(one(sp.class), CLASSES.map((c) => c[0]), 'transparent') as Cls;
+  const cw = customWindow(one(sp.from), one(sp.to), bounds.from, bounds.to);
+  const rq = one(sp.range)?.toUpperCase();
+  const preset: RangeKey = isRangeKey(rq) && PRESETS.includes(rq) ? rq : '1Y';
+  const want = cw ?? { from: presetFrom(preset, bounds.from, bounds.to), to: bounds.to };
+  const tv = live ? await api<TxValues>('tx-values', { class: cls, from: want.from, to: want.to }) : await getTxValues();
+  // what came back: one class and one window (the trailing year, transparent, unless the data source is live)
+  const got = { from: tv.range.from, to: dayMinus(tv.range.to_exclusive, 1) };
+  const unmet = tv.class !== cls || (live ? !near(got.from, want.from) || !near(got.to, want.to) : cw != null || preset !== '1Y');
+  const activeRange: RangeKey | null = unmet ? '1Y' : cw ? null : preset;
+  const clsLabel = (c: string) => CLASSES.find((x) => x[0] === c)?.[1] ?? c;
+  const winLabel = (w: { from: string; to: string }, r: RangeKey | null) => (r ? RANGE_NAME[r].toLowerCase() : `${dateLong(w.from)} – ${dateLong(w.to)}`);
+  const csvRows = tv.days.map((d) => ({
+    date: d.date, zec_usd: d.price, transactions: d.count, usd_moved: zat(d.total_zat) * d.price, mean_usd: zat(d.mean_zat) * d.price,
+    p10_usd: zat(d.p10_zat) * d.price, p25_usd: zat(d.p25_zat) * d.price, median_usd: zat(d.p50_zat) * d.price, p75_usd: zat(d.p75_zat) * d.price,
+    p90_usd: zat(d.p90_zat) * d.price, p95_usd: zat(d.p95_zat) * d.price, p99_usd: zat(d.p99_zat) * d.price, p999_usd: zat(d.p999_zat) * d.price,
+    max_usd: zat(d.max_zat) * d.price, mode_zec: zat(d.top_value_zat), mode_count: d.top_value_count,
+  }));
   const days = tv.days;
   const first = days[0].date, last = days.at(-1)!.date;
   const nDays = days.length;
@@ -75,28 +108,29 @@ export default async function TxSizesPage() {
     <>
       <Masthead
         title="How big is a transparent Zcash transaction?"
-        lede={<>Half of the {num(N)} transparent transactions between {dateLong(first)} and {dateLong(last)} moved <b className="num value">{fmt(P.p50)}</b> or less. The average is far higher because a few giant transfers carry most of the money.</>}
+        lede={<>Half of the {num(N)} {tv.class === 'deshield' ? 'deshielding' : tv.class === 'all' ? 'transparent-output' : 'transparent'} transactions between {dateLong(first)} and {dateLong(last)} moved <b className="num value">{fmt(P.p50)}</b> or less. The average is far higher because a few giant transfers carry most of the money.</>}
       />
 
       <div className={r.fbar} role="region" aria-label="Report filters">
         <div className={r.grp}>
           <span className={r.glbl} id="g-range">Range</span>
           <div className={r.grpRow}>
-            <FixedSeg labelledBy="g-range" options={['1M', '3M', '6M', '1Y', '5Y', 'ALL']} active="1Y" />
+            <TxRange labelledBy="g-range" presets={PRESETS} active={activeRange} win={!unmet && cw ? got : null} bounds={bounds} fixed={!live} />
             <span className={r.count}><b>{rangeLabel}</b> · {nDays} days</span>
           </div>
         </div>
         <div className={r.grp}>
           <span className={r.glbl} id="g-view">View</span>
-          <FixedSeg labelledBy="g-view" options={['Transparent → transparent', 'Leaving a shielded pool', 'Everything']} active="Transparent → transparent" />
+          <LinkSeg labelledBy="g-view" active={tv.class} options={CLASSES.map(([k, l]) => ({ key: k, label: l, href: hrefWith('/tx-sizes', sp, { class: k }), disabled: !live }))} />
         </div>
-        <div className={r.end}><a className="btn" href="/api/tx-values" download="zec-transparent-tx-sizes.json">Download data</a></div>
+        <div className={r.end}><CsvButton rows={csvRows} slug="transparent-tx-sizes" /></div>
       </div>
+      {unmet && <ParamNote>{clsLabel(cls)}, {winLabel(want, cw ? null : preset)}, isn’t available yet — showing {clsLabel(tv.class).toLowerCase()}, {winLabel(got, '1Y')}.</ParamNote>}
 
       <section className="hero" aria-label="Answer">
         <div className={r.heroTop}>
           <div>
-            <p className="kicker">Median · transparent → transparent · {rangeLabel}</p>
+            <p className="kicker">Median · {clsLabel(tv.class).toLowerCase()} · {rangeLabel}</p>
             <p className={r.lead}>A typical transparent transaction moves</p>
             <p className="figure">{fmt(P.p50)}<small>median</small></p>
           </div>
@@ -138,7 +172,7 @@ export default async function TxSizesPage() {
           takeaway={<>Transactions of <b>{fmt(P.p90)} or less</b> are 90% of the count, but carry only <b>{pct(dollarsAtP90 * 100, 1)}</b> of the dollars; half of all dollars moved in transfers above <b>{fmt(halfDollars)}</b> — just <b>{pct(txAboveHalf * 100, 2)}</b> of transactions.</>}
           actions={<ChartActions api="tx-values" name="transaction size distribution" />}
           legend={<Legend items={[{ label: 'Share of transactions', color: 'var(--s2)', line: true }, { label: 'Share of dollars', color: 'var(--s4)', line: true }]} />}
-          foot={`Transparent → transparent · ${rangeLabel} · dollars at each day’s close · data through ${dateLong(dataThrough)}`}
+          foot={`${clsLabel(tv.class)} · ${rangeLabel} · dollars at each day’s close · data through ${dateLong(dataThrough)}`}
         >
           <XYChart
             x={cdf.map((c) => c.usd)} xScale="log" xTicks={usdDecades(1e-3, 1e9)}
@@ -183,7 +217,7 @@ export default async function TxSizesPage() {
           takeaway={<>The daily median averaged <b>{fmt(avgMed)}</b>, with its low of <b>{fmt(med[dailyMedMin])}</b> on {dateLong(dates[dailyMedMin])}, and ended the range at <b>{fmt(med.at(-1)!)}</b> on {dateLong(last)}.</>}
           actions={<ChartActions api="tx-values" name="transaction size over time" />}
           legend={<Legend items={[{ label: 'Median', color: 'var(--s2)', line: true }, { label: 'P25–P75', color: 'color-mix(in srgb, var(--s2) 55%, transparent)' }, { label: 'P10–P90', color: 'color-mix(in srgb, var(--s2) 25%, transparent)' }, { label: 'Mean', color: 'var(--s4)', line: true, dashed: true }]} />}
-          foot={`Log scale · transparent → transparent · ${rangeLabel} · dollars at each day’s close · data through ${dateLong(dataThrough)}`}
+          foot={`Log scale · ${clsLabel(tv.class).toLowerCase()} · ${rangeLabel} · dollars at each day’s close · data through ${dateLong(dataThrough)}`}
         >
           <XYChart
             x={xDays} xTicks={monthTicks} yLog yFormat="usdCompact"

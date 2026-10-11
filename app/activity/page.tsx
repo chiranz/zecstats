@@ -1,10 +1,14 @@
 import type { Metadata } from 'next';
 import { Masthead } from '@/components/chrome/Masthead';
 import { Card, ChartActions, Delta, Kpi, KpiBand, More, Section, StackBar, Table, Tiles } from '@/components/ui/blocks';
-import { TimeSeriesChart } from '@/components/charts/TimeSeriesChart';
 import { HBars, MoreCols, Prose } from '@/components/privacy-tools/parts';
 import { fz, zamt } from '@/components/privacy-tools/fmt';
-import { getActivity, getLargestWallets, getShieldHops, type BucketKey, type Wallet } from '@/lib/data/privacy-tools';
+import { getActivity, getLargestWallets, getShieldHops, type Activity, type BucketKey, type Wallet } from '@/lib/data/privacy-tools';
+import { api, DATA_SOURCE } from '@/lib/data/core';
+import { ActivityChart } from '@/components/reports/ActivityChart';
+import { LinkSeg, ParamNote } from '@/components/reports/LinkSeg';
+import { hrefWith, one, pick } from '@/components/reports/params';
+import { ACTIVITY_RANGES, ACTIVITY_WINDOWS } from '@/components/reports/views';
 import { compact, dateLong, num, pct, zat } from '@/lib/format';
 import s from './page.module.css';
 
@@ -21,8 +25,14 @@ const BUCKETS: { key: BucketKey; label: string; color: string; sub: string }[] =
 const COHORTS = ['<30d', '30-180d', '180d-1y', '1-3y', '3y+'];
 const COHORT_LABEL: Record<string, string> = { '<30d': 'under 30 days', '30-180d': '30–180 days', '180d-1y': '180 days–1 year', '1-3y': '1–3 years', '3y+': '3 years +' };
 
-export default async function ActivityPage() {
-  const [a, w, hops] = await Promise.all([getActivity(), getLargestWallets(), getShieldHops()]);
+export default async function ActivityPage({ searchParams }: PageProps<'/activity'>) {
+  // live's link state: ?window=daily|weekly|monthly (column size; the server picks the data) &range=30|90|365|0 (days)
+  const sp = await searchParams;
+  const live = DATA_SOURCE === 'live';
+  const want = pick(one(sp.window), ACTIVITY_WINDOWS.map((x) => x[0]), 'weekly');
+  const range = pick(one(sp.range), ACTIVITY_RANGES.map((x) => x[0]), '365');
+  const [a, w, hops] = await Promise.all([live && want !== 'weekly' ? api<Activity>('activity', { window: want }) : getActivity(), getLargestWallets(), getShieldHops()]);
+  const unit = a.window, unitNoun = unit === 'daily' ? 'day' : unit === 'monthly' ? 'month' : 'week';
   const b = a.buckets, dir = a.direction, bf = a.backfill;
   const l7 = (k: BucketKey) => zat(b[k].last_7d.value_zat);
   const total7 = BUCKETS.reduce((x, k) => x + l7(k.key), 0);
@@ -74,22 +84,20 @@ export default async function ActivityPage() {
         <Kpi k="Long-term storage" v={compact(zat(a.storage.long_term_zat), 2)} unit="ZEC" s="transparent coins unmoved for 1 year +" />
       </KpiBand>
 
+      {want !== unit && <ParamNote>{want === 'daily' ? 'Daily' : 'Monthly'} columns aren’t available yet — showing {unit} columns.</ParamNote>}
       <Card
         title="What happens to transparent coins over time?"
-        takeaway={<>Transient movement dwarfs the other two buckets every week; the latest full week moved <b>{compact(zat(series.at(-2)!.transient_transparent_zat), 2)} ZEC</b> transparently, against <b>{compact(zat(series.at(-2)!.shielded_savings_zat), 1)}</b> into shielded savings.</>}
+        takeaway={<>Transient movement dwarfs the other two buckets every {unitNoun}; the latest full {unitNoun} moved <b>{compact(zat(series.at(-2)!.transient_transparent_zat), 2)} ZEC</b> transparently, against <b>{compact(zat(series.at(-2)!.shielded_savings_zat), 1)}</b> into shielded savings.</>}
         actions={<ChartActions api="activity" name="Classified volume by bucket" />}
-        foot={`Classified volume by the week each coin was spent · the last column (week of ${dateLong(series.at(-1)!.date)}) is still in progress · data through ${dateLong(a.as_of)}`}
+        foot={`Classified volume by the ${unitNoun} each coin was spent · the last column (${unitNoun === 'day' ? '' : `${unitNoun} of `}${dateLong(series.at(-1)!.date)}) is still in progress · data through ${dateLong(a.as_of)}`}
       >
-        <TimeSeriesChart
-          dates={series.map((r) => r.date)}
-          series={BUCKETS.map((k) => ({ key: k.key, label: k.label, color: k.color, values: series.map((r) => zat(r[`${k.key}_zat`])), type: 'bar' as const }))}
-          stacked
-          shareToggle
-          format="zecCompact"
-          ranges={['1Y', '5Y', 'ALL']}
-          defaultRange="1Y"
-          height={320}
-          ariaLabel="Stacked columns: weekly transparent volume classified as transient transparent, in exchanges (sweep-shaped) and shielded savings, since 2016."
+        <ActivityChart
+          rows={series}
+          buckets={BUCKETS}
+          initialRange={range}
+          unit={unit}
+          windowSeg={<LinkSeg labelledBy="act-win" active={unit} options={ACTIVITY_WINDOWS.map(([k, l]) => ({ key: k, label: l, href: hrefWith('/activity', sp, { window: k }), disabled: !live }))} />}
+          ariaLabel="Stacked columns: transparent volume classified as transient transparent, in exchanges (sweep-shaped) and shielded savings, since 2016."
         />
       </Card>
 
