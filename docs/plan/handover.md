@@ -69,6 +69,12 @@
    loader: prefetched), or real title text instead of a bar where the title is known (Next's docs suggest it).
 2. **Backend integration kit** for the site owner (env vars, strict live mode, upstream auth headers, route map,
    `check:api --live`, per-endpoint source badge, docs). See the iteration-3 report; not started.
+   - **Syncing from zecstats.com with Vercel Cron (researched 11 Oct):** blocked until the owner allows it. Every
+     server-side request (API and home page) gets `403 cf-mitigated: challenge`, and robots.txt disallows `/api/`; do not
+     work around the challenge. With the owner's OK (a Cloudflare WAF skip rule on a secret header, or an unproxied API
+     origin): set `ZECSTATS_DATA_SOURCE=live` plus the header and pages refresh on their own (60 s cache); a daily cron
+     (Hobby allows once a day, ±59 min; Pro per minute) is only needed to keep a fallback copy, e.g. `/api/cron/sync`
+     guarded by `CRON_SECRET`, writing to Vercel Blob (the deployed file system is read-only) or calling a Deploy Hook.
 3. **Remaining parity:** gap 3 (calculator's 16 assets — needs `dca?assets=` variants), gap 4 rest (`?v=` views, any
    comparison periods, PNG, Group column, reorder, Reset, Correlate), gap 12 (per-chart unit/roll/grain toggles), gap 15
    (missing blocks: /network weekly nodes, exchange map, world-usage map + awake curve, donate QR, og:image, sitemap/robots).
