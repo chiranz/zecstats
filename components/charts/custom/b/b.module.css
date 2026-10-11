@@ -1,0 +1,19 @@
+/* Custom panels for registry-b (survival triangle, issuance-aligned lines, ranked bars). Colours via tokens only. */
+.wrap { position: relative; width: 100%; }
+.wrap svg { display: block; width: 100%; height: auto; overflow: visible; }
+.wrap text { font-family: var(--mono); font-size: 12px; fill: var(--muted); }
+.wrap :global(.gl) { stroke: var(--grid); }
+.wrap :global(.ax) { stroke: var(--axis); }
+.wrap:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: var(--r-sm); }
+.label { fill: var(--text-2) !important; }
+.strong { fill: var(--value) !important; font-weight: 600; }
+.legend { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font: 400 12px var(--mono); color: var(--muted); margin-bottom: 10px; }
+.ramp { position: relative; width: min(260px, 60vw); height: 10px; border-radius: 3px; border: 1px solid var(--line); background: linear-gradient(90deg, color-mix(in srgb, var(--zec) 4%, transparent), var(--zec)); }
+.rampTicks { position: relative; width: min(260px, 60vw); height: 16px; margin-top: 2px; }
+.rampTicks span { position: absolute; transform: translateX(-50%); font: 400 12px var(--mono); color: var(--muted); white-space: nowrap; }
+.rampTicks span:first-child { transform: none; }
+.rampTicks span:last-child { transform: translateX(-100%); }
+.key { display: inline-flex; align-items: center; gap: 6px; font: 500 12px var(--mono); color: var(--text-2); }
+.key i { display: inline-block; width: 14px; height: 3px; border-radius: 2px; }
+.key b { display: inline-block; width: 10px; height: 10px; border-radius: 3px; }
+.tipRow { display: grid; grid-template-columns: 12px 1fr auto; gap: 8px; align-items: center; }
