@@ -1,7 +1,9 @@
 # Handover: end of iteration 3 (11 Oct 2026)
 
 ## State
-- Next.js 16 app at the repo root, on `main`, small per-area commits, **not pushed**; working tree clean.
+- Next.js 16 app at the repo root, on `main`, small per-area commits. Private repo https://github.com/chiranz/zecstats;
+  Vercel project `zecstats` (scope chiranz) deploys `main` to https://zecstats.vercel.app. `NEXT_PUBLIC_SITE_URL` is
+  set to that URL (production + preview), which makes the deploy noindex; only https://zecstats.com is indexable.
 - Last checks (end of iteration 3):
   - `pnpm build` → 100 pages. 13 routes are dynamic: /api, /compare, /amount-suggest, /privacy-suggestions.json, and the
     report/tool pages that read their URL params on the server (activity, btc-bull-run, btc-migration, metrics,
