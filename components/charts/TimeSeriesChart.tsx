@@ -396,10 +396,10 @@ export function TimeSeriesChart(props: TimeSeriesChartProps) {
               else val = show(vs[li]!, si);
             }
             return (
-              <button key={s.key} type="button" className="chip" aria-pressed={on} onClick={() => toggle(s.key)} title={on ? `Hide ${s.label}` : `Show ${s.label}`} style={on ? undefined : { opacity: 0.55 }}>
+              <button key={s.key} type="button" className="chip" aria-pressed={on} onClick={() => toggle(s.key)} title={on ? `Hide ${s.label}` : `Show ${s.label}`} style={{ maxWidth: '100%', height: 'auto', minHeight: 28, whiteSpace: 'normal', flexWrap: 'wrap', rowGap: 0, ...(on ? null : { opacity: 0.55 }) }}>
                 <Swatch s={s} />
                 {s.label}
-                {val && <span className="muted" style={{ marginLeft: 2 }}>{val} · {dateShort(ds[li])}</span>}
+                {val && <span className="muted" style={{ marginLeft: 2, whiteSpace: 'nowrap' }}>{val} · {dateShort(ds[li])}</span>}
               </button>
             );
           })}

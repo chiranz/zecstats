@@ -2,7 +2,7 @@ import 'server-only';
 import { cache } from 'react';
 import { getChartIndex } from './home';
 import { getIronwoodSources } from './ironwood';
-import { getHopMedian, getTurnstileIndex, ROUND_TRIPS } from './privacy';
+import { getHopMedian, getRoundTrips, getTurnstileIndex } from './privacy';
 import { api, DATA_SOURCE } from './core';
 import { getFreshness, getLatestBlock, getPools, type Freshness } from './snapshot';
 import { chartBySlug } from '@/lib/charts';
@@ -40,8 +40,8 @@ export type NavData = {
 };
 
 async function load(): Promise<NavData> {
-  const [f, index, src, pools, lb, ti, hop, tips] = await Promise.all([
-    getFreshness(), getChartIndex(), getIronwoodSources(), getPools(), getLatestBlock(), getTurnstileIndex(), getHopMedian(),
+  const [f, index, src, pools, lb, ti, hop, trips, tips] = await Promise.all([
+    getFreshness(), getChartIndex(), getIronwoodSources(), getPools(), getLatestBlock(), getTurnstileIndex(), getHopMedian(), getRoundTrips(),
     api<{ columns: { buckets: { amounts: { amount: number }[] }[] }[] }>('privacy-suggestions'),
   ]);
   const values: Record<string, string> = {};
@@ -57,7 +57,7 @@ async function load(): Promise<NavData> {
   values['/privacy'] = `${pct(pools.shieldedPct)} shielded`;
   values['/ironwood'] = `${num(src.orchard_migration_pct, 2)}%`;
   values['/orchard-turnstile'] = `${Math.round(ti.isi)}/100`;
-  values['/wall-of-shame'] = `${ROUND_TRIPS.total} trips`;
+  values['/wall-of-shame'] = `${trips.total} trips`;
   values['/shield-hops'] = `${num(hop.median, 2)} ZEC`;
   const amounts = tips.columns.flatMap((c) => c.buckets.flatMap((b) => b.amounts.map((a) => a.amount)));
   if (amounts.length) values['/privacy-suggestions'] = `${num(Math.min(...amounts), 1)}–${num(Math.max(...amounts))} ZEC`;

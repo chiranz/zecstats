@@ -151,5 +151,3 @@ export const getRoundTrips = cache(async () => {
   return { total: rows.length, zec: n('zec'), usd: n('usd'), both: n('both') };
 });
 
-/** @deprecated hard-coded; use getRoundTrips(). Kept only for lib/data/nav.ts and components/navlab until they switch. */
-export const ROUND_TRIPS = { total: 500, zec: 123, usd: 197, both: 180 };

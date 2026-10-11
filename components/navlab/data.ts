@@ -2,7 +2,7 @@ import 'server-only';
 import { cache } from 'react';
 import { getHome, getChartIndex } from '@/lib/data/home';
 import { getFreshness, POOL_COLOR, POOL_LABEL, POOLS } from '@/lib/data/snapshot';
-import { getHopMedian, ROUND_TRIPS } from '@/lib/data/privacy';
+import { getHopMedian, getRoundTrips } from '@/lib/data/privacy';
 import { getSearchIndex } from '@/lib/data/search-index';
 import { chartBySlug } from '@/lib/charts';
 import { CHART_GROUPS, GROUP_SLUGS } from '@/lib/charts/types';
@@ -15,7 +15,7 @@ const SHORT: Record<string, string> = { price: 'Price', costbasis: 'Cost basis',
 
 // Read-only: everything here comes from the same helpers the real pages use, so menu values match the pages.
 export const getNavLabData = cache(async (): Promise<NavData> => {
-  const [home, index, f, hop, search] = await Promise.all([getHome(), getChartIndex(), getFreshness(), getHopMedian(), getSearchIndex()]);
+  const [home, index, f, hop, search, trips] = await Promise.all([getHome(), getChartIndex(), getFreshness(), getHopMedian(), getSearchIndex(), getRoundTrips()]);
   const p = home.pools;
 
   const values: Record<string, string> = {};
@@ -28,7 +28,7 @@ export const getNavLabData = cache(async (): Promise<NavData> => {
     { href: '/privacy', label: 'Overview', value: `${pct(p.shieldedPct)} shielded`, desc: 'Shielded supply, pools, flows' },
     { href: '/ironwood', label: 'Ironwood', value: `${ironwood.pctText} crossed`, desc: `The newest pool, live ${ironwood.days} days`, featured: true },
     { href: '/orchard-turnstile', label: 'Turnstile', value: `${Math.round(home.turnstile.isi)}/100`, desc: 'Was the Orchard bug used to mint ZEC?' },
-    { href: '/wall-of-shame', label: 'Wall of Shame', value: `${ROUND_TRIPS.total} round trips`, desc: 'Round trips that reused an amount' },
+    { href: '/wall-of-shame', label: 'Wall of Shame', value: `${trips.total} round trips`, desc: 'Round trips that reused an amount' },
     { href: '/shield-hops', label: 'Shield hops', value: `${num(hop.median, 2)} ZEC median`, desc: 'How much moves when coins go shielded' },
     { href: '/privacy-suggestions', label: 'Privacy tips', value: '0.1–1,000 ZEC', desc: 'Round amounts with the biggest crowd' },
     { href: '/amount-suggest', label: 'Amount lookup', desc: 'How common is your amount?' },
