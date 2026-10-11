@@ -70,8 +70,8 @@ body{margin:0}
 .topbar .shell{display:flex;align-items:center;gap:6px;height:var(--barh)}
 .brand{display:inline-flex;align-items:center;gap:10px;font:800 17px var(--wordmark);letter-spacing:.06em;color:var(--accent)!important;text-shadow:var(--glow);margin-right:18px;white-space:nowrap}
 .brand:hover{text-decoration:none!important}
-.brand-mark{width:22px;height:22px;border:1.5px solid var(--accent);border-radius:6px;display:grid;place-items:center;box-shadow:var(--glow)}
-.brand-mark::after{content:"";width:8px;height:8px;background:var(--accent);transform:rotate(45deg)}
+.brand-mark{position:relative;flex:none;display:inline-block;box-sizing:border-box;width:22px;height:22px;border:.6875px solid #163d27;border-radius:20.83%;background:#050a06;box-shadow:var(--glow)}
+.brand-mark::after{content:"";position:absolute;left:16.667%;top:16.667%;width:66.667%;height:66.667%;background:linear-gradient(#00ff66,#00ff66) 0 100%/26.667% 40% no-repeat,linear-gradient(#00ff66,#00ff66) 50% 100%/26.667% 66.667% no-repeat,linear-gradient(#00ff66,#00ff66) 100% 100%/26.667% 100% no-repeat}
 .nav{display:flex;align-items:center;gap:2px;flex:1;min-width:0}
 .nl{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 11px;border-radius:8px;border:0;background:none;font:500 13px var(--mono);color:var(--text-2)!important;cursor:pointer;white-space:nowrap}
 .nl:hover{background:var(--accent-wash);color:var(--value)!important;text-decoration:none!important}
