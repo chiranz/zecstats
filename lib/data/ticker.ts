@@ -72,14 +72,14 @@ function parseFeed(it: RawNewsItem): Pick<TickerItem, 'kind' | 'tag' | 'qual' | 
   }
   if ((m = /^All-time high: ([\d.]+) GH\/s network hashrate — previous record ([\d.]+) GH\/s/.exec(h))) {
     const up = ((n(m[1]) - n(m[2])) / n(m[2])) * 100;
-    return { kind: 'hashrate', tag: 'Hashrate', qual: 'ATH', label: 'Hashrate all-time high', value: `${m[1]} GH/s`, delta: fromDelta(delta(up)), window: 'vs previous record' };
+    return { kind: 'hashrate', tag: 'Hashrate', qual: 'ATH', label: 'Hashrate all-time high', value: `${m[1]} GSol/s`, delta: fromDelta(delta(up)), window: 'vs previous record' };
   }
   if ((m = /^Zcash hashrate jumps to ([\d.]+) GH\/s \(([+−-][\d.]+σ)/.exec(h))) {
-    return { kind: 'hashrate', tag: 'Hashrate', qual: '1D', label: 'Hashrate jump', value: `${m[1]} GH/s`, delta: chg('up', m[2].replace(/^[+]/, '')), per: 'vs 30d', window: 'vs 30-day norm' };
+    return { kind: 'hashrate', tag: 'Hashrate', qual: '1D', label: 'Hashrate jump', value: `${m[1]} GSol/s`, delta: chg('up', m[2].replace(/^[+]/, '')), per: 'vs 30d', window: 'vs 30-day norm' };
   }
   if ((m = /^Zcash hashrate is (up|down) ([\d.]+%) this week to ([\d.]+) GH\/s/.exec(h))) {
     const dir = m[1] === 'up' ? 'up' : 'dn';
-    return { kind: 'hashrate', tag: 'Hashrate', qual: '7D', label: 'Hashrate this week', value: `${m[3]} GH/s`, delta: chg(dir, m[2]), window: 'over the week' };
+    return { kind: 'hashrate', tag: 'Hashrate', qual: '7D', label: 'Hashrate this week', value: `${m[3]} GSol/s`, delta: chg(dir, m[2]), window: 'over the week' };
   }
   if ((m = /^([\d,]+) ZEC migrated (\w+) → Ironwood today/.exec(h))) {
     return { kind: 'ironwood', tag: 'Ironwood', qual: '1D', label: `${m[2]} → Ironwood in a day`, value: `${m[1]} ZEC` };

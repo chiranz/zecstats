@@ -283,7 +283,7 @@ function News() {
             <p className={news.hrH}><T>Hashrate · three windows</T></p>
             <dl className={news.kv}>
               {['last 120 blocks, about 2.5 h', 'daily estimate · the all-time high', 'through Oct 10'].map((x, i) => (
-                <div key={x}><dt><T>{['Now', 'Oct 10, one day', '7-day average'][i]}</T><span><T>{x}</T></span></dt><dd><T>30.59 GH/s</T></dd></div>
+                <div key={x}><dt><T>{['Now', 'Oct 10, one day', '7-day average'][i]}</T><span><T>{x}</T></span></dt><dd><T>30.59 GSol/s</T></dd></div>
               ))}
             </dl>
             <p className="small"><T>Each figure averages over a different window, which is why they differ.</T></p>
