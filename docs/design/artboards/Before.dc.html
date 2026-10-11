@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Before — the live site today</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap">
+<style>
+:root{--bg:#050a06;--card:#0b140e;--raised:#111d15;--line:#1f3a2a;--line-strong:#447d5a;--text:#d4ecdb;--value:#ecf8ef;--text-2:#a3c2ad;--muted:#7f9c89;--accent:#00ff66;--down:#ff7a6b;--mono:"JetBrains Mono",ui-monospace,monospace;--sans:"IBM Plex Sans",system-ui,sans-serif}
+[data-theme="light"]{--bg:#f2f6f2;--card:#ffffff;--raised:#f7faf7;--line:#d3ded6;--line-strong:#7a9184;--text:#0c1b11;--value:#04140a;--text-2:#35503f;--muted:#55705e;--accent:#00873a;--down:#c0392b}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0}
+.site{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.55;min-height:100%}
+.site a{color:var(--accent);text-decoration:none}
+.site h1,.site h2,.site p,.site ol{margin:0}
+.wrap{max-width:1360px;margin:0 auto;padding:48px 40px 64px;display:flex;flex-direction:column;gap:28px}
+.kicker{font:500 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.h1{font:700 36px/1.15 var(--mono);letter-spacing:-.02em;color:var(--value)}
+.lede{font-size:17px;color:var(--text-2);max-width:78ch}
+.stats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.stats div{background:var(--card);padding:14px 16px;display:flex;flex-direction:column;gap:2px}
+.stats b{font:600 22px var(--mono);color:var(--value)}
+.stats span{font-size:12.5px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.shot{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.shot img{display:block;width:100%;height:230px;object-fit:cover;object-position:top left;border-bottom:1px solid var(--line)}
+.shot .body{padding:16px 18px 18px;display:flex;flex-direction:column;gap:10px;flex:1}
+.shot h2{font:600 15px var(--mono);color:var(--value)}
+.shot ol{padding-left:20px;display:flex;flex-direction:column;gap:5px;font-size:13.5px;color:var(--text-2)}
+.shot ol li::marker{color:var(--down);font-family:var(--mono);font-size:12px}
+.fix{margin-top:auto;font:500 12.5px var(--mono)}
+</style>
+</helmet>
+<div class="site" data-theme="{{theme}}">
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:10px">
+    <span class="kicker">Before · zecstats.com as of 11 Oct 2026</span>
+    <h1 class="h1">What the live site looks like today</h1>
+    <p class="lede">Audited page by page: 27 standalone pages, 58 chart pages, the unlisted /activity page and the /pro sign-in — 87 in all, at desktop and 390px phone width. The content is excellent; the presentation hides it. These nine screens carry the recurring problems.</p>
+  </header>
+
+  <div class="stats" role="list">
+    <div role="listitem"><b>87</b><span>pages audited</span></div>
+    <div role="listitem"><b>5</b><span>range-control styles</span></div>
+    <div role="listitem"><b>4</b><span>date formats in use</span></div>
+    <div role="listitem"><b>9</b><span>pages with a wrong-metric headline</span></div>
+    <div role="listitem"><b>8</b><span>series coloured with the accent</span></div>
+    <div role="listitem"><b>8</b><span>pages missing from every menu</span></div>
+  </div>
+
+  <div class="grid">
+    <article class="shot">
+      <img src="/_blob/84b2ece6be33484265b42df19b52e6fe" alt="Live homepage, first screen: glowing wordmark, donate strip, search, untitled 5-year price chart and a grid of equal KPI tiles">
+      <div class="body">
+        <h2>Homepage — first screen</h2>
+        <ol>
+          <li>Long glowing wordmark and an ad strip ("Feeling Generous?") sit above all content.</li>
+          <li>The price chart has no headline figure; y labels sit inside the plot.</li>
+          <li>Twelve equal-weight tiles; the last row is orphaned.</li>
+          <li>Text, labels, values, links and "up" are all the same green — no hierarchy.</li>
+        </ol>
+        <a class="fix" href="Main.dc.html">Fixed in Dashboard →</a>
+      </div>
+    </article>
+    <article class="shot">
+      <img src="/_blob/9beae7cb81636f8127a5fa140c209c3b" alt="Live homepage chart index: grids of bordered boxes, many showing a dash instead of a value">
+      <div class="body">
+        <h2>Homepage — chart index</h2>
+        <ol>
+          <li>About 25 of 58 tiles show "—", which reads as broken.</li>
+          <li>Charts repeat across groups (Pool Residency, Pool Values, Cost Basis, Price).</li>
+          <li>Eighty-odd identical boxes; nothing marks where to start.</li>
+          <li>Privacy, the site's distinctive data, is one group among eleven.</li>
+        </ol>
+        <a class="fix" href="Charts.dc.html">Fixed in Charts index →</a>
+      </div>
+    </article>
+    <article class="shot">
+      <img src="/_blob/f2c4767afa54dbec8127ed8b0e3ba301" alt="Live chart page for ZEC price: intro text, headline sentence and range card above the chart">
+      <div class="body">
+        <h2>Chart page template (×58)</h2>
+        <ol>
+          <li>The chart starts ~500px down on desktop and two screens down on a phone.</li>
+          <li>Every chart opens on 3 months — supply and shielding rate look flat.</li>
+          <li>Pinned "Latest" box plus hover box: two values, often different dates.</li>
+          <li>No clipping: the 200-week average draws below the x-axis. No log scale.</li>
+        </ol>
+        <a class="fix" href="Chart-price.dc.html">Fixed in Chart page →</a>
+      </div>
+    </article>
+    <article class="shot">
+      <img src="/_blob/92332383b928d8bbfb408d499567e657" alt="Live Ironwood page: hero with 89% and a neon progress bar with pale text printed on it">
+      <div class="body">
+        <h2>Ironwood tracker</h2>
+        <ol>
+          <li>Progress label printed on the neon fill at 1.15:1 contrast — unreadable.</li>
+          <li>"$5.0M/day" beside "$5.0B total"; 4.11M vs 4.89M vs 3.27M migrated, unlabelled.</li>
+          <li>Donut in a half-width card with dead space beside it.</li>
+        </ol>
+        <a class="fix" href="Ironwood.dc.html">Fixed in Ironwood →</a>
+      </div>
+    </article>
+    <article class="shot">
+      <img src="/_blob/53cb24a1bc9e97bb0f490208e34f61f1" alt="Live Tools page: methodology paragraphs above a grid of 24 tool cards">
+      <div class="body">
+        <h2>Tools &amp; Charts</h2>
+        <ol>
+          <li>A wall of methodology prose sits above the index people came for.</li>
+          <li>24 tools in one ungrouped grid: Halving next to Cross-Chain Swaps.</li>
+          <li>Global search hangs on "Searching…".</li>
+          <li>Tool names differ between card, nav, H1 and URL.</li>
+        </ol>
+        <a class="fix" href="Navigation.dc.html">Fixed in Navigation →</a>
+      </div>
+    </article>
+    <article class="shot">
+      <img src="/_blob/e75658b40d444497a980dd61127d0e54" alt="Live More menu: a long unsorted list of sixteen links">
+      <div class="body">
+        <h2>"More" menu</h2>
+        <ol>
+          <li>16 unsorted items; Dashboard is buried inside "More".</li>
+          <li>The trigger renames itself to the current page ("Halving ▾").</li>
+          <li>Eight pages (turnstile, shield-hops, tx-sizes, btc-migration, wall-of-shame, amount-suggest, correlate, signals) are in no menu.</li>
+        </ol>
+        <a class="fix" href="Navigation.dc.html">Fixed in Navigation →</a>
+      </div>
+    </article>
+    <article class="shot">
+      <img src="/_blob/021043668fca36d9bc66019e8ca6d6fa" alt="Live site at phone width: homepage, price chart page and Ironwood page side by side">
+      <div class="body">
+        <h2>Phone width — first screens</h2>
+        <ol>
+          <li>The wordmark wraps to three lines and fills the first screen.</li>
+          <li>The homepage price chart shrinks to ~60px with no y-axis.</li>
+          <li>Date inputs clip; the Ironwood progress label overflows.</li>
+        </ol>
+        <a class="fix" href="Home-mobile.dc.html">Fixed in Dashboard mobile →</a>
+      </div>
+    </article>
+    <article class="shot">
+      <img src="/_blob/af59eaf841ccd922b3c299b500cfa21e" alt="Live site at phone width: price chart with overlapping annotation labels and a moving average below the axis">
+      <div class="body">
+        <h2>Phone width — charts</h2>
+        <ol>
+          <li>Annotation labels pile onto the price line.</li>
+          <li>The 200-week average renders below the x-axis, outside the plot.</li>
+          <li>Rotated, colliding date ticks; yellow, blue and red series off the theme.</li>
+        </ol>
+        <a class="fix" href="Chart-price-mobile.dc.html">Fixed in Chart page mobile →</a>
+      </div>
+    </article>
+    <article class="shot">
+      <img src="/_blob/cfbea1b3ec6619fb986afbe191d31f2c" alt="Live Wall of Shame page: intro text above one very long table">
+      <div class="body">
+        <h2>Wall of Shame</h2>
+        <ol>
+          <li>One 500-row table, 23,867px tall: no pagination, filters or sticky header.</li>
+          <li>No summary — how many leaks, which pools, which trend.</li>
+          <li>Badge colours mean something different from the same colours elsewhere.</li>
+        </ol>
+        <a class="fix" href="Leaks.dc.html">Fixed in Wall of Shame →</a>
+      </div>
+    </article>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":1440,"height":1869}}'>
+class Component extends DCLogic {
+  renderVals() { return { theme: this.props.theme ?? 'dark' }; }
+}
+</script>
+</body>
+</html>

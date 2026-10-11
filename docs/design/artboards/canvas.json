@@ -1,0 +1,277 @@
+{
+"v": 3,
+"createdOnFiles": {
+"v": 1,
+"at": "2026-10-11T02:30:00Z"
+},
+"title": "ZEC Stats Redesign Canvas",
+"launch": {
+"view": "canvas"
+},
+"pages": [],
+"boards": {
+"Before.dc.html": {
+"x": 0,
+"y": 0,
+"w": 1440,
+"h": 1869,
+"title": "Before — the live site today",
+"expand": "fill"
+},
+"DesignSystem.dc.html": {
+"x": 1520,
+"y": 0,
+"w": 1440,
+"h": 3800,
+"title": "Design system — Refined Terminal",
+"expand": "fill"
+},
+"Navigation.dc.html": {
+"x": 3040,
+"y": 0,
+"w": 1440,
+"h": 3120,
+"title": "Navigation, search, footer",
+"expand": "fill"
+},
+"Main.dc.html": {
+"x": 0,
+"y": 4220,
+"w": 1440,
+"h": 5317,
+"title": "Dashboard — desktop",
+"expand": "fill"
+},
+"Home-mobile.dc.html": {
+"x": 1520,
+"y": 4220,
+"w": 390,
+"h": 8032,
+"title": "Dashboard — mobile",
+"expand": "fill"
+},
+"Privacy.dc.html": {
+"x": 0,
+"y": 12672,
+"w": 1440,
+"h": 5790,
+"title": "Privacy hub (new) — desktop",
+"expand": "fill"
+},
+"Privacy-mobile.dc.html": {
+"x": 1520,
+"y": 12672,
+"w": 390,
+"h": 11028,
+"title": "Privacy hub — mobile",
+"expand": "fill"
+},
+"Ironwood.dc.html": {
+"x": 1990,
+"y": 12672,
+"w": 1440,
+"h": 4178,
+"title": "Ironwood tracker — desktop",
+"expand": "fill"
+},
+"Ironwood-mobile.dc.html": {
+"x": 3510,
+"y": 12672,
+"w": 390,
+"h": 6684,
+"title": "Ironwood tracker — mobile",
+"expand": "fill"
+},
+"Metrics.dc.html": {
+"x": 0,
+"y": 29314,
+"w": 1440,
+"h": 3253,
+"title": "Metrics table — desktop",
+"expand": "fill"
+},
+"Calculator.dc.html": {
+"x": 1520,
+"y": 29314,
+"w": 1440,
+"h": 2346,
+"title": "Investment calculator — desktop",
+"expand": "fill"
+},
+"Calculator-mobile.dc.html": {
+"x": 3040,
+"y": 29314,
+"w": 390,
+"h": 3683,
+"title": "Investment calculator — mobile",
+"expand": "fill"
+},
+"News.dc.html": {
+"x": 3510,
+"y": 29314,
+"w": 1440,
+"h": 2837,
+"title": "News feed — desktop",
+"expand": "fill"
+},
+"News-mobile.dc.html": {
+"x": 5030,
+"y": 29314,
+"w": 390,
+"h": 4561,
+"title": "News feed — mobile",
+"expand": "fill"
+},
+"Charts.dc.html": {
+"x": 0,
+"y": 24120,
+"w": 1440,
+"h": 4774,
+"title": "Charts index — desktop",
+"expand": "fill"
+},
+"Charts-mobile.dc.html": {
+"x": 1520,
+"y": 24120,
+"w": 390,
+"h": 2339,
+"title": "Charts index — mobile (filtered)",
+"expand": "fill"
+},
+"Chart-price.dc.html": {
+"x": 1990,
+"y": 24120,
+"w": 1440,
+"h": 2269,
+"title": "Chart page: price — desktop",
+"expand": "fill"
+},
+"Chart-price-mobile.dc.html": {
+"x": 3510,
+"y": 24120,
+"w": 390,
+"h": 4008,
+"title": "Chart page: price — mobile",
+"expand": "fill"
+},
+"Chart-pools.dc.html": {
+"x": 3980,
+"y": 24120,
+"w": 1440,
+"h": 2749,
+"title": "Chart page: pool balances — desktop",
+"expand": "fill"
+},
+"Report-tx-sizes.dc.html": {
+"x": 0,
+"y": 34295,
+"w": 1440,
+"h": 4682,
+"title": "Distribution report: transaction sizes",
+"expand": "fill"
+},
+"Network.dc.html": {
+"x": 1520,
+"y": 34295,
+"w": 1440,
+"h": 4263,
+"title": "Map + directory: network nodes",
+"expand": "fill"
+},
+"Leaks.dc.html": {
+"x": 3040,
+"y": 34295,
+"w": 1440,
+"h": 2554,
+"title": "Leaderboard: Wall of Shame — desktop",
+"expand": "fill"
+},
+"Leaks-mobile.dc.html": {
+"x": 4560,
+"y": 34295,
+"w": 390,
+"h": 4179,
+"title": "Leaderboard: Wall of Shame — mobile",
+"expand": "fill"
+},
+"Turnstile.dc.html": {
+"x": 5030,
+"y": 34295,
+"w": 1440,
+"h": 5124,
+"title": "Investigation: Orchard turnstile watch",
+"expand": "fill"
+}
+},
+"order": [
+"Before.dc.html",
+"DesignSystem.dc.html",
+"Navigation.dc.html",
+"Main.dc.html",
+"Home-mobile.dc.html",
+"Privacy.dc.html",
+"Privacy-mobile.dc.html",
+"Ironwood.dc.html",
+"Ironwood-mobile.dc.html",
+"Charts.dc.html",
+"Charts-mobile.dc.html",
+"Chart-price.dc.html",
+"Chart-price-mobile.dc.html",
+"Chart-pools.dc.html",
+"Metrics.dc.html",
+"Calculator.dc.html",
+"Calculator-mobile.dc.html",
+"News.dc.html",
+"News-mobile.dc.html",
+"Report-tx-sizes.dc.html",
+"Network.dc.html",
+"Leaks.dc.html",
+"Leaks-mobile.dc.html",
+"Turnstile.dc.html"
+],
+"notes": {
+"t_system": {
+"x": 0,
+"y": -300,
+"text": "System — before, tokens, navigation",
+"kind": "title1",
+"maxW": 4480
+},
+"t_landing": {
+"x": 0,
+"y": 3920,
+"text": "Landing page",
+"kind": "title1",
+"maxW": 1910
+},
+"t_privacy": {
+"x": 0,
+"y": 12372,
+"text": "Privacy — new hub + Ironwood tracker",
+"kind": "title1",
+"maxW": 3900
+},
+"t_tools": {
+"x": 0,
+"y": 29014,
+"text": "Tools — table, calculator, feed",
+"kind": "title1",
+"maxW": 5420
+},
+"t_charts": {
+"x": 0,
+"y": 23820,
+"text": "Charts — index + chart page template",
+"kind": "title1",
+"maxW": 5420
+},
+"t_reports": {
+"x": 0,
+"y": 33995,
+"text": "Reports & data — four reusable templates",
+"kind": "title1",
+"maxW": 6470
+}
+},
+"designSystems": []
+}

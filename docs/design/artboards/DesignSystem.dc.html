@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Design system — Refined Terminal</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;800&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap">
+<style>
+/* ===== ZEC Stats — "Refined Terminal" tokens + core components =====
+   Paste VERBATIM at the top of every artboard's helmet style block.
+   Dark is the default (the live site is dark-first). Light = [data-theme="light"] on the root div. */
+:root{
+  --bg:#050a06; --bg-2:#08100b; --card:#0b140e; --raised:#111d15; --inset:#07100a;
+  --line:#1f3a2a; --line-strong:#447d5a;            /* line-strong = 3.6:1+ for inputs, buttons, chips */
+  --text:#d4ecdb; --value:#ecf8ef; --text-2:#a3c2ad; --muted:#7f9c89; --faint:#5f7a68; /* faint: decoration only, never body text */
+  --accent:#00ff66; --accent-ink:#04140a; --accent-wash:rgba(0,255,102,.10); --accent-line:rgba(0,255,102,.35);
+  --glow:0 0 14px rgba(0,255,102,.45);
+  --up:#00ff66; --down:#ff7a6b; --warn:#f5c451; --info:#38bdf8; --unknown:#5f7a68;
+  /* canonical series colours — SAME meaning on every page */
+  --p-transparent:#77837c; --p-sprout:#7a86a8; --p-sapling:#38bdf8; --p-orchard:#a78bfa; --p-ironwood:#00ff66; --p-lockbox:#f9a8d4;
+  --zec:#00ff66; --btc:#f7931a; --usd:#d4ecdb; --gold:#e8c66a;
+  --s1:#00ff66; --s2:#38bdf8; --s3:#a78bfa; --s4:#f7931a; --s5:#f9a8d4; --s6:#77837c; /* generic order when no semantic colour applies */
+  --grid:rgba(212,236,219,.07); --axis:rgba(212,236,219,.22);
+  --shadow:0 1px 0 rgba(255,255,255,.02) inset, 0 12px 32px -16px rgba(0,0,0,.8);
+  --pop:0 16px 40px -12px rgba(0,0,0,.85);
+  --wordmark:"Orbitron","JetBrains Mono",ui-monospace,monospace;
+  --mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --r-sm:6px; --r:10px; --r-lg:14px; --r-xl:18px;
+  --page:1200px; --measure:68ch; --barh:56px;
+}
+[data-theme="light"]{
+  --bg:#f2f6f2; --bg-2:#eaf0eb; --card:#ffffff; --raised:#f7faf7; --inset:#eef3ef;
+  --line:#d3ded6; --line-strong:#7a9184;
+  --text:#0c1b11; --value:#04140a; --text-2:#35503f; --muted:#55705e; --faint:#8aa092;
+  --accent:#00873a; --accent-ink:#ffffff; --accent-wash:rgba(0,135,58,.08); --accent-line:rgba(0,135,58,.35); --glow:none;
+  --up:#00873a; --down:#c0392b; --warn:#a86a00; --info:#0277b6;
+  --p-transparent:#6b7a72; --p-sprout:#56628a; --p-sapling:#0277b6; --p-orchard:#7c3aed; --p-ironwood:#00873a; --p-lockbox:#be185d;
+  --zec:#00873a; --btc:#b45f00; --gold:#8a6a00;
+  --s1:#00873a; --s2:#0277b6; --s3:#7c3aed; --s4:#b45f00; --s5:#be185d; --s6:#6b7a72;
+  --grid:rgba(12,27,17,.07); --axis:rgba(12,27,17,.25); --shadow:0 1px 2px rgba(12,27,17,.06),0 8px 24px -12px rgba(12,27,17,.14); --pop:0 16px 40px -12px rgba(12,27,17,.3);
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0}
+.site{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;min-height:100%;
+  background-image:repeating-linear-gradient(0deg,rgba(0,255,102,.018) 0 1px,transparent 1px 3px)} /* scanlines kept, at 1.8% */
+[data-theme="light"].site{background-image:none}
+.site a{color:var(--accent);text-decoration:none} .site a:hover{text-decoration:underline}
+.site h1,.site h2,.site h3,.site p{margin:0}
+.num,.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.shell{max-width:var(--page);margin-inline:auto;padding-inline:clamp(16px,4vw,32px)}
+.page{display:flex;flex-direction:column;gap:32px;padding-block:28px 56px}
+
+/* type scale — headings are MONO (terminal voice); prose is SANS (readability) */
+.h1{font:700 clamp(26px,4vw,38px)/1.12 var(--mono);letter-spacing:-.02em;color:var(--value)}
+.h2{font:600 clamp(18px,2.1vw,22px)/1.25 var(--mono);letter-spacing:-.01em;color:var(--value)}
+.h3{font:600 15px/1.3 var(--mono);color:var(--text)}
+.kicker{font:500 11px/1.2 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.lede{font-size:clamp(15px,1.6vw,17px);color:var(--text-2);max-width:var(--measure)}
+.note{font-size:14px;color:var(--text-2);max-width:var(--measure)}
+.small{font-size:12.5px;color:var(--muted)}
+
+/* ---------- top bar (sticky) ---------- */
+.topbar{position:sticky;top:0;z-index:20;background:rgba(5,10,6,.86);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+[data-theme="light"] .topbar{background:rgba(242,246,242,.88)}
+.topbar .shell{display:flex;align-items:center;gap:6px;height:var(--barh)}
+.brand{display:inline-flex;align-items:center;gap:10px;font:800 17px var(--wordmark);letter-spacing:.06em;color:var(--accent)!important;text-shadow:var(--glow);margin-right:18px;white-space:nowrap}
+.brand:hover{text-decoration:none!important}
+.brand-mark{width:22px;height:22px;border:1.5px solid var(--accent);border-radius:6px;display:grid;place-items:center;box-shadow:var(--glow)}
+.brand-mark::after{content:"";width:8px;height:8px;background:var(--accent);transform:rotate(45deg)}
+.nav{display:flex;align-items:center;gap:2px;flex:1;min-width:0}
+.nl{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 11px;border-radius:8px;border:0;background:none;font:500 13px var(--mono);color:var(--text-2)!important;cursor:pointer;white-space:nowrap}
+.nl:hover{background:var(--accent-wash);color:var(--value)!important;text-decoration:none!important}
+.nl[aria-current="page"]{color:var(--value)!important;background:var(--raised);box-shadow:inset 0 0 0 1px var(--line-strong)}
+.nl[aria-current="page"]::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:var(--glow)}
+.tb-right{display:flex;align-items:center;gap:8px;margin-left:auto}
+.kbd-search{display:inline-flex;align-items:center;gap:10px;height:34px;padding:0 10px 0 12px;min-width:220px;border-radius:8px;border:1px solid var(--line-strong);background:var(--inset);color:var(--muted);font:400 13px var(--mono);cursor:pointer}
+.kbd{display:inline-block;padding:1px 6px;border:1px solid var(--line-strong);border-bottom-width:2px;border-radius:5px;font:500 11px var(--mono);color:var(--text-2);margin-left:auto}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:34px;padding:0 13px;border-radius:8px;border:1px solid var(--line-strong);background:var(--card);font:500 13px var(--mono);color:var(--text)!important;cursor:pointer;white-space:nowrap}
+.btn:hover{background:var(--raised);text-decoration:none!important}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)!important;font-weight:600}
+.btn.ghost{border-color:transparent;background:none}
+.btn.icon{width:34px;padding:0}
+.burger{display:none}
+@media (max-width:1020px){.nav,.kbd-search .lbl{display:none}.kbd-search{min-width:0}.burger{display:inline-flex}}
+@media (max-width:560px){.kbd-search{display:none}.tb-right .donate{display:none}}
+
+/* ---------- masthead ---------- */
+.mast{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px 32px}
+.crumbs{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font:400 12.5px var(--mono);color:var(--muted)}
+.crumbs a{color:var(--text-2)!important}
+.fresh{display:flex;flex-direction:column;align-items:flex-end;gap:3px;font:400 12px var(--mono);color:var(--muted);text-align:right}
+.live{display:inline-flex;align-items:center;gap:7px;color:var(--text-2)}
+.live i{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:var(--glow)}
+@media (max-width:640px){.fresh{align-items:flex-start;text-align:left}}
+
+/* ---------- surfaces ---------- */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:clamp(16px,2.4vw,24px);display:flex;flex-direction:column;gap:16px;min-width:0;box-shadow:var(--shadow)}
+.card-head{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:10px 20px}
+.hero{background:linear-gradient(180deg,var(--raised),var(--card));border:1px solid var(--line);border-radius:var(--r-xl);padding:clamp(18px,3vw,32px);display:flex;flex-direction:column;gap:20px;min-width:0}
+.figure{font:700 clamp(48px,8vw,84px)/.95 var(--mono);letter-spacing:-.04em;color:var(--value)}
+.figure.md{font-size:clamp(34px,5vw,52px)}
+.figure small{font-size:.45em;font-weight:600;color:var(--text-2);margin-left:.08em}
+.delta{display:inline-flex;align-items:center;gap:5px;font:500 13px var(--mono);padding:3px 9px;border-radius:999px;background:var(--accent-wash);color:var(--up)}
+.delta.dn{background:rgba(255,122,107,.12);color:var(--down)}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.split{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:20px 44px;align-items:start}
+@media (max-width:900px){.grid2,.grid3,.split{grid-template-columns:minmax(0,1fr)}}
+
+/* ---------- KPI band: shared-border tiles. Column counts are chosen so rows are always FULL (4, 6 or 8 tiles; never 5-of-6) ---------- */
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden}
+.kpis.six{grid-template-columns:repeat(6,minmax(0,1fr))}
+.kpi{background:var(--card);padding:14px 16px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.kpi .k{font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.kpi .v{font:600 clamp(18px,2vw,23px)/1.2 var(--mono);color:var(--value);letter-spacing:-.01em;overflow-wrap:anywhere}
+.kpi .v span{font-size:.62em;color:var(--text-2);font-weight:500;margin-left:3px}
+.kpi .s{font-size:12px;color:var(--muted);line-height:1.4}
+.up{color:var(--up)} .dn{color:var(--down)}
+@media (max-width:1020px){.kpis.six{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:560px){.kpis,.kpis.six{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* ---------- controls ---------- */
+.seg{display:inline-flex;padding:3px;gap:2px;background:var(--inset);border:1px solid var(--line);border-radius:9px;max-width:100%;overflow-x:auto;scrollbar-width:none}
+.seg button,.seg a{font:500 12.5px var(--mono);color:var(--text-2)!important;background:none;border:0;padding:5px 11px;border-radius:6px;cursor:pointer;white-space:nowrap}
+.seg [aria-pressed="true"],.seg [aria-current="true"]{background:var(--raised);color:var(--value)!important;box-shadow:inset 0 0 0 1px var(--line-strong)}
+.chip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 11px;border-radius:999px;border:1px solid var(--line-strong);background:none;font:500 12px var(--mono);color:var(--text-2)!important;cursor:pointer;white-space:nowrap}
+.chip[aria-pressed="true"]{background:var(--accent-wash);border-color:var(--accent-line);color:var(--value)!important}
+.check{display:inline-flex;align-items:center;gap:8px;font:500 12.5px var(--mono);color:var(--text-2)}
+.check input{accent-color:var(--accent);width:16px;height:16px}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+.toolbar .lbl{font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-right:-6px}
+.field{display:flex;align-items:center;gap:10px;height:44px;padding:0 14px;border:1px solid var(--line-strong);border-radius:var(--r);background:var(--inset);color:var(--muted);font:400 14px var(--mono)}
+.field input{flex:1;min-width:0;background:none;border:0;color:var(--value);font:inherit;outline:none}
+
+/* ---------- charts (SVG drawn inline) ---------- */
+.chart{position:relative;width:100%}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart text{font-family:var(--mono);font-size:11px;fill:var(--muted)}
+.chart .gl{stroke:var(--grid)} .chart .ax{stroke:var(--axis)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font:400 12px var(--mono);color:var(--text-2)}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.sw{display:inline-block;width:10px;height:10px;border-radius:3px}
+.ln{display:inline-block;width:16px;height:3px;border-radius:2px}
+.tip{position:absolute;z-index:3;background:var(--raised);border:1px solid var(--line-strong);border-radius:var(--r);box-shadow:var(--pop);padding:9px 12px;font:400 12px var(--mono);color:var(--text-2);min-width:170px;display:flex;flex-direction:column;gap:5px}
+.tip b{color:var(--value);font-weight:600}
+.takeaway{font-size:15px;color:var(--text);max-width:var(--measure)}
+.takeaway b{color:var(--value)}
+
+/* ---------- tables ---------- */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:linear-gradient(90deg,var(--card) 30%,transparent),linear-gradient(270deg,var(--card) 30%,transparent) 100% 0,radial-gradient(farthest-side at 100% 50%,rgba(0,0,0,.5),transparent) 100% 0;background-repeat:no-repeat;background-size:40px 100%,40px 100%,14px 100%;background-attachment:local,local,scroll}
+table.t{border-collapse:collapse;width:100%;font-size:13.5px}
+.t th,.t td{padding:10px 14px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+.t th:first-child,.t td:first-child{text-align:left}
+.t thead th{position:sticky;top:0;background:var(--raised);font:500 11.5px var(--mono);letter-spacing:.04em;color:var(--muted);text-transform:none}
+.t td{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--text)}
+.t td.l{font-family:var(--sans);color:var(--text)}
+.t tr:hover td{background:var(--accent-wash)}
+
+/* ---------- callouts / disclosure ---------- */
+.callout{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;padding:14px 16px;border-radius:var(--r);background:var(--inset);border:1px solid var(--line)}
+.callout .ic{width:18px;height:18px;color:var(--accent);grid-row:span 2}
+.callout.warn .ic{color:var(--warn)}
+details.more{border:1px solid var(--line);border-radius:var(--r);background:var(--card)}
+details.more>summary{cursor:pointer;list-style:none;padding:12px 16px;font:500 13px var(--mono);color:var(--text-2);display:flex;justify-content:space-between;gap:12px}
+details.more>summary::after{content:"+";color:var(--accent)}
+details.more[open]>summary::after{content:"–"}
+details.more>div{padding:0 16px 16px}
+
+/* ---------- section header ---------- */
+.sec{display:flex;flex-direction:column;gap:16px}
+.sec-h{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:8px 20px}
+.sec-h .h2::before{content:"// ";color:var(--accent);font-weight:500}
+
+/* ---------- footer ---------- */
+.foot{border-top:1px solid var(--line);margin-top:24px;background:var(--bg-2)}
+.foot .shell{display:grid;grid-template-columns:minmax(0,1.4fr) repeat(4,minmax(0,1fr));gap:28px 32px;padding-block:36px 28px;font-size:13.5px}
+.foot h4{margin:0 0 10px;font:500 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.foot ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
+.foot a{color:var(--text-2)!important}
+.foot .base{grid-column:1/-1;display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 20px;border-top:1px solid var(--line);padding-top:16px;font:400 12px var(--mono);color:var(--muted)}
+@media (max-width:900px){.foot .shell{grid-template-columns:repeat(2,minmax(0,1fr))}.foot .about{grid-column:1/-1}}
+
+/* ---------- board-only ---------- */
+.ds{max-width:1320px;margin:0 auto;padding:48px 40px 64px;display:flex;flex-direction:column;gap:40px}
+.swatches{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}
+.swatch{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--card)}
+.swatch .chip-c{height:64px;border-bottom:1px solid var(--line)}
+.swatch .meta{padding:10px 12px;display:flex;flex-direction:column;gap:2px;font:400 12px var(--mono);color:var(--muted)}
+.swatch .meta b{color:var(--value);font-weight:600;font-size:12.5px}
+.pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
+.spec{display:grid;grid-template-columns:200px 1fr;gap:14px 24px;align-items:baseline}
+.spec .lab{font:400 12px var(--mono);color:var(--muted)}
+.dodont{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.rule{display:grid;grid-template-columns:22px 1fr;gap:4px 10px;font-size:14px;color:var(--text-2)}
+.rule b{color:var(--value);font-weight:600}
+.ok{color:var(--up)} .no{color:var(--down)}
+.tmpl{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.tmpl .card{gap:8px;padding:16px}
+/* QA fixes */
+.lede,.takeaway,.note{text-wrap:pretty}
+.spec{grid-template-columns:250px minmax(0,1fr)}
+</style>
+</helmet>
+<div class="site" data-theme="{{theme}}">
+<div class="ds">
+
+  <header class="mast">
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <span class="brand" style="font-size:22px"><span class="brand-mark" aria-hidden="true"></span>ZEC STATS</span>
+      <h1 class="h1">Refined Terminal — design system</h1>
+      <p class="lede">The live site's identity — black-green ground, neon accent, monospace numerals, Orbitron wordmark, faint scanlines — kept intact. What changes is hierarchy: one accent with one job, readable prose, fixed series colours, and charts that answer a question.</p>
+    </div>
+    <div class="fresh"><span class="live"><i aria-hidden="true"></i>Tokens checked against WCAG 2.1</span><span>Dark default · light via toggle</span><span>Redesign concept · 11 Oct 2026</span></div>
+  </header>
+
+  <section class="sec" aria-labelledby="p-h">
+    <div class="sec-h"><h2 class="h2" id="p-h">Principles</h2></div>
+    <div class="grid3">
+      <div class="card"><h3 class="h3">The answer comes first</h3><p class="note">Every page opens with the number it exists to show. Methodology and caveats fold away at the bottom — never above the chart.</p></div>
+      <div class="card"><h3 class="h3">Neon is a signal, not a texture</h3><p class="note">#00ff66 marks the brand, the active state, the primary series and "up". Body copy is soft mint-white; glow lives only on the wordmark.</p></div>
+      <div class="card"><h3 class="h3">One colour, one meaning</h3><p class="note">Orchard is violet on every chart on every page. Transparent is neutral grey ("not private"). ZEC is green, Bitcoin is orange.</p></div>
+      <div class="card"><h3 class="h3">Full rows, no orphans</h3><p class="note">KPI bands hold 4, 6 or 8 tiles. Content spans the 1200px shell — no narrow left column beside empty space.</p></div>
+      <div class="card"><h3 class="h3">One control per job</h3><p class="note">A single range control (1M 3M 6M 1Y 5Y ALL), one segmented style, one chip style, one tooltip — on every page.</p></div>
+      <div class="card"><h3 class="h3">Mono for data, sans for reading</h3><p class="note">JetBrains Mono keeps the terminal voice in headings, labels and figures. IBM Plex Sans carries paragraphs at 14–17px.</p></div>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="c-h">
+    <div class="sec-h"><h2 class="h2" id="c-h">Colour — surfaces and text</h2><span class="small mono">hex and ratio = dark theme · ratio = contrast against --card</span></div>
+    <div class="swatches">
+      <div class="swatch"><div class="chip-c" style="background:var(--bg)"></div><div class="meta"><b>--bg</b><span>#050a06 · page</span></div></div>
+      <div class="swatch"><div class="chip-c" style="background:var(--card)"></div><div class="meta"><b>--card</b><span>#0b140e · surfaces</span></div></div>
+      <div class="swatch"><div class="chip-c" style="background:var(--raised)"></div><div class="meta"><b>--raised</b><span>#111d15 · hero, active</span></div></div>
+      <div class="swatch"><div class="chip-c" style="background:var(--inset)"></div><div class="meta"><b>--inset</b><span>#07100a · fields, seg</span></div></div>
+      <div class="swatch"><div class="chip-c" style="background:var(--line)"></div><div class="meta"><b>--line</b><span>#1f3a2a · dividers</span></div></div>
+      <div class="swatch"><div class="chip-c" style="background:var(--line-strong)"></div><div class="meta"><b>--line-strong</b><span>#447d5a · 3.9:1 controls</span></div></div>
+      <div class="swatch"><div class="chip-c" style="background:var(--value)"></div><div class="meta"><b>--value</b><span>#ecf8ef · 17.2:1 figures</span></div></div>
+      <div class="swatch"><div class="chip-c" style="background:var(--text)"></div><div class="meta"><b>--text</b><span>#d4ecdb · 15.0:1 body</span></div></div>
+      <div class="swatch"><div class="chip-c" style="background:var(--text-2)"></div><div class="meta"><b>--text-2</b><span>#a3c2ad · 9.7:1 prose</span></div></div>
+      <div class="swatch"><div class="chip-c" style="background:var(--muted)"></div><div class="meta"><b>--muted</b><span>#7f9c89 · 6.3:1 labels</span></div></div>
+      <div class="swatch"><div class="chip-c" style="background:var(--accent);box-shadow:var(--glow)"></div><div class="meta"><b>--accent</b><span>#00ff66 · 13.8:1 signal</span></div></div>
+      <div class="swatch"><div class="chip-c" style="background:var(--down)"></div><div class="meta"><b>--down</b><span>#ff7a6b · 7.4:1 ▼ only</span></div></div>
+    </div>
+    <div class="tbl-wrap">
+      <table class="t">
+        <thead><tr><th>What changed</th><th>Live site</th><th>Ratio</th><th>Redesign</th><th>Ratio</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr><td class="l">Body text</td><td>#c6f9d0 + glow</td><td>16.2</td><td>#d4ecdb, no glow</td><td>15.0</td><td class="l">Less saturated mint stops halation on black; still AAA</td></tr>
+          <tr><td class="l">Secondary text</td><td>#7cc88d (one tone)</td><td>9.5</td><td>#a3c2ad / #7f9c89</td><td>9.7 / 6.3</td><td class="l">Two steps give prose vs label hierarchy</td></tr>
+          <tr><td class="l">Control borders</td><td>#266542</td><td class="dn">2.7</td><td>#447d5a</td><td class="up">3.9</td><td class="l">WCAG 1.4.11 needs 3:1 for inputs and buttons</td></tr>
+          <tr><td class="l">Links</td><td>#9e9eff lavender</td><td>8.0</td><td>#00ff66 accent</td><td>13.8</td><td class="l">Removes the off-palette browser visited colour</td></tr>
+          <tr><td class="l">Progress label</td><td>mint on neon fill</td><td class="dn">1.15</td><td>label below the bar</td><td class="up">15.0</td><td class="l">Ironwood gate caption was unreadable</td></tr>
+          <tr><td class="l">Light theme borders</td><td>#8e9c92</td><td class="dn">2.4</td><td>#7a9184</td><td class="up">3.4</td><td class="l">Same rule in light mode</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="s-h">
+    <div class="sec-h"><h2 class="h2" id="s-h">Colour — series (locked meanings)</h2></div>
+    <div class="pair">
+      <div class="card">
+        <h3 class="h3">Pools — always in this order</h3>
+        <div style="display:flex;height:28px;border-radius:6px;overflow:hidden;gap:2px">
+          <i style="flex:70.3;background:var(--p-transparent)"></i><i style="flex:1.2;background:var(--p-sprout)"></i><i style="flex:2.8;background:var(--p-sapling)"></i><i style="flex:2.1;background:var(--p-orchard)"></i><i style="flex:24.2;background:var(--p-ironwood)"></i>
+        </div>
+        <div class="legend">
+          <span><i class="sw" style="background:var(--p-transparent)"></i>Transparent · grey = not private</span>
+          <span><i class="sw" style="background:var(--p-sprout)"></i>Sprout · legacy</span>
+          <span><i class="sw" style="background:var(--p-sapling)"></i>Sapling</span>
+          <span><i class="sw" style="background:var(--p-orchard)"></i>Orchard</span>
+          <span><i class="sw" style="background:var(--p-ironwood)"></i>Ironwood · newest = brand</span>
+          <span><i class="sw" style="background:var(--p-lockbox)"></i>Lockbox (dev fund)</span>
+        </div>
+        <p class="small">Lightness steps differ (L 0.73 / 0.44 / 0.34 / 0.24 / 0.22), so pools stay distinguishable in greyscale and for colour-blind readers.</p>
+      </div>
+      <div class="card">
+        <h3 class="h3">Comparisons and ordered buckets</h3>
+        <div class="legend"><span><i class="ln" style="background:var(--zec)"></i>ZEC</span><span><i class="ln" style="background:var(--btc)"></i>Bitcoin</span><span><i class="ln" style="background:var(--gold)"></i>Gold</span><span><i class="ln" style="background:var(--text);opacity:.7"></i>USD / invested (dashed)</span></div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <span class="small mono">Coin age (ordinal → one-hue ramp, never rainbow)</span>
+          <div style="display:flex;height:22px;border-radius:6px;overflow:hidden;gap:2px">
+            <i style="flex:1;background:#00ff66"></i><i style="flex:1;background:#00cc55"></i><i style="flex:1;background:#139a4a"></i><i style="flex:1;background:#1e6f3e"></i><i style="flex:1;background:#234a31"></i>
+          </div>
+          <div style="display:flex;justify-content:space-between" class="small mono"><span>&lt;30d</span><span>30–180d</span><span>180d–1y</span><span>1–3y</span><span>3y+</span></div>
+        </div>
+        <div class="legend"><span class="up">▲ 8.7%</span><span class="dn">▼ 36.1%</span><span>Deltas always carry the arrow glyph</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="t-h">
+    <div class="sec-h"><h2 class="h2" id="t-h">Typography</h2></div>
+    <div class="card">
+      <div class="spec">
+        <span class="lab">Wordmark · Orbitron 800 · glow</span><span class="brand" style="font-size:20px"><span class="brand-mark" aria-hidden="true"></span>ZEC STATS</span>
+        <span class="lab">Hero figure · Mono 700 · 84/52</span><span class="figure md">29.3<small>%</small></span>
+        <span class="lab">H1 · Mono 700 · 38</span><span class="h1">How private is Zcash right now?</span>
+        <span class="lab">H2 · Mono 600 · 22 · // prefix</span><span class="sec-h"><span class="h2">Privacy at a glance</span></span>
+        <span class="lab">H3 / chart title · Mono 600 · 15</span><span class="h3">How much ZEC is shielded, and in which pool?</span>
+        <span class="lab">Kicker · Mono 500 · 11 caps</span><span class="kicker">Shielded supply</span>
+        <span class="lab">Lede · Plex Sans 17</span><span class="lede">29.3% of all ZEC sits in shielded pools — up from 23.5% a year ago.</span>
+        <span class="lab">Body · Plex Sans 14–15</span><span class="note">Balances refresh every block, about every 75 seconds. The headline percentage counts Orchard coins that crossed into Ironwood.</span>
+        <span class="lab">Data · Mono tabular 13.5</span><span class="num" style="color:var(--value)">3,267,319.17 ZEC · $1,221.62 · 0.01474 BTC</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="k-h">
+    <div class="sec-h"><h2 class="h2" id="k-h">Components</h2></div>
+    <div class="pair">
+      <div class="card">
+        <span class="kicker">Buttons</span>
+        <div class="toolbar"><a class="btn primary" href="#">Donate</a><button class="btn" type="button">Copy link</button><button class="btn ghost" type="button">Reset</button><button class="btn icon" type="button" aria-label="Download CSV"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg></button></div>
+        <span class="kicker">Range — the only range control on the site</span>
+        <div class="toolbar"><span class="lbl">Range</span><div class="seg" role="group" aria-label="Range"><button type="button">1M</button><button type="button">3M</button><button type="button">6M</button><button type="button" aria-pressed="true">1Y</button><button type="button">5Y</button><button type="button">ALL</button><button type="button">Custom</button></div><span class="lbl">Scale</span><div class="seg" role="group" aria-label="Scale"><button type="button" aria-pressed="true">Linear</button><button type="button">Log</button></div></div>
+        <span class="kicker">Chips = legend + filter</span>
+        <div class="toolbar"><button class="chip" type="button" aria-pressed="false"><i class="sw" style="background:var(--p-transparent)"></i>Transparent</button><button class="chip" type="button" aria-pressed="true"><i class="sw" style="background:var(--p-sapling)"></i>Sapling</button><button class="chip" type="button" aria-pressed="true"><i class="sw" style="background:var(--p-orchard)"></i>Orchard</button><button class="chip" type="button" aria-pressed="true"><i class="sw" style="background:var(--p-ironwood)"></i>Ironwood</button><label class="check"><input type="checkbox" checked="checked"> Drop repeated amount</label></div>
+        <span class="kicker">Search</span>
+        <label class="field"><svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m13.5 13.5 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><input type="search" placeholder="Search 58 charts, tools and pages…" aria-label="Search"><span class="kbd">⌘K</span></label>
+        <span class="kicker">Deltas and status</span>
+        <div class="toolbar"><span class="delta">▲ 5.8 pts 1y</span><span class="delta dn">▼ 39% 7d</span><span class="live" style="font:500 12.5px var(--mono)"><i aria-hidden="true"></i>Node synced</span><span class="small mono">Data through 10 Oct 2026</span></div>
+        <span class="kicker">Pagination — long tables</span>
+        <div class="toolbar"><span class="small mono">1–50 of 500</span><div class="seg" role="group" aria-label="Pages"><button type="button" aria-label="Previous page">‹</button><button type="button" aria-pressed="true">1</button><button type="button">2</button><button type="button">3</button><button type="button" disabled>…</button><button type="button">10</button><button type="button" aria-label="Next page">›</button></div></div>
+      </div>
+      <div class="card">
+        <span class="kicker">KPI band — full rows only</span>
+        <div class="kpis">
+          <div class="kpi"><span class="k">ZEC/BTC</span><span class="v">0.01474</span><span class="s"><span class="up">▲ 0.5%</span> 24h</span></div>
+          <div class="kpi"><span class="k">Market cap</span><span class="v">$20.78B</span><span class="s">16,979,486 ZEC</span></div>
+          <div class="kpi"><span class="k">MVRV</span><span class="v">3.46×</span><span class="s">Realized $354</span></div>
+          <div class="kpi"><span class="k">Inflation</span><span class="v">3.28%<span>/yr</span></span><span class="s">1,525 ZEC/day</span></div>
+        </div>
+        <span class="kicker">Callout and disclosure</span>
+        <div class="callout"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.5"/></svg><b style="color:var(--value);font:600 13px var(--mono)">Crossings, not holdings</b><span class="note">Coins that crossed into Ironwood and later left still count toward the headline percentage.</span></div>
+        <details class="more"><summary>What this measures, and what it cannot</summary><div><p class="note">Methodology lives here — folded, at the bottom of the page.</p></div></details>
+        <span class="kicker">Table</span>
+        <div class="tbl-wrap"><table class="t"><thead><tr><th>Pool</th><th>Balance</th><th>Share</th></tr></thead><tbody><tr><td class="l"><i class="sw" style="background:var(--p-ironwood);margin-right:8px"></i>Ironwood</td><td>4.11M ZEC</td><td>24.2%</td></tr><tr><td class="l"><i class="sw" style="background:var(--p-sapling);margin-right:8px"></i>Sapling</td><td>476,049 ZEC</td><td>2.8%</td></tr></tbody></table></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="ch-h">
+    <div class="sec-h"><h2 class="h2" id="ch-h">Chart anatomy</h2></div>
+    <div class="split">
+      <div class="card">
+        <div class="card-head">
+          <div style="display:flex;flex-direction:column;gap:6px"><span class="kicker">① Question title</span><h3 class="h3">Is more ZEC being shielded than deshielded?</h3></div>
+          <div style="display:flex;gap:4px"><button class="btn icon ghost" type="button" aria-label="Copy link"><svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg></button><button class="btn icon ghost" type="button" aria-label="Download CSV"><svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg></button></div>
+        </div>
+        <p class="takeaway">② Takeaway: <b>+91,282 ZEC</b> net shielded in the last 7 days — 99,468 in, 8,186 out.</p>
+        <div class="legend"><span><i class="sw" style="background:var(--p-ironwood)"></i>③ Shielded in</span><span><i class="sw" style="background:var(--p-transparent)"></i>Deshielded out</span></div>
+        <div class="chart">
+          <svg viewBox="0 0 520 180" role="img" aria-label="Seven days of shielding: daily shielded inflows above zero, smaller deshielded outflows below zero">
+            <line class="gl" x1="40" y1="20" x2="510" y2="20"/><line class="gl" x1="40" y1="60" x2="510" y2="60"/><line class="ax" x1="40" y1="110" x2="510" y2="110"/><line class="gl" x1="40" y1="150" x2="510" y2="150"/>
+            <text x="34" y="24" text-anchor="end">20K</text><text x="34" y="64" text-anchor="end">10K</text><text x="34" y="114" text-anchor="end">0</text><text x="34" y="154" text-anchor="end">−10K</text>
+            <g fill="var(--p-ironwood)"><rect x="58" y="62" width="44" height="48" rx="3"/><rect x="124" y="44" width="44" height="66" rx="3"/><rect x="190" y="70" width="44" height="40" rx="3"/><rect x="256" y="30" width="44" height="80" rx="3"/><rect x="322" y="58" width="44" height="52" rx="3"/><rect x="388" y="66" width="44" height="44" rx="3"/><rect x="454" y="52" width="44" height="58" rx="3"/></g>
+            <g fill="var(--p-transparent)"><rect x="58" y="110" width="44" height="6" rx="2"/><rect x="124" y="110" width="44" height="9" rx="2"/><rect x="190" y="110" width="44" height="4" rx="2"/><rect x="256" y="110" width="44" height="7" rx="2"/><rect x="322" y="110" width="44" height="5" rx="2"/><rect x="388" y="110" width="44" height="3" rx="2"/><rect x="454" y="110" width="44" height="6" rx="2"/></g>
+            <text x="80" y="172" text-anchor="middle">Oct 4</text><text x="476" y="172" text-anchor="middle">Oct 10</text>
+          </svg>
+          <div class="tip" style="top:8px;right:4px"><b>Thu 7 Oct 2026</b><span><i class="sw" style="background:var(--p-ironwood)"></i> Shielded in · <b>20,140 ZEC</b></span><span><i class="sw" style="background:var(--p-transparent)"></i> Deshielded · <b>1,712 ZEC</b></span></div>
+        </div>
+        <p class="small">⑤ Data through 10 Oct 2026 · computed from our Zebra node · ④ one tooltip style everywhere</p>
+      </div>
+      <div class="dodont">
+        <div class="card">
+          <span class="kicker ok">Do</span>
+          <div class="rule"><span class="ok">✓</span><span><b>Columns for counts and period totals</b> (tx/day, fees per week) with a rolling-average line.</span></div>
+          <div class="rule"><span class="ok">✓</span><span><b>Log toggle</b> for price and ratios over 1Y+; label the scale as log.</span></div>
+          <div class="rule"><span class="ok">✓</span><span><b>Fixed 0–100%</b> axis for shares (shielding rate).</span></div>
+          <div class="rule"><span class="ok">✓</span><span><b>Direct end-labels</b> for 4 or fewer series; legend-as-filter beyond that.</span></div>
+          <div class="rule"><span class="ok">✓</span><span><b>Clip to the plot</b>; per-chart default range (supply opens on ALL, price on 1Y).</span></div>
+          <div class="rule"><span class="ok">✓</span><span><b>Stacked panels</b> sharing one x-axis when units differ.</span></div>
+        </div>
+        <div class="card">
+          <span class="kicker no">Don't</span>
+          <div class="rule"><span class="no">✕</span><span><b>Smoothed splines</b> on daily data — they invent peaks.</span></div>
+          <div class="rule"><span class="no">✕</span><span><b>Rainbow</b> on ordered buckets (age, depth, hops).</span></div>
+          <div class="rule"><span class="no">✕</span><span><b>More than 5 hues</b> — highlight ZEC, grey the rest, or use small multiples.</span></div>
+          <div class="rule"><span class="no">✕</span><span><b>Red vs green only</b> — use position (above/below zero) or blue/orange.</span></div>
+          <div class="rule"><span class="no">✕</span><span><b>Two "latest" boxes</b> or a headline dated differently from the plot.</span></div>
+          <div class="rule"><span class="no">✕</span><span><b>"20000k", "1e-6", rotated ticks</b> — write 20M, per $1M, Oct '26.</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="tp-h">
+    <div class="sec-h"><h2 class="h2" id="tp-h">Twelve templates cover all 87 pages</h2></div>
+    <div class="tmpl">
+      <a class="card" href="Main.dc.html"><span class="kicker">01 · Dashboard</span><span class="h3">Home</span><span class="small">/</span></a>
+      <a class="card" href="Privacy.dc.html"><span class="kicker">02 · Hub</span><span class="h3">Privacy (new)</span><span class="small">/privacy</span></a>
+      <a class="card" href="Ironwood.dc.html"><span class="kicker">03 · Live tracker</span><span class="h3">Ironwood</span><span class="small">ironwood, halving, node, btc-migration (top), btc-bull-run</span></a>
+      <a class="card" href="Chart-price.dc.html"><span class="kicker">04 · Chart page</span><span class="h3">All 58 /chart/*</span><span class="small">single + multi-series variants</span></a>
+      <a class="card" href="Charts.dc.html"><span class="kicker">05 · Index</span><span class="h3">Charts</span><span class="small">replaces the /tools chart list</span></a>
+      <a class="card" href="Calculator.dc.html"><span class="kicker">06 · Calculator</span><span class="h3">Result first</span><span class="small">savings, what-if, amount-suggest</span></a>
+      <a class="card" href="Metrics.dc.html"><span class="kicker">07 · Data table</span><span class="h3">Scorecard</span><span class="small">metrics, wallet-apps, exchange-support</span></a>
+      <a class="card" href="News.dc.html"><span class="kicker">08 · Feed</span><span class="h3">News</span><span class="small">news, signals call log</span></a>
+      <a class="card" href="Report-tx-sizes.dc.html"><span class="kicker">09 · Distribution report</span><span class="h3">Transaction sizes</span><span class="small">tx-sizes, shield-hops, world-usage, activity</span></a>
+      <a class="card" href="Network.dc.html"><span class="kicker">10 · Map + directory</span><span class="h3">Network nodes</span><span class="small">network, exchange-support map, swaps</span></a>
+      <a class="card" href="Leaks.dc.html"><span class="kicker">11 · Leaderboard</span><span class="h3">Wall of Shame</span><span class="small">wall-of-shame, btc swaps table, compare, correlate</span></a>
+      <a class="card" href="Turnstile.dc.html"><span class="kicker">12 · Investigation</span><span class="h3">Turnstile watch</span><span class="small">orchard-turnstile, founders-reward, privacy-suggestions, donate</span></a>
+    </div>
+  </section>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":1440,"height":3800}}'>
+class Component extends DCLogic {
+  renderVals() { return { theme: this.props.theme ?? 'dark' }; }
+}
+</script>
+</body>
+</html>

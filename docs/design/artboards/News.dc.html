@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>News</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;800&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap">
+<style>
+/* ===== ZEC Stats — "Refined Terminal" tokens + core components =====
+   Paste VERBATIM at the top of every artboard's helmet style block.
+   Dark is the default (the live site is dark-first). Light = [data-theme="light"] on the root div. */
+:root{
+  --bg:#050a06; --bg-2:#08100b; --card:#0b140e; --raised:#111d15; --inset:#07100a;
+  --line:#1f3a2a; --line-strong:#447d5a;            /* line-strong = 3.6:1+ for inputs, buttons, chips */
+  --text:#d4ecdb; --value:#ecf8ef; --text-2:#a3c2ad; --muted:#7f9c89; --faint:#5f7a68; /* faint: decoration only, never body text */
+  --accent:#00ff66; --accent-ink:#04140a; --accent-wash:rgba(0,255,102,.10); --accent-line:rgba(0,255,102,.35);
+  --glow:0 0 14px rgba(0,255,102,.45);
+  --up:#00ff66; --down:#ff7a6b; --warn:#f5c451; --info:#38bdf8; --unknown:#5f7a68;
+  /* canonical series colours — SAME meaning on every page */
+  --p-transparent:#77837c; --p-sprout:#7a86a8; --p-sapling:#38bdf8; --p-orchard:#a78bfa; --p-ironwood:#00ff66; --p-lockbox:#f9a8d4;
+  --zec:#00ff66; --btc:#f7931a; --usd:#d4ecdb; --gold:#e8c66a;
+  --s1:#00ff66; --s2:#38bdf8; --s3:#a78bfa; --s4:#f7931a; --s5:#f9a8d4; --s6:#77837c; /* generic order when no semantic colour applies */
+  --grid:rgba(212,236,219,.07); --axis:rgba(212,236,219,.22);
+  --shadow:0 1px 0 rgba(255,255,255,.02) inset, 0 12px 32px -16px rgba(0,0,0,.8);
+  --pop:0 16px 40px -12px rgba(0,0,0,.85);
+  --wordmark:"Orbitron","JetBrains Mono",ui-monospace,monospace;
+  --mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --r-sm:6px; --r:10px; --r-lg:14px; --r-xl:18px;
+  --page:1200px; --measure:68ch; --barh:56px;
+}
+[data-theme="light"]{
+  --bg:#f2f6f2; --bg-2:#eaf0eb; --card:#ffffff; --raised:#f7faf7; --inset:#eef3ef;
+  --line:#d3ded6; --line-strong:#7a9184;
+  --text:#0c1b11; --value:#04140a; --text-2:#35503f; --muted:#55705e; --faint:#8aa092;
+  --accent:#00873a; --accent-ink:#ffffff; --accent-wash:rgba(0,135,58,.08); --accent-line:rgba(0,135,58,.35); --glow:none;
+  --up:#00873a; --down:#c0392b; --warn:#a86a00; --info:#0277b6;
+  --p-transparent:#6b7a72; --p-sprout:#56628a; --p-sapling:#0277b6; --p-orchard:#7c3aed; --p-ironwood:#00873a; --p-lockbox:#be185d;
+  --zec:#00873a; --btc:#b45f00; --gold:#8a6a00;
+  --s1:#00873a; --s2:#0277b6; --s3:#7c3aed; --s4:#b45f00; --s5:#be185d; --s6:#6b7a72;
+  --grid:rgba(12,27,17,.07); --axis:rgba(12,27,17,.25); --shadow:0 1px 2px rgba(12,27,17,.06),0 8px 24px -12px rgba(12,27,17,.14); --pop:0 16px 40px -12px rgba(12,27,17,.3);
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0}
+.site{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;min-height:100%;
+  background-image:repeating-linear-gradient(0deg,rgba(0,255,102,.018) 0 1px,transparent 1px 3px)} /* scanlines kept, at 1.8% */
+[data-theme="light"].site{background-image:none}
+.site a{color:var(--accent);text-decoration:none} .site a:hover{text-decoration:underline}
+.site h1,.site h2,.site h3,.site p{margin:0}
+.num,.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.shell{max-width:var(--page);margin-inline:auto;padding-inline:clamp(16px,4vw,32px)}
+.page{display:flex;flex-direction:column;gap:32px;padding-block:28px 56px}
+
+/* type scale — headings are MONO (terminal voice); prose is SANS (readability) */
+.h1{font:700 clamp(26px,4vw,38px)/1.12 var(--mono);letter-spacing:-.02em;color:var(--value)}
+.h2{font:600 clamp(18px,2.1vw,22px)/1.25 var(--mono);letter-spacing:-.01em;color:var(--value)}
+.h3{font:600 15px/1.3 var(--mono);color:var(--text)}
+.kicker{font:500 11px/1.2 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.lede{font-size:clamp(15px,1.6vw,17px);color:var(--text-2);max-width:var(--measure)}
+.note{font-size:14px;color:var(--text-2);max-width:var(--measure)}
+.small{font-size:12.5px;color:var(--muted)}
+
+/* ---------- top bar (sticky) ---------- */
+.topbar{position:sticky;top:0;z-index:20;background:rgba(5,10,6,.86);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+[data-theme="light"] .topbar{background:rgba(242,246,242,.88)}
+.topbar .shell{display:flex;align-items:center;gap:6px;height:var(--barh)}
+.brand{display:inline-flex;align-items:center;gap:10px;font:800 17px var(--wordmark);letter-spacing:.06em;color:var(--accent)!important;text-shadow:var(--glow);margin-right:18px;white-space:nowrap}
+.brand:hover{text-decoration:none!important}
+.brand-mark{width:22px;height:22px;border:1.5px solid var(--accent);border-radius:6px;display:grid;place-items:center;box-shadow:var(--glow)}
+.brand-mark::after{content:"";width:8px;height:8px;background:var(--accent);transform:rotate(45deg)}
+.nav{display:flex;align-items:center;gap:2px;flex:1;min-width:0}
+.nl{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 11px;border-radius:8px;border:0;background:none;font:500 13px var(--mono);color:var(--text-2)!important;cursor:pointer;white-space:nowrap}
+.nl:hover{background:var(--accent-wash);color:var(--value)!important;text-decoration:none!important}
+.nl[aria-current="page"]{color:var(--value)!important;background:var(--raised);box-shadow:inset 0 0 0 1px var(--line-strong)}
+.nl[aria-current="page"]::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:var(--glow)}
+.tb-right{display:flex;align-items:center;gap:8px;margin-left:auto}
+.kbd-search{display:inline-flex;align-items:center;gap:10px;height:34px;padding:0 10px 0 12px;min-width:220px;border-radius:8px;border:1px solid var(--line-strong);background:var(--inset);color:var(--muted);font:400 13px var(--mono);cursor:pointer}
+.kbd{display:inline-block;padding:1px 6px;border:1px solid var(--line-strong);border-bottom-width:2px;border-radius:5px;font:500 11px var(--mono);color:var(--text-2);margin-left:auto}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:34px;padding:0 13px;border-radius:8px;border:1px solid var(--line-strong);background:var(--card);font:500 13px var(--mono);color:var(--text)!important;cursor:pointer;white-space:nowrap}
+.btn:hover{background:var(--raised);text-decoration:none!important}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)!important;font-weight:600}
+.btn.ghost{border-color:transparent;background:none}
+.btn.icon{width:34px;padding:0}
+.burger{display:none}
+@media (max-width:1020px){.nav,.kbd-search .lbl{display:none}.kbd-search{min-width:0}.burger{display:inline-flex}}
+@media (max-width:560px){.kbd-search{display:none}.tb-right .donate{display:none}}
+
+/* ---------- masthead ---------- */
+.mast{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px 32px}
+.crumbs{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font:400 12.5px var(--mono);color:var(--muted)}
+.crumbs a{color:var(--text-2)!important}
+.fresh{display:flex;flex-direction:column;align-items:flex-end;gap:3px;font:400 12px var(--mono);color:var(--muted);text-align:right}
+.live{display:inline-flex;align-items:center;gap:7px;color:var(--text-2)}
+.live i{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:var(--glow)}
+@media (max-width:640px){.fresh{align-items:flex-start;text-align:left}}
+
+/* ---------- surfaces ---------- */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:clamp(16px,2.4vw,24px);display:flex;flex-direction:column;gap:16px;min-width:0;box-shadow:var(--shadow)}
+.card-head{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:10px 20px}
+.hero{background:linear-gradient(180deg,var(--raised),var(--card));border:1px solid var(--line);border-radius:var(--r-xl);padding:clamp(18px,3vw,32px);display:flex;flex-direction:column;gap:20px;min-width:0}
+.figure{font:700 clamp(48px,8vw,84px)/.95 var(--mono);letter-spacing:-.04em;color:var(--value)}
+.figure.md{font-size:clamp(34px,5vw,52px)}
+.figure small{font-size:.45em;font-weight:600;color:var(--text-2);margin-left:.08em}
+.delta{display:inline-flex;align-items:center;gap:5px;font:500 13px var(--mono);padding:3px 9px;border-radius:999px;background:var(--accent-wash);color:var(--up)}
+.delta.dn{background:rgba(255,122,107,.12);color:var(--down)}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.split{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:20px 44px;align-items:start}
+@media (max-width:900px){.grid2,.grid3,.split{grid-template-columns:minmax(0,1fr)}}
+
+/* ---------- KPI band: shared-border tiles. Column counts are chosen so rows are always FULL (4, 6 or 8 tiles; never 5-of-6) ---------- */
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden}
+.kpis.six{grid-template-columns:repeat(6,minmax(0,1fr))}
+.kpi{background:var(--card);padding:14px 16px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.kpi .k{font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.kpi .v{font:600 clamp(18px,2vw,23px)/1.2 var(--mono);color:var(--value);letter-spacing:-.01em;overflow-wrap:anywhere}
+.kpi .v span{font-size:.62em;color:var(--text-2);font-weight:500;margin-left:3px}
+.kpi .s{font-size:12px;color:var(--muted);line-height:1.4}
+.up{color:var(--up)} .dn{color:var(--down)}
+@media (max-width:1020px){.kpis.six{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:560px){.kpis,.kpis.six{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* ---------- controls ---------- */
+.seg{display:inline-flex;padding:3px;gap:2px;background:var(--inset);border:1px solid var(--line);border-radius:9px;max-width:100%;overflow-x:auto;scrollbar-width:none}
+.seg button,.seg a{font:500 12.5px var(--mono);color:var(--text-2)!important;background:none;border:0;padding:5px 11px;border-radius:6px;cursor:pointer;white-space:nowrap}
+.seg [aria-pressed="true"],.seg [aria-current="true"]{background:var(--raised);color:var(--value)!important;box-shadow:inset 0 0 0 1px var(--line-strong)}
+.chip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 11px;border-radius:999px;border:1px solid var(--line-strong);background:none;font:500 12px var(--mono);color:var(--text-2)!important;cursor:pointer;white-space:nowrap}
+.chip[aria-pressed="true"]{background:var(--accent-wash);border-color:var(--accent-line);color:var(--value)!important}
+.check{display:inline-flex;align-items:center;gap:8px;font:500 12.5px var(--mono);color:var(--text-2)}
+.check input{accent-color:var(--accent);width:16px;height:16px}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+.toolbar .lbl{font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-right:-6px}
+.field{display:flex;align-items:center;gap:10px;height:44px;padding:0 14px;border:1px solid var(--line-strong);border-radius:var(--r);background:var(--inset);color:var(--muted);font:400 14px var(--mono)}
+.field input{flex:1;min-width:0;background:none;border:0;color:var(--value);font:inherit;outline:none}
+
+/* ---------- charts (SVG drawn inline) ---------- */
+.chart{position:relative;width:100%}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart text{font-family:var(--mono);font-size:11px;fill:var(--muted)}
+.chart .gl{stroke:var(--grid)} .chart .ax{stroke:var(--axis)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font:400 12px var(--mono);color:var(--text-2)}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.sw{display:inline-block;width:10px;height:10px;border-radius:3px}
+.ln{display:inline-block;width:16px;height:3px;border-radius:2px}
+.tip{position:absolute;z-index:3;background:var(--raised);border:1px solid var(--line-strong);border-radius:var(--r);box-shadow:var(--pop);padding:9px 12px;font:400 12px var(--mono);color:var(--text-2);min-width:170px;display:flex;flex-direction:column;gap:5px}
+.tip b{color:var(--value);font-weight:600}
+.takeaway{font-size:15px;color:var(--text);max-width:var(--measure)}
+.takeaway b{color:var(--value)}
+
+/* ---------- tables ---------- */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:linear-gradient(90deg,var(--card) 30%,transparent),linear-gradient(270deg,var(--card) 30%,transparent) 100% 0,radial-gradient(farthest-side at 100% 50%,rgba(0,0,0,.5),transparent) 100% 0;background-repeat:no-repeat;background-size:40px 100%,40px 100%,14px 100%;background-attachment:local,local,scroll}
+table.t{border-collapse:collapse;width:100%;font-size:13.5px}
+.t th,.t td{padding:10px 14px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+.t th:first-child,.t td:first-child{text-align:left}
+.t thead th{position:sticky;top:0;background:var(--raised);font:500 11.5px var(--mono);letter-spacing:.04em;color:var(--muted);text-transform:none}
+.t td{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--text)}
+.t td.l{font-family:var(--sans);color:var(--text)}
+.t tr:hover td{background:var(--accent-wash)}
+
+/* ---------- callouts / disclosure ---------- */
+.callout{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;padding:14px 16px;border-radius:var(--r);background:var(--inset);border:1px solid var(--line)}
+.callout .ic{width:18px;height:18px;color:var(--accent);grid-row:span 2}
+.callout.warn .ic{color:var(--warn)}
+details.more{border:1px solid var(--line);border-radius:var(--r);background:var(--card)}
+details.more>summary{cursor:pointer;list-style:none;padding:12px 16px;font:500 13px var(--mono);color:var(--text-2);display:flex;justify-content:space-between;gap:12px}
+details.more>summary::after{content:"+";color:var(--accent)}
+details.more[open]>summary::after{content:"–"}
+details.more>div{padding:0 16px 16px}
+
+/* ---------- section header ---------- */
+.sec{display:flex;flex-direction:column;gap:16px}
+.sec-h{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:8px 20px}
+.sec-h .h2::before{content:"// ";color:var(--accent);font-weight:500}
+
+/* ---------- footer ---------- */
+.foot{border-top:1px solid var(--line);margin-top:24px;background:var(--bg-2)}
+.foot .shell{display:grid;grid-template-columns:minmax(0,1.4fr) repeat(4,minmax(0,1fr));gap:28px 32px;padding-block:36px 28px;font-size:13.5px}
+.foot h4{margin:0 0 10px;font:500 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.foot ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
+.foot a{color:var(--text-2)!important}
+.foot .base{grid-column:1/-1;display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 20px;border-top:1px solid var(--line);padding-top:16px;font:400 12px var(--mono);color:var(--muted)}
+@media (max-width:900px){.foot .shell{grid-template-columns:repeat(2,minmax(0,1fr))}.foot .about{grid-column:1/-1}}
+
+
+/* ===== page CSS (Metrics / Calculator / News) ===== */
+.site :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.site button{font-family:inherit}
+.btn.sm{height:30px;padding:0 10px;font-size:12px;gap:6px}
+.btn.icon.sm{width:30px;padding:0}
+.btn svg{flex:none}
+.acts{display:inline-flex;align-items:center;gap:4px}
+.hgroup{display:flex;flex-direction:column;gap:6px;min-width:0}
+.only-mob{display:none}
+/* read next tiles */
+.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.tile{display:flex;flex-direction:column;gap:6px;padding:16px;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--card);color:var(--text)!important;min-width:0}
+.tile:hover{border-color:var(--line-strong);background:var(--raised);text-decoration:none!important}
+.tile .tt{display:flex;justify-content:space-between;gap:10px;font:600 14px/1.3 var(--mono);color:var(--value)}
+.tile .tt::after{content:"→";color:var(--accent);font-weight:500}
+.tile .why{font-size:13.5px;line-height:1.45;color:var(--text-2)}
+.tile .lv{margin-top:auto;padding-top:8px;font:500 13px var(--mono);color:var(--text)}
+.tile .lv span{color:var(--muted);font-weight:400}
+@media (max-width:900px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){
+  .tiles{grid-template-columns:minmax(0,1fr)}
+  .kbd-search{display:inline-flex;width:34px;min-width:0;padding:0;justify-content:center}
+  .only-desk{display:none!important}
+  .only-mob{display:block}
+}
+
+
+.spk{display:block;flex:none;overflow:visible}
+.spk-b{stroke:var(--axis);stroke-width:1;stroke-dasharray:2 3}
+.spk-l{fill:none;stroke:var(--text-2);stroke-width:1.3;stroke-linejoin:round;stroke-linecap:round}
+.spk-e.up{fill:var(--up)} .spk-e.dn{fill:var(--down)}
+
+.news{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:24px 40px;align-items:start}
+.feed{grid-column:1;grid-row:1;display:flex;flex-direction:column;gap:10px;min-width:0}
+.rail{grid-column:2;grid-row:1;position:sticky;top:calc(var(--barh) + 16px);display:flex;flex-direction:column;gap:16px;min-width:0}
+.rail .card{padding:18px;gap:12px}
+.rail-h{font:600 12px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--text-2)}
+/* right now */
+.now-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.now-price{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 10px}
+.now-price .big{font:700 28px/1.1 var(--mono);letter-spacing:-.02em;color:var(--value)}
+.now-price .small{width:100%}
+.kv{display:flex;flex-direction:column;margin:0}
+.kv>div{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:7px 0;border-top:1px solid var(--line)}
+.kv dt{font-size:13.5px;color:var(--text-2)}
+.kv dt span{display:block;font-size:12px;color:var(--muted);line-height:1.3}
+.kv dd{margin:0;font:600 14px var(--mono);color:var(--value);white-space:nowrap}
+.kv dd small{font-weight:400;color:var(--muted);font-size:12px}
+.hr-h{font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+/* filters */
+.flist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.fbtn{display:flex;align-items:center;gap:10px;width:100%;padding:7px 10px;border:0;border-radius:8px;background:none;font:500 13px var(--mono);color:var(--text-2);cursor:pointer;text-align:left}
+.fbtn:hover{background:var(--accent-wash);color:var(--value)}
+.fbtn[aria-pressed="true"]{background:var(--raised);color:var(--value);box-shadow:inset 0 0 0 1px var(--line-strong)}
+.fbtn .fi{display:grid;place-items:center;width:22px;height:22px;border-radius:6px;background:var(--inset);border:1px solid var(--line)}
+.fbtn .n{margin-left:auto;font:400 12px var(--mono);color:var(--muted)}
+.fbtn .n.zero{opacity:.8}
+.f-foot{display:flex;flex-direction:column;gap:8px;padding-top:12px;border-top:1px solid var(--line)}
+.f-foot .seg{align-self:flex-start}
+.f-foot .seg span{color:var(--muted);margin-left:4px}
+/* sigma */
+.sigma p{font-size:13.5px;color:var(--text-2)}
+.sigscale{margin:4px 0 2px}
+.sigscale text{font:400 10.5px var(--mono);fill:var(--muted)}
+/* buckets */
+.bucket{display:flex;align-items:center;gap:12px;margin:14px 0 2px;font:600 11.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--text-2)}
+.bucket:first-child{margin-top:0}
+.bucket::after{content:"";flex:1;height:1px;background:var(--line)}
+.bucket .c{order:2;font-weight:400;letter-spacing:.02em;text-transform:none;color:var(--muted)}
+/* event cards */
+.ev{border:1px solid var(--line);border-radius:var(--r-lg);background:var(--card);min-width:0}
+.ev:hover{border-color:var(--line-strong)}
+.ev.open{border-color:var(--line-strong);box-shadow:var(--shadow)}
+.ev-btn{display:grid;grid-template-columns:32px minmax(0,1fr) auto 18px;gap:6px 14px;align-items:center;width:100%;padding:14px 16px;border:0;background:none;color:inherit;text-align:left;cursor:pointer;border-radius:var(--r-lg)}
+.ev-ic{display:grid;place-items:center;width:32px;height:32px;border-radius:8px;background:var(--inset);border:1px solid var(--line);align-self:start}
+.ev-main{display:flex;flex-direction:column;gap:6px;min-width:0}
+.ev-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.tag{font:500 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--text-2)}
+.tag+.tag::before{content:"· ";color:var(--muted)}
+.sev{display:inline-flex;align-items:center;height:20px;padding:0 7px;border-radius:999px;border:1px solid var(--line-strong);font:500 11px var(--mono);color:var(--text-2)}
+.sev.major{border-color:var(--warn);color:var(--warn)}
+.sig{display:inline-flex;align-items:center;height:20px;padding:0 7px;border-radius:5px;background:var(--inset);border:1px solid var(--line);font:600 11px var(--mono);color:var(--value)}
+.merged{font:400 11.5px var(--mono);color:var(--muted)}
+.ev-title{display:block;font:500 14.5px/1.45 var(--sans);color:var(--value)}
+.ev-title .num{font-weight:500}
+.ev-lines{display:flex;flex-direction:column;gap:3px;font:400 13.5px/1.45 var(--mono);color:var(--text)}
+.ev-side{display:flex;flex-direction:column;align-items:flex-end;gap:6px;align-self:start}
+.ev-side time{font:400 12px var(--mono);color:var(--muted);white-space:nowrap}
+.chev{color:var(--muted);align-self:center;display:grid}
+.ev.open .chev svg{transform:rotate(180deg)}
+.ev-btn:hover .chev{color:var(--accent)}
+.ev-body{display:flex;flex-direction:column;gap:12px;padding:0 16px 16px 62px}
+.ev-body p{font-size:14px;color:var(--text-2);max-width:var(--measure)}
+.ev-body .chart{border-top:1px dashed var(--line);padding-top:12px}
+.ev-foot{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px}
+.ev-foot a{font:500 13px var(--mono)}
+.more-btn{align-self:stretch;height:44px;margin-top:8px}
+.feed .end{font-size:13px;color:var(--muted);text-align:center}
+.up{color:var(--up)} .dn{color:var(--down)}
+@media (max-width:1020px){
+  .news{display:flex;flex-direction:column;align-items:stretch;gap:14px}
+  .rail{display:contents}
+  .now{order:1} .filters{order:2} .feed{order:3} .sigma{order:4}
+  .flist{flex-direction:row;overflow-x:auto;gap:6px;padding-bottom:2px;scrollbar-width:none}
+  .flist li{flex:none}
+  .fbtn{width:auto;height:34px;padding:0 12px 0 6px;border:1px solid var(--line-strong);border-radius:999px}
+  .fbtn .fi{width:22px;height:22px;border:0;background:none}
+  .fbtn .n{margin-left:2px}
+  .filters{background:none;border:0;box-shadow:none;padding:0!important}
+  .filters .rail-h{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  .f-foot{flex-direction:row;align-items:center;justify-content:space-between;border:0;padding:0}
+}
+@media (max-width:560px){
+  .ev-btn{grid-template-columns:28px minmax(0,1fr) 16px;gap:6px 12px;padding:14px}
+  .ev-ic{width:28px;height:28px}
+  .ev-side{grid-column:2;grid-row:2;flex-direction:row;align-items:center;justify-content:space-between;align-self:auto}
+  .chev{grid-column:3;grid-row:1}
+  .ev-body{padding:0 14px 14px}
+  .now-price .big{font-size:26px}
+  .f-foot .small{display:none}
+}
+
+/* QA: masthead freshness note sits at the right on wide screens */
+.mast .lede{text-wrap:pretty}
+@media (min-width:900px){.mast{flex-wrap:nowrap}.mast>:first-child{flex:1 1 560px;max-width:760px;min-width:0}.mast .fresh{flex:0 0 auto;max-width:330px;margin-left:auto}}
+/* QA: tighten the mono word space inside sans headlines */
+.ev-title .num{word-spacing:-.3em}
+.ev-title{text-wrap:pretty}
+/* QA: tighten mono word spaces inside prose */
+p .num,.takeaway .num{word-spacing:-.3em}
+</style>
+</helmet>
+<div class="site" data-theme="{{theme}}">
+<header class="topbar">
+  <div class="shell">
+    <a class="brand" href="Main.dc.html"><span class="brand-mark" aria-hidden="true"></span>ZEC STATS</a>
+    <nav class="nav" aria-label="Main">
+      <a class="nl" href="Main.dc.html">Dashboard</a>
+      <a class="nl" href="Privacy.dc.html">Privacy</a>
+      <a class="nl" href="Charts.dc.html">Charts</a>
+      <button class="nl" type="button" aria-expanded="false" aria-haspopup="true">Tools
+        <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.5 3.5 5 7l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <a class="nl" href="News.dc.html" aria-current="page">News</a>
+    </nav>
+    <div class="tb-right">
+      <button class="kbd-search" type="button" aria-label="Search charts, tools and pages">
+        <svg width="15" height="15" viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m13.5 13.5 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span class="lbl">Search 58 charts &amp; tools</span><span class="kbd lbl">⌘K</span>
+      </button>
+      <button class="btn icon" type="button" aria-label="Switch to light theme">
+        <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </button>
+      <a class="btn primary donate" href="#">Donate</a>
+      <button class="btn icon burger" type="button" aria-label="Open menu" aria-expanded="false">
+        <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+<main class="shell page">
+<header class="mast">
+  <div class="hgroup" style="gap:8px">
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="Main.dc.html">ZEC Stats</a><span aria-hidden="true">›</span><span aria-current="page">News</span></nav>
+    <h1 class="h1">What just happened on Zcash</h1>
+    <p class="lede">A feed our node writes by itself: all-time highs, big daily moves and anything far from its 30-day norm, measured in σ. Newest first, covering 5+ years.</p>
+  </div>
+  <div class="fresh">
+    <span class="live"><i aria-hidden="true"></i>Live · last event 1 min ago</span>
+    <span>Block <span class="num">3,513,512</span> · node synced</span>
+    <span>Redesign concept · figures from a zecstats.com snapshot, 11 Oct 2026</span>
+  </div>
+</header>
+<div class="news">
+<section class="feed" aria-label="Events, newest first">
+<h2 class="bucket">Last hour <span class="c">1 event</span></h2>
+<article class="ev open">
+<button class="ev-btn" type="button" aria-expanded="true" aria-controls="ev1">
+  <span class="ev-ic" style="color:var(--s2)"><svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="10" height="10" rx="1.5"/><path d="M8 2.5V5M12 2.5V5M8 15v2.5M12 15v2.5M2.5 8H5M2.5 12H5M15 8h2.5M15 12h2.5"/></svg></span>
+  <span class="ev-main"><span class="ev-meta"><span class="tag">Hashrate</span><span class="sev">Notable</span><span class="sig" title="+2.8σ standard deviations from the 30-day norm">+2.8σ</span></span><span class="ev-title">Hashrate jumps to <span class="num">32.23 GH/s</span>, well above its 30-day norm of <span class="num">28.89 GH/s</span></span></span>
+  <span class="ev-side"><time datetime="2026-10-11" title="11 Oct 2026, within the last minute">1 min ago</time><svg class="spk" width="64" height="22" viewBox="0 0 64 22" aria-hidden="true"><path class="spk-l" d="M3.0 12.3 L5.5 10.3 L8.0 15.0 L10.6 12.4 L13.1 17.3 L15.6 13.8 L18.1 17.1 L20.7 13.6 L23.2 14.2 L25.7 11.9 L28.2 14.9 L30.7 16.3 L33.3 16.2 L35.8 18.4 L38.3 9.6 L40.8 19.0 L43.3 13.8 L45.9 12.0 L48.4 14.4 L50.9 17.6 L53.4 12.8 L56.0 10.0 L58.5 4.8 L61.0 3.0"/><circle class="spk-e up" cx="61.0" cy="3.0" r="2.3"/></svg></span>
+  <span class="chev"><svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 5 5 5-5"/></svg></span>
+</button>
+<div class="ev-body" id="ev1"><p>Hashrate is the total computing power securing the chain. Today's daily average, <b style="color:var(--text)">32.23 GH/s</b>, is 2.8σ above its 30-day norm of 28.89 GH/s. It differs from the "now" figure (31.61 GH/s, last ~2.5 h) and the all-time high (31.26 GH/s, 7-day average) because each uses a different window.</p>
+<div class="chart"><svg viewBox="0 0 640 130" role="img" aria-label="Daily hashrate over the last 30 days. Most days sit within one standard deviation of the 28.89 GH/s norm; today is 32.23 GH/s, 2.8 standard deviations above.">
+<rect x="44" y="50.2" width="516" height="28.0" fill="var(--accent-wash)"/>
+<line class="gl" x1="44" x2="560" y1="98.1" y2="98.1"/><text x="36" y="102.1" text-anchor="end">26</text>
+<line class="gl" x1="44" x2="560" y1="74.6" y2="74.6"/><text x="36" y="78.6" text-anchor="end">28</text>
+<line class="gl" x1="44" x2="560" y1="51.1" y2="51.1"/><text x="36" y="55.1" text-anchor="end">30</text>
+<line class="gl" x1="44" x2="560" y1="27.6" y2="27.6"/><text x="36" y="31.6" text-anchor="end">32</text>
+<line x1="44" x2="560" y1="64.2" y2="64.2" stroke="var(--text-2)" stroke-dasharray="4 4"/>
+<text x="568" y="68.2">norm 28.89</text>
+<text x="568" y="54.2" style="font-size:10px">+1σ</text>
+<path d="M44 68.1 L61.8 68.4 L79.6 67.8 L97.4 58.7 L115.2 67.9 L133 83.2 L150.8 62.8 L168.6 69.5 L186.3 68.9 L204.1 65.2 L221.9 63.9 L239.7 53.5 L257.5 59.2 L275.3 65.3 L293.1 74.8 L310.9 77.8 L328.7 63.8 L346.5 51.9 L364.3 66 L382.1 67.7 L399.9 60.6 L417.7 82.7 L435.4 70 L453.2 61 L471 56.8 L488.8 69.2 L506.6 62.3 L524.4 63.7 L542.2 57.8 L560 24.9" fill="none" stroke="var(--s2)" stroke-width="1.8" stroke-linejoin="round"/>
+<circle cx="560.0" cy="24.9" r="4" fill="var(--s2)"/>
+<text x="568.0" y="28.9" style="fill:var(--value);font-weight:600">32.23 today</text>
+<text x="44" y="124">Sep 12</text><text x="560" y="124" text-anchor="end">Oct 11</text>
+<text x="36" y="9" text-anchor="end" style="font-size:10px">GH/s</text>
+</svg></div>
+<div class="ev-foot"><span class="small">Shaded band: within ±1σ of the norm · daily values, last 30 days</span><a href="#">Open hashrate chart →</a></div></div>
+</article>
+<h2 class="bucket">Today <span class="c">1 event</span></h2>
+<article class="ev">
+<button class="ev-btn" type="button" aria-expanded="false" aria-controls="ev2">
+  <span class="ev-ic" style="color:var(--s2)"><svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="10" height="10" rx="1.5"/><path d="M8 2.5V5M12 2.5V5M8 15v2.5M12 15v2.5M2.5 8H5M2.5 12H5M15 8h2.5M15 12h2.5"/></svg></span>
+  <span class="ev-main"><span class="ev-meta"><span class="tag">Hashrate</span><span class="sev major">Major</span></span><span class="ev-title">All-time high: <span class="num">31.26 GH/s</span> network hashrate (7-day average); previous record <span class="num">30.84 GH/s</span></span></span>
+  <span class="ev-side"><time datetime="2026-10-10" title="10 Oct 2026, about 13 hours ago">13 h ago</time><svg class="spk" width="64" height="22" viewBox="0 0 64 22" aria-hidden="true"><path class="spk-l" d="M3.0 18.0 L5.5 16.5 L8.0 19.0 L10.6 17.6 L13.1 12.7 L15.6 16.3 L18.1 15.4 L20.7 13.2 L23.2 10.8 L25.7 17.4 L28.2 9.5 L30.7 11.2 L33.3 9.4 L35.8 12.4 L38.3 9.3 L40.8 6.3 L43.3 8.9 L45.9 9.3 L48.4 8.3 L50.9 7.9 L53.4 4.8 L56.0 5.3 L58.5 6.0 L61.0 3.0"/><circle class="spk-e up" cx="61.0" cy="3.0" r="2.3"/></svg></span>
+  <span class="chev"><svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 5 5 5-5"/></svg></span>
+</button>
+</article>
+<h2 class="bucket">This week <span class="c">4 events</span></h2>
+<article class="ev">
+<button class="ev-btn" type="button" aria-expanded="false" aria-controls="ev3">
+  <span class="ev-ic" style="color:var(--s5)"><svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h10M10 4l3 3-3 3M17 13H7M10 10l-3 3 3 3"/></svg></span>
+  <span class="ev-main"><span class="ev-meta"><span class="tag">Pool flows</span><span class="sev">Notable</span></span><span class="ev-title"><span class="num">14,117 ZEC</span> moved from Orchard to Ironwood today (pool to pool, never deshielded)</span></span>
+  <span class="ev-side"><time datetime="2026-10-10" title="10 Oct 2026">1 day ago</time><svg class="spk" width="64" height="22" viewBox="0 0 64 22" aria-hidden="true"><path class="spk-l" d="M3.0 19.0 L5.5 14.6 L8.0 15.3 L10.6 17.5 L13.1 16.2 L15.6 15.7 L18.1 16.1 L20.7 16.1 L23.2 14.6 L25.7 13.8 L28.2 12.4 L30.7 16.6 L33.3 18.2 L35.8 14.5 L38.3 17.1 L40.8 18.4 L43.3 11.9 L45.9 14.1 L48.4 17.2 L50.9 17.2 L53.4 15.3 L56.0 15.8 L58.5 10.0 L61.0 3.0"/><circle class="spk-e up" cx="61.0" cy="3.0" r="2.3"/></svg></span>
+  <span class="chev"><svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 5 5 5-5"/></svg></span>
+</button>
+</article>
+<article class="ev">
+<button class="ev-btn" type="button" aria-expanded="false" aria-controls="ev4">
+  <span class="ev-ic" style="color:var(--s1)"><svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14l4-4 3 3 7-7"/><path d="M13 6h4v4"/></svg></span>
+  <span class="ev-main"><span class="ev-meta"><span class="tag">Price</span><span class="tag">ZEC/BTC</span><span class="sev">Notable</span><span class="merged">2 events merged</span></span><span class="ev-title">Price drop: ZEC and ZEC/BTC fell on the same day</span><span class="ev-lines"><span><span class="dn">▼ 10.7%</span> ZEC to $1,184.91 <span style="color:var(--muted)">(from $1,326.44)</span></span><span><span class="dn">▼ 8.9%</span> ZEC/BTC to 0.01451 BTC <span style="color:var(--muted)">(from 0.01593)</span></span></span></span>
+  <span class="ev-side"><time datetime="2026-10-09" title="9 Oct 2026">2 days ago</time><svg class="spk" width="64" height="22" viewBox="0 0 64 22" aria-hidden="true"><path class="spk-l" d="M3.0 3.5 L5.5 6.2 L8.0 3.7 L10.6 6.8 L13.1 4.8 L15.6 7.6 L18.1 3.1 L20.7 7.9 L23.2 6.8 L25.7 7.6 L28.2 7.5 L30.7 10.7 L33.3 9.5 L35.8 9.0 L38.3 3.0 L40.8 7.8 L43.3 7.9 L45.9 11.6 L48.4 12.4 L50.9 8.8 L53.4 10.0 L56.0 9.8 L58.5 9.7 L61.0 19.0"/><circle class="spk-e dn" cx="61.0" cy="19.0" r="2.3"/></svg></span>
+  <span class="chev"><svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 5 5 5-5"/></svg></span>
+</button>
+</article>
+<article class="ev">
+<button class="ev-btn" type="button" aria-expanded="false" aria-controls="ev5">
+  <span class="ev-ic" style="color:var(--s6)"><svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="4.5" r="2"/><circle cx="4.5" cy="15" r="2"/><circle cx="15.5" cy="15" r="2"/><path d="M9 6.3 5.5 13.2M11 6.3l3.5 6.9M6.5 15h7"/></svg></span>
+  <span class="ev-main"><span class="ev-meta"><span class="tag">Weekly summary</span><span class="sev">Notable</span></span><span class="ev-title">This week in ZEC: price <span class="dn">▼ 10.0%</span> to $1,334.97, hashrate <span class="dn">▼ 2.5%</span> to 29.99 GH/s, shielded pool <span class="up">▲ 40,958 ZEC</span> (29.1% of supply)</span></span>
+  <span class="ev-side"><time datetime="2026-10-06" title="6 Oct 2026">5 days ago</time><svg class="spk" width="64" height="22" viewBox="0 0 64 22" aria-hidden="true"><path class="spk-l" d="M3.0 3.0 L5.5 3.6 L8.0 3.9 L10.6 8.6 L13.1 4.8 L15.6 5.0 L18.1 7.9 L20.7 6.0 L23.2 8.8 L25.7 11.7 L28.2 10.3 L30.7 13.6 L33.3 11.0 L35.8 13.3 L38.3 10.4 L40.8 13.5 L43.3 14.1 L45.9 13.5 L48.4 12.2 L50.9 19.0 L53.4 14.1 L56.0 17.9 L58.5 17.0 L61.0 18.9"/><circle class="spk-e dn" cx="61.0" cy="18.9" r="2.3"/></svg></span>
+  <span class="chev"><svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 5 5 5-5"/></svg></span>
+</button>
+</article>
+<article class="ev">
+<button class="ev-btn" type="button" aria-expanded="false" aria-controls="ev6">
+  <span class="ev-ic" style="color:var(--s3)"><svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2.5 16 5v4.5c0 3.8-2.6 6.6-6 8-3.4-1.4-6-4.2-6-8V5z"/></svg></span>
+  <span class="ev-main"><span class="ev-meta"><span class="tag">Shielded pool</span><span class="sev">Notable</span></span><span class="ev-title">Shielded pool grew <span class="num">41,605 ZEC</span> this week, to 4.94M ZEC (29.1% of supply)</span></span>
+  <span class="ev-side"><time datetime="2026-10-05" title="5 Oct 2026">6 days ago</time><svg class="spk" width="64" height="22" viewBox="0 0 64 22" aria-hidden="true"><path class="spk-l" d="M3.0 17.7 L5.5 14.5 L8.0 19.0 L10.6 15.4 L13.1 14.3 L15.6 17.1 L18.1 16.0 L20.7 13.4 L23.2 11.4 L25.7 15.0 L28.2 14.4 L30.7 13.8 L33.3 10.4 L35.8 11.1 L38.3 12.4 L40.8 6.6 L43.3 10.1 L45.9 10.2 L48.4 8.5 L50.9 8.4 L53.4 7.8 L56.0 5.9 L58.5 3.0 L61.0 4.3"/><circle class="spk-e up" cx="61.0" cy="4.3" r="2.3"/></svg></span>
+  <span class="chev"><svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 5 5 5-5"/></svg></span>
+</button>
+</article>
+<h2 class="bucket">This month <span class="c">5 events</span></h2>
+<article class="ev">
+<button class="ev-btn" type="button" aria-expanded="false" aria-controls="ev7">
+  <span class="ev-ic" style="color:var(--s1)"><svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14l4-4 3 3 7-7"/><path d="M13 6h4v4"/></svg></span>
+  <span class="ev-main"><span class="ev-meta"><span class="tag">Price</span><span class="sev">Notable</span></span><span class="ev-title">ZEC is down 21.1% over the past week, now $1,301.30 (was $1,648.99)</span></span>
+  <span class="ev-side"><time datetime="2026-10-04" title="4 Oct 2026">7 days ago</time><svg class="spk" width="64" height="22" viewBox="0 0 64 22" aria-hidden="true"><path class="spk-l" d="M3.0 3.9 L5.5 4.1 L8.0 3.0 L10.6 4.6 L13.1 5.1 L15.6 7.9 L18.1 4.8 L20.7 7.9 L23.2 6.6 L25.7 7.4 L28.2 8.0 L30.7 10.2 L33.3 9.3 L35.8 13.3 L38.3 11.8 L40.8 9.3 L43.3 12.3 L45.9 11.8 L48.4 14.0 L50.9 15.2 L53.4 14.2 L56.0 17.0 L58.5 17.9 L61.0 19.0"/><circle class="spk-e dn" cx="61.0" cy="19.0" r="2.3"/></svg></span>
+  <span class="chev"><svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 5 5 5-5"/></svg></span>
+</button>
+</article>
+<article class="ev">
+<button class="ev-btn" type="button" aria-expanded="false" aria-controls="ev8">
+  <span class="ev-ic" style="color:var(--s1)"><svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14l4-4 3 3 7-7"/><path d="M13 6h4v4"/></svg></span>
+  <span class="ev-main"><span class="ev-meta"><span class="tag">Price</span><span class="sev">Notable</span></span><span class="ev-title">ZEC <span class="dn">▼ 7.1%</span> today to $1,334.47 (from $1,436.14)</span></span>
+  <span class="ev-side"><time datetime="2026-10-02" title="2 Oct 2026">9 days ago</time><svg class="spk" width="64" height="22" viewBox="0 0 64 22" aria-hidden="true"><path class="spk-l" d="M3.0 8.9 L5.5 5.3 L8.0 9.6 L10.6 8.7 L13.1 15.4 L15.6 8.4 L18.1 11.5 L20.7 9.6 L23.2 7.6 L25.7 11.3 L28.2 9.2 L30.7 3.0 L33.3 5.4 L35.8 3.2 L38.3 5.7 L40.8 10.7 L43.3 9.4 L45.9 8.4 L48.4 6.1 L50.9 4.0 L53.4 8.9 L56.0 12.2 L58.5 10.1 L61.0 19.0"/><circle class="spk-e dn" cx="61.0" cy="19.0" r="2.3"/></svg></span>
+  <span class="chev"><svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 5 5 5-5"/></svg></span>
+</button>
+</article>
+<article class="ev">
+<button class="ev-btn" type="button" aria-expanded="false" aria-controls="ev9">
+  <span class="ev-ic" style="color:var(--s3)"><svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2.5 16 5v4.5c0 3.8-2.6 6.6-6 8-3.4-1.4-6-4.2-6-8V5z"/></svg></span>
+  <span class="ev-main"><span class="ev-meta"><span class="tag">Shielded pool</span><span class="sev major">Major</span><span class="sig" title="+5.0σ standard deviations from the 30-day norm">+5.0σ</span></span><span class="ev-title"><span class="num">23,336 ZEC</span> deshielded today, five times the usual spread above normal</span></span>
+  <span class="ev-side"><time datetime="2026-09" title="Date not captured in the snapshot">[date]</time><svg class="spk" width="64" height="22" viewBox="0 0 64 22" aria-hidden="true"><path class="spk-l" d="M3.0 17.5 L5.5 14.7 L8.0 16.1 L10.6 9.6 L13.1 15.0 L15.6 18.2 L18.1 18.5 L20.7 13.4 L23.2 14.8 L25.7 17.4 L28.2 12.6 L30.7 13.0 L33.3 11.7 L35.8 15.0 L38.3 16.7 L40.8 12.3 L43.3 13.2 L45.9 12.9 L48.4 14.0 L50.9 16.9 L53.4 19.0 L56.0 10.6 L58.5 12.5 L61.0 3.0"/><circle class="spk-e up" cx="61.0" cy="3.0" r="2.3"/></svg></span>
+  <span class="chev"><svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 5 5 5-5"/></svg></span>
+</button>
+</article>
+<article class="ev">
+<button class="ev-btn" type="button" aria-expanded="false" aria-controls="ev10">
+  <span class="ev-ic" style="color:var(--s1)"><svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14l4-4 3 3 7-7"/><path d="M13 6h4v4"/></svg></span>
+  <span class="ev-main"><span class="ev-meta"><span class="tag">Price</span><span class="sev">Notable</span></span><span class="ev-title">ZEC <span class="dn">▼ 7.9%</span> today to $1,499.14 (from $1,627.88)</span></span>
+  <span class="ev-side"><time datetime="2026-09-24" title="24 Sep 2026">17 days ago</time><svg class="spk" width="64" height="22" viewBox="0 0 64 22" aria-hidden="true"><path class="spk-l" d="M3.0 10.7 L5.5 12.3 L8.0 11.6 L10.6 10.4 L13.1 8.0 L15.6 10.0 L18.1 9.5 L20.7 4.7 L23.2 6.2 L25.7 5.2 L28.2 12.3 L30.7 4.3 L33.3 9.4 L35.8 3.0 L38.3 6.4 L40.8 9.6 L43.3 8.7 L45.9 7.9 L48.4 9.1 L50.9 6.4 L53.4 16.8 L56.0 9.8 L58.5 15.0 L61.0 19.0"/><circle class="spk-e dn" cx="61.0" cy="19.0" r="2.3"/></svg></span>
+  <span class="chev"><svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 5 5 5-5"/></svg></span>
+</button>
+</article>
+<article class="ev">
+<button class="ev-btn" type="button" aria-expanded="false" aria-controls="ev11">
+  <span class="ev-ic" style="color:var(--s1)"><svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14l4-4 3 3 7-7"/><path d="M13 6h4v4"/></svg></span>
+  <span class="ev-main"><span class="ev-meta"><span class="tag">Price</span><span class="sev">Notable</span></span><span class="ev-title">ZEC <span class="up">▲ 10.5%</span> today to $1,627.88 (from $1,473.66)</span></span>
+  <span class="ev-side"><time datetime="2026-09-23" title="23 Sep 2026">18 days ago</time><svg class="spk" width="64" height="22" viewBox="0 0 64 22" aria-hidden="true"><path class="spk-l" d="M3.0 16.0 L5.5 11.6 L8.0 12.8 L10.6 13.5 L13.1 16.1 L15.6 19.0 L18.1 13.6 L20.7 12.4 L23.2 14.3 L25.7 13.4 L28.2 13.5 L30.7 9.2 L33.3 15.3 L35.8 16.3 L38.3 15.4 L40.8 12.2 L43.3 11.4 L45.9 13.2 L48.4 13.6 L50.9 13.9 L53.4 11.1 L56.0 18.4 L58.5 11.3 L61.0 3.0"/><circle class="spk-e up" cx="61.0" cy="3.0" r="2.3"/></svg></span>
+  <span class="chev"><svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 5 5 5-5"/></svg></span>
+</button>
+</article>
+<h2 class="bucket">Earlier <span class="c">September 2026</span></h2>
+<article class="ev">
+<button class="ev-btn" type="button" aria-expanded="false" aria-controls="ev12">
+  <span class="ev-ic" style="color:var(--s1)"><svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14l4-4 3 3 7-7"/><path d="M13 6h4v4"/></svg></span>
+  <span class="ev-main"><span class="ev-meta"><span class="tag">Price</span><span class="tag">ZEC/BTC</span><span class="sev">Notable</span><span class="merged">2 events merged</span></span><span class="ev-title">Price drop: ZEC and ZEC/BTC fell on the same day</span><span class="ev-lines"><span><span class="dn">▼ 7.6%</span> ZEC to $1,137.65 <span style="color:var(--muted)">(from $1,230.81)</span></span><span><span class="dn">▼ 6.1%</span> ZEC/BTC to 0.01437 BTC <span style="color:var(--muted)">(from 0.01531)</span></span></span></span>
+  <span class="ev-side"><time datetime="2026-09-07" title="7 Sep 2026">7 Sep 2026</time><svg class="spk" width="64" height="22" viewBox="0 0 64 22" aria-hidden="true"><path class="spk-l" d="M3.0 9.6 L5.5 7.4 L8.0 6.6 L10.6 3.0 L13.1 8.6 L15.6 8.8 L18.1 7.0 L20.7 10.1 L23.2 5.4 L25.7 8.6 L28.2 4.2 L30.7 6.2 L33.3 9.8 L35.8 6.8 L38.3 5.2 L40.8 6.1 L43.3 6.1 L45.9 11.1 L48.4 5.5 L50.9 10.1 L53.4 12.7 L56.0 8.1 L58.5 6.8 L61.0 19.0"/><circle class="spk-e dn" cx="61.0" cy="19.0" r="2.3"/></svg></span>
+  <span class="chev"><svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 5 5 5-5"/></svg></span>
+</button>
+</article>
+<article class="ev">
+<button class="ev-btn" type="button" aria-expanded="false" aria-controls="ev13">
+  <span class="ev-ic" style="color:var(--s1)"><svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14l4-4 3 3 7-7"/><path d="M13 6h4v4"/></svg></span>
+  <span class="ev-main"><span class="ev-meta"><span class="tag">Price</span><span class="sev">Notable</span></span><span class="ev-title">ZEC is up 27.7% over the past week, now $1,023.60 (was $801.62)</span></span>
+  <span class="ev-side"><time datetime="2026-09-04" title="4 Sep 2026">4 Sep 2026</time><svg class="spk" width="64" height="22" viewBox="0 0 64 22" aria-hidden="true"><path class="spk-l" d="M3.0 18.2 L5.5 17.9 L8.0 19.0 L10.6 18.4 L13.1 14.3 L15.6 14.7 L18.1 13.5 L20.7 12.1 L23.2 12.3 L25.7 10.7 L28.2 8.2 L30.7 10.5 L33.3 12.5 L35.8 9.8 L38.3 8.4 L40.8 9.5 L43.3 10.9 L45.9 9.5 L48.4 7.7 L50.9 4.1 L53.4 4.4 L56.0 5.8 L58.5 3.0 L61.0 5.5"/><circle class="spk-e up" cx="61.0" cy="5.5" r="2.3"/></svg></span>
+  <span class="chev"><svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 5 5 5-5"/></svg></span>
+</button>
+</article>
+<article class="ev">
+<button class="ev-btn" type="button" aria-expanded="false" aria-controls="ev14">
+  <span class="ev-ic" style="color:var(--s4)"><svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h11l-3-3M16 13H5l3 3"/></svg></span>
+  <span class="ev-main"><span class="ev-meta"><span class="tag">ZEC/BTC</span><span class="sev">Notable</span></span><span class="ev-title">ZEC/BTC <span class="up">▲ 11.0%</span> today to 0.01171 BTC (from 0.01054 BTC)</span></span>
+  <span class="ev-side"><time datetime="2026-09-03" title="3 Sep 2026">3 Sep 2026</time><svg class="spk" width="64" height="22" viewBox="0 0 64 22" aria-hidden="true"><path class="spk-l" d="M3.0 15.8 L5.5 12.3 L8.0 16.7 L10.6 15.9 L13.1 11.5 L15.6 13.9 L18.1 14.2 L20.7 10.8 L23.2 10.7 L25.7 14.5 L28.2 13.1 L30.7 12.3 L33.3 13.9 L35.8 12.4 L38.3 14.4 L40.8 10.0 L43.3 14.8 L45.9 17.4 L48.4 19.0 L50.9 12.7 L53.4 11.3 L56.0 15.5 L58.5 12.1 L61.0 3.0"/><circle class="spk-e up" cx="61.0" cy="3.0" r="2.3"/></svg></span>
+  <span class="chev"><svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 5 5 5-5"/></svg></span>
+</button>
+</article>
+<article class="ev">
+<button class="ev-btn" type="button" aria-expanded="false" aria-controls="ev15">
+  <span class="ev-ic" style="color:var(--s5)"><svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h10M10 4l3 3-3 3M17 13H7M10 10l-3 3 3 3"/></svg></span>
+  <span class="ev-main"><span class="ev-meta"><span class="tag">Pool flows</span><span class="sev">Notable</span></span><span class="ev-title"><span class="num">5,652 ZEC</span> moved from Orchard to Ironwood today (pool to pool, never deshielded)</span></span>
+  <span class="ev-side"><time datetime="2026-09-03" title="3 Sep 2026">3 Sep 2026</time><svg class="spk" width="64" height="22" viewBox="0 0 64 22" aria-hidden="true"><path class="spk-l" d="M3.0 14.3 L5.5 15.4 L8.0 16.1 L10.6 17.0 L13.1 14.7 L15.6 17.2 L18.1 13.4 L20.7 15.6 L23.2 15.6 L25.7 15.4 L28.2 16.2 L30.7 13.4 L33.3 14.3 L35.8 11.7 L38.3 16.9 L40.8 12.5 L43.3 16.4 L45.9 15.0 L48.4 18.9 L50.9 14.4 L53.4 19.0 L56.0 15.5 L58.5 10.4 L61.0 3.0"/><circle class="spk-e up" cx="61.0" cy="3.0" r="2.3"/></svg></span>
+  <span class="chev"><svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 5 5 5-5"/></svg></span>
+</button>
+</article>
+<button class="btn more-btn" type="button">Load older events</button>
+<p class="end">Showing events back to 3 Sep 2026 · the feed covers 5+ years.</p>
+</section>
+<aside class="rail" aria-label="Context and filters">
+<section class="card now" aria-labelledby="now-h">
+  <div class="now-top"><h2 class="rail-h" id="now-h"><span class="live"><i aria-hidden="true"></i>Right now</span></h2><span class="small mono">updated 1 min ago</span></div>
+  <div class="now-price"><span class="big">$1,222.51</span><span class="delta">▲ 0.9% 24h</span></div>
+  <svg class="spk" width="300" height="40" viewBox="0 0 300 40" aria-hidden="true"><line class="spk-b" x1="0" x2="300" y1="21.1" y2="21.1"/><path class="spk-l" d="M4.0 21.1 L11.5 21.4 L19.0 28.4 L26.5 29.6 L33.9 20.1 L41.4 16.8 L48.9 14.0 L56.4 23.8 L63.9 28.7 L71.4 25.3 L78.9 20.3 L86.4 34.1 L93.8 36.0 L101.3 22.8 L108.8 22.0 L116.3 18.6 L123.8 10.5 L131.3 24.1 L138.8 26.5 L146.3 26.2 L153.7 23.1 L161.2 15.9 L168.7 12.2 L176.2 18.2 L183.7 21.0 L191.2 21.9 L198.7 21.5 L206.2 20.9 L213.6 15.3 L221.1 26.0 L228.6 24.3 L236.1 15.7 L243.6 12.2 L251.1 4.0 L258.6 7.0 L266.1 9.5 L273.5 23.3 L281.0 19.6 L288.5 17.6 L296.0 10.1"/><circle class="spk-e up" cx="296.0" cy="10.1" r="2.3"/></svg>
+  <dl class="kv">
+    <div><dt>Shielded</dt><dd>29.3% <small>of supply</small></dd></div>
+    <div><dt>Latest block</dt><dd>3,513,512</dd></div>
+  </dl>
+  <p class="hr-h">Hashrate · three windows</p>
+  <dl class="kv">
+    <div><dt>Now<span>last 120 blocks, about 2.5 h</span></dt><dd>31.61 <small>GH/s</small></dd></div>
+    <div><dt>Today's jump<span>daily average, +2.8σ</span></dt><dd>32.23 <small>GH/s</small></dd></div>
+    <div><dt>All-time high<span>7-day average, set 13 h ago</span></dt><dd>31.26 <small>GH/s</small></dd></div>
+  </dl>
+  <p class="small">Each figure averages over a different window, which is why they differ.</p>
+  <a class="mono" style="font-size:13px" href="Chart-price.dc.html">Open price chart →</a>
+</section>
+<nav class="card filters" aria-labelledby="f-h">
+  <h2 class="rail-h" id="f-h">Show · last 30 days</h2>
+  <ul class="flist"><li><button class="fbtn" type="button" aria-pressed="true"><span class="fi" style="color:var(--text-2)"><svg width="13" height="13" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 4v12M4 10h12"/></svg></span>All<span class="n">11</span></button></li><li><button class="fbtn" type="button" aria-pressed="false"><span class="fi" style="color:var(--s1)"><svg width="13" height="13" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14l4-4 3 3 7-7"/><path d="M13 6h4v4"/></svg></span>Price<span class="n">5</span></button></li><li><button class="fbtn" type="button" aria-pressed="false"><span class="fi" style="color:var(--s4)"><svg width="13" height="13" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h11l-3-3M16 13H5l3 3"/></svg></span>ZEC/BTC<span class="n">1</span></button></li><li><button class="fbtn" type="button" aria-pressed="false"><span class="fi" style="color:var(--s2)"><svg width="13" height="13" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="10" height="10" rx="1.5"/><path d="M8 2.5V5M12 2.5V5M8 15v2.5M12 15v2.5M2.5 8H5M2.5 12H5M15 8h2.5M15 12h2.5"/></svg></span>Hashrate<span class="n">2</span></button></li><li><button class="fbtn" type="button" aria-pressed="false"><span class="fi" style="color:var(--s3)"><svg width="13" height="13" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2.5 16 5v4.5c0 3.8-2.6 6.6-6 8-3.4-1.4-6-4.2-6-8V5z"/></svg></span>Shielded pool<span class="n">2</span></button></li><li><button class="fbtn" type="button" aria-pressed="false"><span class="fi" style="color:var(--s5)"><svg width="13" height="13" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h10M10 4l3 3-3 3M17 13H7M10 10l-3 3 3 3"/></svg></span>Pool flows<span class="n">1</span></button></li><li><button class="fbtn" type="button" aria-pressed="false"><span class="fi" style="color:var(--s6)"><svg width="13" height="13" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 10h3l2-5 3.5 10 2-5h4.5"/></svg></span>Activity<span class="n zero">0</span></button></li></ul>
+  <div class="f-foot">
+    <div class="seg" role="group" aria-label="Severity"><button type="button" aria-pressed="true">All</button><button type="button" aria-pressed="false">Major only<span>2</span></button></div>
+    <p class="small">Filters are kept in the link.</p>
+  </div>
+</nav>
+<section class="card sigma" aria-labelledby="sg-h">
+  <h2 class="rail-h" id="sg-h">What's a σ?</h2>
+  <p>σ (sigma) says how unusual a value is next to its own last 30 days. <b style="color:var(--text)">+2.8σ</b> means today sits 2.8 times the usual spread above the 30-day average.</p>
+  <svg class="sigscale" viewBox="0 0 300 58" role="img" aria-label="A scale from minus 3 to plus 3 sigma, with the middle band from minus 1 to plus 1 shaded as normal and a marker at plus 2.8 sigma for today's hashrate.">
+<path d="M12 35.9 L14 35.9 L15.9 35.9 L17.9 35.9 L19.9 35.9 L21.9 35.9 L23.8 35.8 L25.8 35.8 L27.8 35.8 L29.7 35.8 L31.7 35.7 L33.7 35.7 L35.7 35.6 L37.6 35.6 L39.6 35.5 L41.6 35.4 L43.5 35.3 L45.5 35.2 L47.5 35.1 L49.5 35 L51.4 34.9 L53.4 34.7 L55.4 34.5 L57.3 34.4 L59.3 34.2 L61.3 33.9 L63.3 33.7 L65.2 33.4 L67.2 33.1 L69.2 32.8 L71.1 32.5 L73.1 32.1 L75.1 31.7 L77.1 31.3 L79 30.9 L81 30.4 L83 29.9 L84.9 29.3 L86.9 28.8 L88.9 28.2 L90.9 27.6 L92.8 26.9 L94.8 26.2 L96.8 25.5 L98.7 24.8 L100.7 24.1 L102.7 23.3 L104.7 22.6 L106.6 21.8 L108.6 21 L110.6 20.2 L112.5 19.4 L114.5 18.7 L116.5 17.9 L118.5 17.1 L120.4 16.4 L122.4 15.6 L124.4 15 L126.3 14.3 L128.3 13.6 L130.3 13.1 L132.3 12.5 L134.2 12 L136.2 11.5 L138.2 11.1 L140.1 10.8 L142.1 10.5 L144.1 10.3 L146.1 10.1 L148 10 L150 10 L152 10 L153.9 10.1 L155.9 10.3 L157.9 10.5 L159.9 10.8 L161.8 11.1 L163.8 11.5 L165.8 12 L167.7 12.5 L169.7 13.1 L171.7 13.6 L173.7 14.3 L175.6 15 L177.6 15.6 L179.6 16.4 L181.5 17.1 L183.5 17.9 L185.5 18.7 L187.5 19.4 L189.4 20.2 L191.4 21 L193.4 21.8 L195.3 22.6 L197.3 23.3 L199.3 24.1 L201.3 24.8 L203.2 25.5 L205.2 26.2 L207.2 26.9 L209.1 27.6 L211.1 28.2 L213.1 28.8 L215.1 29.3 L217 29.9 L219 30.4 L221 30.9 L222.9 31.3 L224.9 31.7 L226.9 32.1 L228.9 32.5 L230.8 32.8 L232.8 33.1 L234.8 33.4 L236.7 33.7 L238.7 33.9 L240.7 34.2 L242.7 34.4 L244.6 34.5 L246.6 34.7 L248.6 34.9 L250.5 35 L252.5 35.1 L254.5 35.2 L256.5 35.3 L258.4 35.4 L260.4 35.5 L262.4 35.6 L264.3 35.6 L266.3 35.7 L268.3 35.7 L270.3 35.8 L272.2 35.8 L274.2 35.8 L276.2 35.8 L278.1 35.9 L280.1 35.9 L282.1 35.9 L284.1 35.9 L286 35.9 L288 35.9" fill="none" stroke="var(--line-strong)" stroke-width="1.4"/>
+<rect x="110.6" y="10" width="78.9" height="26" fill="var(--accent-wash)"/>
+<line class="ax" x1="12" x2="288" y1="36" y2="36" style="stroke:var(--axis)"/>
+<line x1="31.7" x2="31.7" y1="36" y2="40" stroke="var(--axis)"/><text x="31.7" y="52" text-anchor="middle">-3σ</text>
+<line x1="71.1" x2="71.1" y1="36" y2="40" stroke="var(--axis)"/><text x="71.1" y="52" text-anchor="middle">-2σ</text>
+<line x1="110.6" x2="110.6" y1="36" y2="40" stroke="var(--axis)"/><text x="110.6" y="52" text-anchor="middle">-1σ</text>
+<line x1="150.0" x2="150.0" y1="36" y2="40" stroke="var(--axis)"/><text x="150.0" y="52" text-anchor="middle">0</text>
+<line x1="189.4" x2="189.4" y1="36" y2="40" stroke="var(--axis)"/><text x="189.4" y="52" text-anchor="middle">+1σ</text>
+<line x1="228.9" x2="228.9" y1="36" y2="40" stroke="var(--axis)"/><text x="228.9" y="52" text-anchor="middle">+2σ</text>
+<line x1="268.3" x2="268.3" y1="36" y2="40" stroke="var(--axis)"/><text x="268.3" y="52" text-anchor="middle">+3σ</text>
+<line x1="260.4" x2="260.4" y1="6" y2="36" stroke="var(--s2)" stroke-width="2"/><circle cx="260.4" cy="6" r="3" fill="var(--s2)"/>
+</svg>
+  <p class="small">If moves were normally distributed, beyond ±2σ would happen about 1 day in 20, and beyond ±3σ about 1 day in 370. Crypto often isn't normal, so read σ as a ranking, not a probability.</p>
+</section>
+</aside>
+</div>
+<section class="sec" aria-labelledby="rn-h">
+<div class="sec-h"><h2 class="h2" id="rn-h">Read next</h2></div>
+<div class="tiles">
+<a class="tile" href="Chart-price.dc.html"><span class="tt">ZEC price</span><span class="why">Every price move in the feed, on one chart with moving averages.</span><span class="lv">$1,222.51 · <span>▲0.9% 24h</span></span></a>
+<a class="tile" href="Chart-pools.dc.html"><span class="tt">Shielded pools</span><span class="why">How the 29.3% shielded share splits across Sapling, Orchard and Ironwood.</span><span class="lv">4.97M ZEC <span>shielded</span></span></a>
+<a class="tile" href="Ironwood.dc.html"><span class="tt">Ironwood migration</span><span class="why">The Orchard to Ironwood moves showing up in the feed, tracked to completion.</span><span class="lv">89.24% <span>of Orchard ZEC crossed</span></span></a>
+<a class="tile" href="#"><span class="tt">Hashrate</span><span class="why">The full hashrate and difficulty history behind today's record.</span><span class="lv">31.61 GH/s <span>now</span></span></a>
+</div></section>
+</main>
+<footer class="foot">
+  <div class="shell">
+    <div class="about" style="display:flex;flex-direction:column;gap:12px">
+      <a class="brand" href="Main.dc.html"><span class="brand-mark" aria-hidden="true"></span>ZEC STATS</a>
+      <p class="note" style="font-size:13.5px">Every Zcash number, computed from a Zebra full node we run — not copied from an exchange API. Price is the one external input.</p>
+      <p class="small mono"><span class="live"><i aria-hidden="true"></i>Synced</span> · block 3,513,512 · data through 10 Oct 2026</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn primary" href="#">Donate</a><a class="btn" href="#">Follow @zecstats_</a></div>
+    </div>
+    <div><h4>Explore</h4><ul><li><a href="Main.dc.html">Dashboard</a></li><li><a href="Privacy.dc.html">Privacy</a></li><li><a href="Charts.dc.html">All 58 charts</a></li><li><a href="News.dc.html">News feed</a></li><li><a href="Metrics.dc.html">Metrics table</a></li></ul></div>
+    <div><h4>Privacy</h4><ul><li><a href="Ironwood.dc.html">Ironwood migration</a></li><li><a href="Turnstile.dc.html">Turnstile watch</a></li><li><a href="#">Privacy tips</a></li><li><a href="#">Amount lookup</a></li><li><a href="Leaks.dc.html">Wall of Shame</a></li></ul></div>
+    <div><h4>Tools</h4><ul><li><a href="Calculator.dc.html">Investment calculator</a></li><li><a href="#">What if gold</a></li><li><a href="#">Compare charts</a></li><li><a href="#">Correlations</a></li><li><a href="#">ZEC 2026 vs BTC 2017</a></li></ul></div>
+    <div><h4>Network &amp; data</h4><ul><li><a href="Network.dc.html">Network nodes</a></li><li><a href="#">Node status</a></li><li><a href="#">Halving</a></li><li><a href="#">Methodology</a></li><li><a href="#">CSV &amp; JSON API</a></li></ul></div>
+    <div class="base"><span>by @jeremiahrogers · Zcash data you can verify</span><span>Redesign concept — not the live site</span></div>
+  </div>
+</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":1440,"height":2837}}'>
+class Component extends DCLogic {
+  renderVals() { return { theme: this.props.theme ?? 'dark' }; }
+}
+</script>
+</body>
+</html>
