@@ -8,7 +8,8 @@ import './chrome.css';
 
 const orbitron = Orbitron({ subsets: ['latin'], weight: ['700', '800'], variable: '--font-orbitron', display: 'swap' });
 const jetbrains = JetBrains_Mono({ subsets: ['latin'], weight: ['400', '500', '600', '700'], variable: '--font-jetbrains', display: 'swap' });
-const plex = IBM_Plex_Sans({ subsets: ['latin'], weight: ['400', '500', '600'], variable: '--font-plex', display: 'swap' });
+// variable font: the static-weight request returns gstatic "l/font?kit=…&skey=…" URLs that Turbopack's font loader can't parse
+const plex = IBM_Plex_Sans({ subsets: ['latin'], weight: 'variable', variable: '--font-plex', display: 'swap' });
 
 export const metadata: Metadata = {
   title: { default: 'ZEC Stats — Zcash network statistics', template: '%s — ZEC Stats' },
