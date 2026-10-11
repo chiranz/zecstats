@@ -60,8 +60,15 @@
      already the destination while the fallback shows): `/` dashboard · `/chart/*` chart page (header + key figure, chart
      card with actions, range seg, legend chips, plot, caption) · `/news` feed + right rail · `/charts` filter band + rail +
      rows · default: header + hero + KPI band. Layout chrome (top bar, tape, context bar) stays; only `<main>` swaps.
-   - Design first: add an Iteration 3 canvas board for it (skeleton next to the real page for each shape), then build,
-     then compare screenshots of skeleton vs page at 1440/390 dark+light, then deploy (push to `main`).
+   - **Every screen size (user rule):** design and check each shape at phone 390, tablet 768 and 1024 (portrait and
+     landscape tablets), laptop 1280 and 1440, and large desktop 1920. The layout changes at the CSS breakpoints 560, 640,
+     760, 900, 1020 and 1180 px (KPI bands go 4→2 columns, key figure hides ≤640, nav folds ≤1020, mega menu 4→3
+     columns ≤1180, chart height shrinks on narrow screens), so the skeleton must change at exactly the same points:
+     reuse the real classes rather than copying sizes. The saved references cover 1440 and 390 only, so take the
+     missing widths first. `scripts/shot.mjs` shoots 1440 + 390; add a `--widths=390,768,1024,1280,1440,1920` option.
+   - Design first: add an Iteration 3 canvas board for it (skeleton next to the real page for each shape, at phone,
+     tablet and laptop widths), then build, then compare screenshots of skeleton vs page at all six widths in dark and
+     light, then deploy (push to `main`).
 2. **Backend integration kit** for the site owner (env vars, strict live mode, upstream auth headers, route map,
    `check:api --live`, per-endpoint source badge, docs). See the iteration-3 report; not started.
 3. **Remaining parity:** gap 3 (calculator's 16 assets — needs `dca?assets=` variants), gap 4 rest (`?v=` views, any
