@@ -10,3 +10,5 @@ data/raw/
 .vercel
 .env*
 !.env.example
+# screenshot references for design work (regenerate: node scripts/shot.mjs <base> docs/design/refs/skeleton /route … --widths=…)
+docs/design/refs/skeleton/
