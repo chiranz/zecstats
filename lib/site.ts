@@ -91,7 +91,7 @@ export function navSection(pathname: string): 'Dashboard' | 'Privacy' | 'Charts'
   if (pathname.startsWith('/chart')) return 'Charts';
   if (pathname.startsWith('/news')) return 'News';
   if (privacyLinks.some((l) => l.href === pathname)) return 'Privacy';
-  if (toolGroups.some((g) => g.links.some((l) => l.href === pathname))) return 'Tools';
+  if (pathname === '/pro' || toolGroups.some((g) => g.links.some((l) => l.href === pathname))) return 'Tools';
   return null;
 }
 

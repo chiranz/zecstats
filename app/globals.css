@@ -83,6 +83,14 @@ html[data-theme="light"] .topbar{background:rgba(242,246,242,.88)}
 .live{display:inline-flex;align-items:center;gap:7px;color:var(--text-2)}
 .live i{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:var(--glow)}
 @media (max-width:640px){.fresh{align-items:flex-start;text-align:left}}
+/* desktop: H1 spans the row, the lede and the freshness note share the line below (artboard "QA fixes") */
+@media (min-width:900px){
+  .mast{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:40px;row-gap:8px;align-items:end}
+  .mast>div:first-child{display:contents!important}
+  .mast>div:first-child>*{grid-column:1/-1}
+  .mast>div:first-child>.lede{grid-column:1}
+  .mast>.fresh{grid-column:2;max-width:380px}
+}
 
 /* ---------- surfaces ---------- */
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:clamp(16px,2.4vw,24px);display:flex;flex-direction:column;gap:16px;min-width:0;box-shadow:var(--shadow)}
