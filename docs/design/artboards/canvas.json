@@ -249,6 +249,86 @@
    "h": 7980,
    "title": "Landing top · four compositions with the ticker — mobile",
    "expand": "fill"
+  },
+  "Nav-A-section-bar.dc.html": {
+   "x": 0,
+   "y": 59959,
+   "w": 1440,
+   "h": 2278,
+   "title": "Nav A · section bar — desktop",
+   "expand": "fill"
+  },
+  "Nav-A-section-bar-mobile.dc.html": {
+   "x": 1520,
+   "y": 59959,
+   "w": 390,
+   "h": 2812,
+   "title": "Nav A · section bar — mobile",
+   "expand": "fill"
+  },
+  "Nav-B-command.dc.html": {
+   "x": 1990,
+   "y": 59959,
+   "w": 1440,
+   "h": 2329,
+   "title": "Nav B · command line — desktop",
+   "expand": "fill"
+  },
+  "Nav-B-command-mobile.dc.html": {
+   "x": 3510,
+   "y": 59959,
+   "w": 390,
+   "h": 2761,
+   "title": "Nav B · command line — mobile",
+   "expand": "fill"
+  },
+  "Nav-C-questions.dc.html": {
+   "x": 3980,
+   "y": 59959,
+   "w": 1440,
+   "h": 2928,
+   "title": "Nav C · questions — desktop",
+   "expand": "fill"
+  },
+  "Nav-C-questions-mobile.dc.html": {
+   "x": 5500,
+   "y": 59959,
+   "w": 390,
+   "h": 2813,
+   "title": "Nav C · questions — mobile",
+   "expand": "fill"
+  },
+  "Nav-D-answer-first.dc.html": {
+   "x": 0,
+   "y": 63272,
+   "w": 1440,
+   "h": 2318,
+   "title": "Nav D · answer first (recommended) — desktop",
+   "expand": "fill"
+  },
+  "Nav-D-answer-first-mobile.dc.html": {
+   "x": 1520,
+   "y": 63272,
+   "w": 390,
+   "h": 2615,
+   "title": "Nav D · answer first (recommended) — mobile",
+   "expand": "fill"
+  },
+  "Nav-E-thumb.dc.html": {
+   "x": 1990,
+   "y": 63272,
+   "w": 1440,
+   "h": 2236,
+   "title": "Nav E · thumb — desktop",
+   "expand": "fill"
+  },
+  "Nav-E-thumb-mobile.dc.html": {
+   "x": 3510,
+   "y": 63272,
+   "w": 390,
+   "h": 3193,
+   "title": "Nav E · thumb — mobile",
+   "expand": "fill"
   }
  },
  "order": [
@@ -281,7 +361,17 @@
   "Ticker-1-tape.dc.html",
   "Ticker-1-tape-mobile.dc.html",
   "Landing-top.dc.html",
-  "Landing-top-mobile.dc.html"
+  "Landing-top-mobile.dc.html",
+  "Nav-A-section-bar.dc.html",
+  "Nav-A-section-bar-mobile.dc.html",
+  "Nav-B-command.dc.html",
+  "Nav-B-command-mobile.dc.html",
+  "Nav-C-questions.dc.html",
+  "Nav-C-questions-mobile.dc.html",
+  "Nav-D-answer-first.dc.html",
+  "Nav-D-answer-first-mobile.dc.html",
+  "Nav-E-thumb.dc.html",
+  "Nav-E-thumb-mobile.dc.html"
  ],
  "notes": {
   "t_system": {
@@ -339,6 +429,13 @@
    "text": "Iteration 2 — event ticker (single-row tape) + landing top",
    "kind": "title1",
    "maxW": 3900
+  },
+  "t_iter2_nav": {
+   "x": 0,
+   "y": 59659,
+   "text": "Iteration 2 — navigation + page header (5 directions)",
+   "kind": "title1",
+   "maxW": 5890
   }
  },
  "designSystems": []
