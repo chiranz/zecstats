@@ -2,7 +2,7 @@
 
 ## State
 - Next.js 16 app at the repo root, on `main`, committed in small per-area commits and **not pushed**. All 31 pages and 58 `/chart/<slug>` pages are built from the `data/api` snapshot.
-- `pnpm build` passes (92 pages). `pnpm typecheck` is clean. `pnpm check:api` reports 68/68 typed reads matching the snapshot.
+- `pnpm build` passes (99 pages). `pnpm typecheck` is clean. `pnpm check:api` reports 68/68 typed reads matching the snapshot.
 - Design canvas (source of truth): https://claude.ai/artifact/14NxTBtnDk6j4hyhMxHzqd, version 12. It is shared as "anyone with the link".
   - `docs/design/artboards/` mirrors it exactly, including `canvas.json`.
   - `docs/design/renders/*.jpg` are older exports that still show the old logo.
@@ -59,14 +59,14 @@ A subagent was building the ticker + landing A into the app. Its work is uncommi
    - swap-assets toggles.
    - btc-migration sources and explorer links.
    - Report pages keeping their state in the URL; CSV where the live site has CSV.
-4. **API hardening:**
+3. **API hardening:**
    - Runtime validation per endpoint, using zod/valibot (a new dependency; ask) or hand-written validators.
    - Capture the non-default API variants through the user's browser: `dca?assets=` (16 assets for the calculator), shield-hops classes and windows, `tx-values?class=`, `near-network?days=&gran=`, `btc-migration?days=&min_btc=`, `usage-clock?days=`, `utxo-survival`.
    - The mock `/api` route ignores query params in snapshot mode.
-5. **Calculator:** restore the 16 assets once the `dca` variants are captured (the menu text promises gold and stocks).
-6. **Missing blocks:** the weekly visible-nodes chart on `/network`, the exchange access map, the world-usage animated map and awake-population curve, the donate QR, og:image cards, `app/sitemap.ts` and `app/robots.ts`.
+4. **Calculator:** restore the 16 assets once the `dca` variants are captured (the menu text promises gold and stocks).
+5. **Missing blocks:** the weekly visible-nodes chart on `/network`, the exchange access map, the world-usage animated map and awake-population curve, the donate QR, og:image cards, `app/sitemap.ts` and `app/robots.ts`.
 7. **A fresh-agent code review** (user rule: a different agent reviews; read the test diff first). No test suite exists yet. Consider adding one before the bigger changes.
-8. **Housekeeping:**
+7. **Housekeeping:**
    - Re-export the canvas renders, which still show the old logo.
    - Brand-mark glow: keep the current strength or make it subtler (user's call).
    - The nav artboards show the original Privacy hub under the bars, not the v2 hub.
