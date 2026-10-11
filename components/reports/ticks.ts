@@ -1,6 +1,8 @@
 // Tick builders for XYChart (server side, so labels are exact and serialisable).
+import { scaleLinear } from 'd3-scale';
 import type { Tick } from './XYChart';
 import { compact, monthYear, year } from '@/lib/format';
+import { axisLabels, type ValueFormat } from '@/components/charts/valueFormat';
 
 export const dayMs = (d: string) => Date.parse(`${d}T00:00:00Z`);
 
@@ -19,6 +21,14 @@ export function dateTicks(from: string, to: string, every: 'month' | 'quarter' |
   }
   return out;
 }
+
+/** Evenly spaced value ticks over [lo, hi] (niced), labelled with one precision taken from the step: never "1.5|2|2". */
+export function valueTicks(lo: number, hi: number, f: ValueFormat, count = 5): Tick[] {
+  const ts = scaleLinear().domain([lo, hi]).nice(count).ticks(count);
+  const { labels } = axisLabels(ts, f);
+  return ts.map((v, i) => ({ v, label: labels[i] }));
+}
+
 /** Decade ticks for a log dollar axis: $0.01, $1, $100, $10K … */
 export function usdDecades(lo: number, hi: number): Tick[] {
   const out: Tick[] = [];

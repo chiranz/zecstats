@@ -124,31 +124,81 @@ function inline(src: Element, dst: Element) {
   for (let i = 0; i < src.children.length; i++) if (dst.children[i]) inline(src.children[i], dst.children[i]);
 }
 
-export async function svgToPng(svg: SVGSVGElement, title: string, caption: string): Promise<Blob> {
+type LegendItem = { label: string; color: string; dash?: string | null; line?: boolean };
+/** A colour as canvas understands it: CSS variables are resolved; patterns and gradients fall back to `fb`. */
+function paint(c: string, fb: string): string {
+  const v = c.match(/^var\((--[\w-]+)/);
+  const out = v ? getComputedStyle(document.documentElement).getPropertyValue(v[1]).trim() : c;
+  return !out || /url\(|gradient/.test(out) ? fb : out;
+}
+
+/**
+ * The plotted SVG as a PNG: title, then a key row (one swatch + label per visible series, the axis unit and the date
+ * range, read from the chart's data-legend / data-unit / data-range), the plot, and the caption.
+ * Charts that don't publish a legend export without the key row.
+ */
+export async function svgToPng(svg: SVGSVGElement, title: string, caption: string, legend?: LegendItem[]): Promise<Blob> {
   const box = svg.getBoundingClientRect();
   const w = Math.round(box.width), h = Math.round(box.height);
+  let items: LegendItem[] = legend ?? [];
+  if (!legend) try { items = JSON.parse(svg.dataset.legend ?? '[]'); } catch { items = []; }
+  const meta = [svg.dataset.unit, svg.dataset.range].filter(Boolean).join(' · ');
   const clone = svg.cloneNode(true) as SVGSVGElement;
   inline(svg, clone);
+  clone.querySelectorAll('[data-noexport]').forEach((el) => el.remove()); // hover line and dots
   clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
   clone.setAttribute('width', String(w));
   clone.setAttribute('height', String(h));
   const url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(clone)], { type: 'image/svg+xml' }));
   const img = new Image();
   await new Promise<void>((res, rej) => { img.onload = () => res(); img.onerror = () => rej(new Error('svg')); img.src = url; });
-  const scale = 2, pad = 24, top = 52, bottom = 34;
+  const root = getComputedStyle(document.documentElement);
+  const tok = (n: string, fb: string) => root.getPropertyValue(n).trim() || fb;
+  const muted = tok('--muted', '#7f9c89'), text2 = tok('--text-2', '#b9cfc0');
+  const scale = 2, pad = 24, W = w + pad * 2;
+  // lay the key out first (it wraps), so the canvas is tall enough
+  const g0 = document.createElement('canvas').getContext('2d')!;
+  g0.font = '400 12px ui-monospace, monospace';
+  const rows: { x: number; it: LegendItem | null; text: string }[][] = [[]];
+  let cx = 0;
+  const add = (it: LegendItem | null, text: string) => {
+    const wd = (it ? 22 : 0) + g0.measureText(text).width + 18;
+    if (cx && cx + wd > w) { rows.push([]); cx = 0; }
+    rows.at(-1)!.push({ x: cx, it, text });
+    cx += wd;
+  };
+  items.forEach((it) => add(it, it.label));
+  if (meta) add(null, meta);
+  const keyH = items.length || meta ? rows.length * 20 + 6 : 0;
+  const top = 46 + keyH, bottom = 34;
   const c = document.createElement('canvas');
-  c.width = (w + pad * 2) * scale; c.height = (h + top + bottom) * scale;
+  c.width = W * scale; c.height = (h + top + bottom) * scale;
   const g = c.getContext('2d')!;
   g.scale(scale, scale);
-  const root = getComputedStyle(document.documentElement);
-  g.fillStyle = root.getPropertyValue('--card').trim() || '#0b140e';
-  g.fillRect(0, 0, w + pad * 2, h + top + bottom);
-  g.fillStyle = root.getPropertyValue('--value').trim() || '#ecf8ef';
+  g.fillStyle = tok('--card', '#0b140e');
+  g.fillRect(0, 0, W, h + top + bottom);
+  g.fillStyle = tok('--value', '#ecf8ef');
   g.font = '600 16px ui-monospace, monospace';
-  g.fillText(title, pad, 32);
+  g.fillText(title, pad, 30);
+  g.font = '400 12px ui-monospace, monospace';
+  rows.forEach((r, ri) => {
+    const yy = 46 + ri * 20 + 10;
+    for (const { x, it, text } of r) {
+      const px = pad + x;
+      if (it) {
+        const col = paint(it.color, muted);
+        if (it.line) {
+          g.strokeStyle = col; g.lineWidth = 2.5;
+          g.setLineDash(it.dash ? it.dash.split(/[\s,]+/).map(Number).filter((v) => v > 0) : []);
+          g.beginPath(); g.moveTo(px, yy); g.lineTo(px + 16, yy); g.stroke(); g.setLineDash([]);
+        } else { g.fillStyle = col; g.fillRect(px + 3, yy - 5, 10, 10); }
+      }
+      g.fillStyle = it ? text2 : muted;
+      g.fillText(text, px + (it ? 22 : 0), yy + 4);
+    }
+  });
   g.drawImage(img, pad, top, w, h);
-  g.fillStyle = root.getPropertyValue('--muted').trim() || '#7f9c89';
-  g.font = '400 11px ui-monospace, monospace';
+  g.fillStyle = muted;
   g.fillText(caption, pad, top + h + 22);
   URL.revokeObjectURL(url);
   return await new Promise<Blob>((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error('png'))), 'image/png'));

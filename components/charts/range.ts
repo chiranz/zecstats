@@ -2,8 +2,8 @@
 // (same names and meaning as the live site) and the URL helpers. Pure functions, safe on the server.
 
 export type RangeKey = '1M' | '3M' | '6M' | '9M' | '1Y' | '2Y' | '5Y' | 'YTD' | 'ALL';
-/** Days back from the last date. YTD has no fixed length (it starts on 1 January of the last date's year). */
-export const RANGE_DAYS: Record<RangeKey, number> = { '1M': 31, '3M': 92, '6M': 183, '9M': 275, '1Y': 366, '2Y': 731, '5Y': 1827, YTD: NaN, ALL: Infinity };
+/** Days a preset keeps, the last date included. YTD has no fixed length (it starts on 1 January of the last date's year). */
+export const RANGE_DAYS: Record<RangeKey, number> = { '1M': 30, '3M': 91, '6M': 182, '9M': 273, '1Y': 365, '2Y': 730, '5Y': 1826, YTD: NaN, ALL: Infinity };
 export const RANGE_NAME: Record<RangeKey, string> = { '1M': 'Last month', '3M': 'Last 3 months', '6M': 'Last 6 months', '9M': 'Last 9 months', '1Y': 'Last year', '2Y': 'Last 2 years', '5Y': 'Last 5 years', YTD: 'Year to date', ALL: 'All history' };
 export const RANGE_ORDER: RangeKey[] = ['1M', '3M', '6M', '9M', '1Y', '2Y', '5Y', 'YTD', 'ALL'];
 
@@ -24,7 +24,7 @@ const shift = (d: string, days: number) => new Date(Date.parse(`${d}T00:00:00Z`)
 /** First date a preset keeps, given the data's first and last dates. */
 export function presetFrom(r: RangeKey, first: string, last: string): string {
   const days = RANGE_DAYS[r];
-  const from = r === 'YTD' ? `${last.slice(0, 4)}-01-01` : Number.isFinite(days) ? shift(last, days) : first;
+  const from = r === 'YTD' ? `${last.slice(0, 4)}-01-01` : Number.isFinite(days) ? shift(last, days - 1) : first;
   return from < first ? first : from;
 }
 
