@@ -284,7 +284,8 @@ export function TimeSeriesChart(props: TimeSeriesChartProps) {
               return (
                 <g key={i}>
                   <line x1={ex} x2={ex} y1={0} y2={ih} stroke="var(--axis)" strokeDasharray="2 4" />
-                  <text x={ex + 5} y={10 + (i % 2) * 13} style={{ fontSize: 10.5 }}>{ev.label}</text>
+                  {/* near the right edge the label goes left of its line so it stays inside the plot */}
+                  <text x={ex > iw - 80 ? ex - 5 : ex + 5} textAnchor={ex > iw - 80 ? 'end' : 'start'} y={10 + (i % 2) * 13} style={{ fontSize: 10.5 }}>{ev.label}</text>
                 </g>
               );
             })}
