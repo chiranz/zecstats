@@ -40,22 +40,21 @@ export default async function NodePage() {
       <Masthead
         crumbs={[{ label: 'Tools' }, { label: 'Network' }, { label: 'Node status' }]}
         title="Is our Zcash node healthy?"
-        lede={<>{fresh.synced ? 'Yes' : 'Not quite'}: our Zebra node is <b className="value">{fresh.synced ? 'fully synced' : 'catching up'}</b> at block <b className="num value">{num(lb.height)}</b>, {behind <= 0 ? 'level with' : `${behind} block${behind === 1 ? '' : 's'} behind`} the network’s tip, and the last block arrived {ago} before the snapshot.</>}
+        lede={<>{fresh.synced ? 'Yes' : 'Not quite'}: our Zebra node is <b className="value">{fresh.synced ? 'fully synced' : 'catching up'}</b> at block <b className="num value">{num(lb.height)}</b>, {behind <= 0 ? 'level with' : `${behind} block${behind === 1 ? '' : 's'} behind`} the network’s tip, and the last block arrived {ago} ago.</>}
       />
 
       <section className="hero" aria-label="Answer">
         <div className={r.heroGrid}>
           <div className="stack" style={{ gap: 14 }}>
-            <p className="kicker">Node state at the snapshot · {dateLong(captured)} {new Date(captured).toISOString().slice(11, 16)} UTC</p>
+            <p className="kicker">Node state · checked {dateLong(captured)} {new Date(captured).toISOString().slice(11, 16)} UTC</p>
             <p className="figure md" style={{ color: fresh.synced ? 'var(--up)' : 'var(--warn)' }}>{fresh.synced ? 'Synced' : 'Catching up'}</p>
             <p className="note">Every chain figure on this site is read from this node. It is a Zebra full node — one of the two independent Zcash implementations — and it validates every block against the consensus rules itself rather than accepting anyone’s word for them.</p>
-            <p className="small">Block counter updates every 5 seconds on the live site; this redesign shows the captured state.</p>
           </div>
           <dl className={r.kv}>
             <dt>Node software</dt><dd>{NODE_VERSION}</dd>
             <dt>Latest indexed block</dt><dd>{num(lb.height)} / {num(lb.node_estimated_height)}<small>{pct((lb.height / lb.node_estimated_height) * 100, 1)} of the network tip</small></dd>
             <dt>Latest indexed day</dt><dd>{dateLong(lb.time * 1000)}<small>UTC, the day of the latest block</small></dd>
-            <dt>Last block seen</dt><dd>{ago} before the snapshot</dd>
+            <dt>Last block seen</dt><dd>{ago} ago</dd>
             <dt>Indexing rate</dt><dd>{num(lb.indexing_rate_per_min, 1)} blocks/min<small>the chain makes 0.8 a minute at target</small></dd>
             <dt>Blocks remaining to sync</dt><dd>{num(Math.max(0, behind))}</dd>
             <dt>UTXO backfill height</dt><dd>{num(bf.utxo_backfill_height)}</dd>
@@ -85,7 +84,7 @@ export default async function NodePage() {
         />
       </Card>
 
-      <Section title="How far has each index caught up?" aside={<span className="small">chain height {num(bf.chain_height)} at the snapshot</span>}>
+      <Section title="How far has each index caught up?" aside={<span className="small">chain height {num(bf.chain_height)}</span>}>
         <div className="tbl-wrap">
           <table className="t">
             <caption className="sr-only">Index backfill status</caption>
@@ -112,7 +111,7 @@ export default async function NodePage() {
 
       <More summary="Why read from our own node at all?">
         <p>That is the difference between verified and trusted. A site reading from an exchange API is repeating what that exchange says the supply is; this one is repeating what the Zcash network agreed it is. Supply and shielded pool balances in particular are read from the node’s own per-block snapshots rather than reconstructed from a block-reward formula — a formula gets slow start, Blossom and NU6 wrong, and consensus cannot.</p>
-        <p>When indexing falls behind, the charts say so rather than quietly showing stale numbers. Not shown here: the live site’s “blocks indexed in the last 6 hours” table, which is computed on the server per hour and is not in the snapshot’s API data.</p>
+        <p>When indexing falls behind, the charts say so rather than quietly showing stale numbers.</p>
       </More>
 
       <Tiles items={[

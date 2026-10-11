@@ -370,7 +370,7 @@ export default async function PrivacyPage() {
               { key: 'x', label: 'Crossing the turnstile', color: 'var(--p-transparent)', type: 'bar', values: p.usage.orchardCross },
             ]} stacked format="count" ranges={false} showLegend={false} height={220}
               ariaLabel="Orchard actions per day over the last three months, split into fully shielded and crossing the turnstile" />
-            <p className="small">Orchard actions per day, last 3 months · Ironwood internal activity is not published in the snapshot</p>
+            <p className="small">Orchard actions per day, last 3 months · Ironwood internal activity is not published</p>
           </article>
         </div>
         <article className="card">
@@ -396,7 +396,7 @@ export default async function PrivacyPage() {
 
       <More summary="How these privacy numbers are computed">
         <p className="note">Pool balances and every shield/deshield flow are exact: they come from consensus-enforced per-block pool totals on our Zebra node. What stays hidden is everything inside a pool — who holds what, and who pays whom. Transparent-activity buckets, round-trip matches and the suspicion index are heuristics built on top of those exact totals, and are labelled as such. Dollar values use {usd(p.price)} ({dateLong(now.date)}).</p>
-        <p className="note">Shielding counts value moving from transparent into any shielded pool; value moving straight from Orchard into Ironwood is pool-to-pool and is left out of both sides. The round-amount table and the round-trip counts are taken from the live Privacy tips and Wall of Shame pages, generated {dateLong(ROUND_AMOUNTS.generated)}.</p>
+        <p className="note">Shielding counts value moving from transparent into any shielded pool; value moving straight from Orchard into Ironwood is pool-to-pool and is left out of both sides. The round-amount table and the round-trip counts are taken from the Privacy tips and Wall of Shame pages, generated {dateLong(ROUND_AMOUNTS.generated)}.</p>
       </More>
 
       <div className={s.readNext}>

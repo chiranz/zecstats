@@ -97,7 +97,7 @@ export default async function ActivityPage() {
       <div className="grid2">
         <Card
           title="What sits in long-term storage?"
-          takeaway={<><b>{compact(zat(a.storage.long_term_zat), 2)} ZEC</b> of transparent coins haven’t moved in a year or more — {pct((zat(a.storage.long_term_zat) / storTotal) * 100, 0)} of the {compact(storTotal, 2)} ZEC in this snapshot.</>}
+          takeaway={<><b>{compact(zat(a.storage.long_term_zat), 2)} ZEC</b> of transparent coins haven’t moved in a year or more — {pct((zat(a.storage.long_term_zat) / storTotal) * 100, 0)} of the {compact(storTotal, 2)} transparent ZEC counted.</>}
           foot={`Unspent transparent coins by age, as of ${dateLong(a.storage.date)} · same data as Transparent ZEC by Age`}
         >
           <HBars
@@ -109,7 +109,7 @@ export default async function ActivityPage() {
         <Card
           title="Which way is value moving?"
           takeaway={<>Net <b>{netNow >= 0 ? 'into' : 'out of'}</b> the shielded pools: <b>{netNow >= 0 ? '+' : '−'}{num(Math.abs(netNow))} ZEC</b> in the last 7 days, {netNow < netPrior ? 'less than' : 'more than'} the {num(Math.abs(netPrior))} the week before.</>}
-          foot="Shield and deshield legs into and out of Sprout + Sapling + Orchard only, as the live page defines it · ZEC"
+          foot="Shield and deshield legs into and out of Sprout + Sapling + Orchard only · ZEC"
         >
           <Table<{ k: string; now: number; prior: number; strong?: boolean }>
             caption="Shielding direction, last 7 days vs prior 7 days"

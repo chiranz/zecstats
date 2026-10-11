@@ -235,7 +235,7 @@ export function NewsFeed({ items: initial, refTs, nextBefore, nowCard, sigmaCard
           </Fragment>
         ))}
         {canMore && <button type="button" className={`btn ${s.moreBtn}`} onClick={loadMore} disabled={loading}>{loading ? 'Loading…' : 'Load older events'}</button>}
-        {oldestShown && <p className={s.end}>Showing events back to {dateLong(oldestShown.ts * 1000)}{canMore ? ' · the live feed covers 5+ years.' : ' · that is everything in this snapshot; the live feed covers 5+ years.'}</p>}
+        {oldestShown && <p className={s.end}>Showing events back to {dateLong(oldestShown.ts * 1000)}{canMore ? '' : ' · that is the start of the feed.'}</p>}
       </div>
       <aside className={s.rail} aria-label="Context and filters">
         {nowCard}

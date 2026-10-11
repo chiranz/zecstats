@@ -18,7 +18,7 @@ export type LookupBucket = { bucket: string; lo: number; hi: number | null; shie
 export type LookupRound = { dir: Dir; items: [number, number][] };
 type LiveOption = { amount: number; count: number; matched: boolean; delta_pct: number };
 type Live = { rounded_to: number; yours?: { count: number; matched: boolean } | null; options: LiveOption[] };
-type Result = { kind: 'live'; amount: number; dir: Dir; d: Live } | { kind: 'snap'; amount: number; dir: Dir; why: string } | { kind: 'err'; msg: string };
+type Result = { kind: 'live'; amount: number; dir: Dir; d: Live } | { kind: 'snap'; amount: number; dir: Dir } | { kind: 'err'; msg: string };
 
 const EXAMPLES = ['0.1', '2.5', '10', '546.3379'];
 const verb = (d: Dir) => (d === 'shield' ? 'shielded' : 'deshielded');
@@ -40,14 +40,12 @@ export function AmountLookup({ initialAmount, initialDir, buckets, rounds }: { i
     if (!(a > 0) || a > 1e9) { setRes({ kind: 'err', msg: 'Enter an amount between 0 and 1,000,000,000 ZEC.' }); return; }
     setBusy(true);
     try { history.replaceState(null, '', `?amount=${encodeURIComponent(String(a))}&dir=${d}`); } catch { /* ignore */ }
-    let why = 'The exact-amount index is not part of this snapshot.';
     try {
       const r = await fetch(`/api/amount-suggest?amount=${encodeURIComponent(String(a))}&dir=${d}`);
       const j = await r.json();
       if (j && Array.isArray(j.options)) { setRes({ kind: 'live', amount: a, dir: d, d: j as Live }); setBusy(false); return; }
-      if (j?.status) why = String(j.status);
-    } catch { why = 'The lookup service did not answer.'; }
-    setRes({ kind: 'snap', amount: a, dir: d, why });
+    } catch { /* fall back to the amount band */ }
+    setRes({ kind: 'snap', amount: a, dir: d });
     setBusy(false);
   }, []);
 
@@ -135,7 +133,7 @@ export function AmountLookup({ initialAmount, initialDir, buckets, rounds }: { i
                     ? <>{ramt(near[0].amount)} ZEC is itself one of the most-used round amounts: <b className="value">{num(near[0].count)}</b> {noun(res.dir)} sit nearest it.</>
                     : best ? <>The biggest nearby crowd is <b className="value">{ramt(best.amount)} ZEC</b> ({num(best.count)} {noun(res.dir)}, {best.delta > 0 ? '+' : ''}{best.delta.toFixed(1)}% from yours).</> : null}
                 </p>
-                <p className="small"><Icon name="info" size={13} /> {res.why} Exact counts for {ramt(res.amount)} ZEC come from the live index; the figure above is the size of its amount band.</p>
+                <p className="small"><Icon name="info" size={13} /> The figure above counts every {noun(res.dir, 1)} in the amount band that {ramt(res.amount)} ZEC falls in.</p>
               </div>
               <div className="tbl-wrap">
                 <table className="t">

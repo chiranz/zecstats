@@ -260,7 +260,7 @@ export const poolProfit: ChartDef = {
       indexValue: '5 histograms',
       ranges: false,
       dataThrough: through,
-      notes: [`Price line: ${fmt(d.price_now, 'usd')} (latest snapshot price). Transparent is exact; shielded pools use the deposit model.`],
+      notes: [`Price line: ${fmt(d.price_now, 'usd')} (latest price). Transparent is exact; shielded pools use the deposit model.`],
     };
   },
 };

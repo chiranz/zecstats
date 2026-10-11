@@ -41,7 +41,7 @@ export const price: ChartDef = {
       heading: 'Methodology',
       paragraphs: [
         'The partial current day is never plotted, so the chart, the headline and the range statistics all end on the same date.',
-        'The moving averages are linearly weighted over 350 and 1,400 daily closes (50 and 200 weeks), as on the live site, so they start in late 2017 and mid-2020.',
+        'The moving averages are linearly weighted over 350 and 1,400 daily closes (50 and 200 weeks), so they start in late 2017 and mid-2020.',
         'The first print in Oct 2016 ($19,077) dwarfs everything after it on a linear axis — switch to Log for 5Y and ALL.',
         'For price against what the average coin actually cost, see realized price: the gap between the two is what most of the valuation charts are built on.',
       ],

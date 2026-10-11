@@ -19,7 +19,8 @@ const Z = 1e8;
 const z = (v: number) => v / Z;
 const median = (xs: number[]) => { const s = [...xs].sort((a, b) => a - b); const m = s.length >> 1; return s.length ? (s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2) : 0; };
 
-export function HopsReport({ initial }: { initial: ShieldHops }) {
+/** `fixed`: only the initial view has data, so the other views are disabled. */
+export function HopsReport({ initial, fixed = false }: { initial: ShieldHops; fixed?: boolean }) {
   const [data, setData] = useState(initial);
   const [cls, setCls] = useState<Cls>(initial.class);
   const [drop, setDrop] = useState(initial.repeat === 'drop');
@@ -37,7 +38,6 @@ export function HopsReport({ initial }: { initial: ShieldHops }) {
       const gotCls = j.class as Cls, gotDrop = j.repeat === 'drop';
       if (gotCls !== c || gotDrop !== dr) {
         setCls(gotCls); setDrop(gotDrop);
-        setNotice(`That view isn’t in this snapshot — showing ${CLASSES.find((x) => x[0] === gotCls)?.[1].toLowerCase()}, repeated amount ${gotDrop ? 'dropped' : 'kept'}.`);
       }
     } catch {
       setNotice('Could not load /api/shield-hops — showing the last view.');
@@ -73,12 +73,12 @@ export function HopsReport({ initial }: { initial: ShieldHops }) {
         <div className={ui.grp}>
           <span className={ui.glbl} id="hv">Which hops</span>
           <div className="seg" role="group" aria-labelledby="hv">
-            {CLASSES.map(([k, l]) => <button key={k} type="button" aria-pressed={cls === k} disabled={busy} onClick={() => { setCls(k); void load(k, days, drop); }}>{l}</button>)}
+            {CLASSES.map(([k, l]) => <button key={k} type="button" aria-pressed={cls === k} disabled={busy || (fixed && k !== cls)} onClick={() => { setCls(k); void load(k, days, drop); }}>{l}</button>)}
           </div>
         </div>
         <div className={ui.grp}>
           <span className={ui.glbl}>Robots</span>
-          <label className="check" style={{ height: 34 }}><input type="checkbox" checked={drop} disabled={busy} onChange={(e) => { setDrop(e.target.checked); void load(cls, days, e.target.checked); }} />Drop the repeated amount</label>
+          <label className="check" style={{ height: 34 }}><input type="checkbox" checked={drop} disabled={busy || fixed} onChange={(e) => { setDrop(e.target.checked); void load(cls, days, e.target.checked); }} />Drop the repeated amount</label>
         </div>
         <div className={ui.grp}>
           <span className={ui.glbl} id="hr">Range</span>

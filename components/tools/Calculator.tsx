@@ -19,7 +19,6 @@ const FREQS: { key: Freq; label: string; noun: string; per: string }[] = [
 type AssetKey = 'zec' | 'btc';
 const ASSET: Record<AssetKey, { label: string; color: string }> = { zec: { label: 'Zcash', color: 'var(--zec)' }, btc: { label: 'Bitcoin', color: 'var(--btc)' } };
 // On the live site, but their prices are not part of this snapshot (the live /api/dca fetches them per request).
-const NOT_IN_SNAPSHOT = 'Ethereum, Monero, Solana, XRP, BNB, Dogecoin, Cardano, Tron, Litecoin, Dash, NEAR, gold, SPY and QQQ';
 
 const pctTxt = (v: number | null, d = 1) => (v == null ? '—' : `${v < 0 ? '▼ ' : ''}${num(Math.abs(v * 100), d)}%`);
 const isoOk = (v: string) => /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(Date.parse(`${v}T00:00:00Z`));
@@ -181,13 +180,12 @@ export function Calculator({ prices }: { prices: PriceArrays }) {
               </div>
             </div>
             <div className={s.fg} role="group" aria-labelledby="dca-cmp">
-              <div className="spread"><span className={s.flbl} id="dca-cmp">Compare with</span><span className="small mono">{withBtc ? 1 : 0} of 1 in this snapshot</span></div>
+              <div className="spread"><span className={s.flbl} id="dca-cmp">Compare with</span><span className="small mono">{withBtc ? 1 : 0} selected</span></div>
               <span className={s.fh}>Zcash is always shown.</span>
               <span className={s.cgL}>Crypto</span>
               <div className={s.chips}>
                 <button type="button" className="chip" aria-pressed={withBtc} onClick={() => setWithBtc((v) => !v)}><i className="sw" style={{ background: 'var(--btc)', borderRadius: '50%', width: 8, height: 8 }} />Bitcoin</button>
               </div>
-              <p className={s.fh}>The live calculator also offers {NOT_IN_SNAPSHOT}. Their daily prices are not in this snapshot, so they are left out here rather than guessed.</p>
             </div>
             <div className={s.share}>
               <CopyButton label="Share this result" done="Link copied" />

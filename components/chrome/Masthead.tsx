@@ -31,7 +31,6 @@ export async function Masthead({ kicker, crumbs, title, lede, children, freshnes
         <div className="fresh">
           <span className="live"><i aria-hidden="true" />Node {f.synced ? 'synced' : 'catching up'} · block <span className="num">{num(f.height)}</span></span>
           <span>Data through {dateLong(f.dataThrough)} · {cadence}</span>
-          <span>Redesign concept · figures from a zecstats.com snapshot, {dateLong(f.capturedAt)}</span>
         </div>
       )}
     </header>

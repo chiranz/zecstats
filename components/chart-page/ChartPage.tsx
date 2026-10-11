@@ -165,15 +165,14 @@ async function NotBuilt({ slug, crumbs, groupTitle, title, failed = false }: { s
     <div className={s.page}>
       <Masthead crumbs={crumbs} title={title ?? (await liveTitle(slug))} lede={live?.d} />
       <div className={s.empty} role="status">
-        <span className="kicker">{failed ? 'Data unavailable' : 'Not built yet'}</span>
+        <span className="kicker">{failed ? 'Data unavailable' : 'Coming soon'}</span>
         <p>
           {failed
-            ? 'This chart’s data could not be read from the snapshot, so nothing is drawn rather than a wrong line.'
-            : `This chart is part of the ${groupTitle} group, but its redesigned page hasn’t been built yet in this concept.`}
+            ? 'This chart’s data could not be loaded, so nothing is drawn rather than a wrong line.'
+            : `This chart is part of the ${groupTitle} group. Its page is coming soon.`}
         </p>
         <div className="row">
           <Link className="btn" href="/charts">All 58 charts</Link>
-          <a className="btn ghost" href={`https://zecstats.com/chart/${slug}`} rel="noopener">Open on zecstats.com <Icon name="external" size={14} /></a>
         </div>
       </div>
     </div>

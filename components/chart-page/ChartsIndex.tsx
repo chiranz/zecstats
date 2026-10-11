@@ -199,7 +199,7 @@ function Row({ it, also }: { it: IndexItem; also?: string }) {
         <span>{it.title}{it.ext && <Ext />}{also && <span className={s.also}>also in {also}</span>}</span>
       </span>
       <Spark values={it.spark} />
-      <span className={`${s.v} ${descriptor || !it.built ? s.d : ''}`}>{it.built ? it.value : '—'}{!it.built && <span className="sr-only"> (not built yet)</span>}</span>
+      <span className={`${s.v} ${descriptor || !it.built ? s.d : ''}`}>{it.built ? it.value : '—'}{!it.built && <span className="sr-only"> (coming soon)</span>}</span>
       <span className={s.go} aria-hidden="true">→</span>
     </Link>
   );
@@ -219,7 +219,7 @@ function Feature({ it, also }: { it: IndexItem; also?: string }) {
         ) : f?.descriptor ? <span className={`delta ${s.neutral}`}>{f.descriptor}</span> : null}
       </span>
       <Mini values={it.spark} color={f?.color ?? 'var(--zec)'} />
-      <span className={s.fc}>{f ? f.caption : 'Not built yet in this concept'}{also ? ` · also in ${also}` : ''}</span>
+      <span className={s.fc}>{f ? f.caption : 'Coming soon'}{also ? ` · also in ${also}` : ''}</span>
       <span className={s.fo}>Open chart <Icon name="arrow-right" size={13} /></span>
     </Link>
   );

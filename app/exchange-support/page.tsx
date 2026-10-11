@@ -36,7 +36,7 @@ export default async function ExchangeSupportPage() {
       </Masthead>
 
       {ex.stale && (
-        <Callout title={`Last verified ${dateLong(ex.last_updated)} — ${ageDays} days before this snapshot`} tone="warn">
+        <Callout title={`Last verified ${dateLong(ex.last_updated)} — ${ageDays} days ago`} tone="warn">
           The country list is checked by hand about once a month, so a recent listing or ban may not be reflected yet.
         </Callout>
       )}

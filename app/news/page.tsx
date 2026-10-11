@@ -78,7 +78,7 @@ export default async function NewsPage() {
       <Masthead
         crumbs={[{ label: 'News' }]}
         title="What just happened on Zcash"
-        lede={<>A feed our node writes by itself: all-time highs, big daily moves and anything far from its 30-day norm, measured in σ. Newest first; the latest event was {lastAgo} h before this snapshot.</>}
+        lede={<>A feed our node writes by itself: all-time highs, big daily moves and anything far from its 30-day norm, measured in σ. Newest first; the latest event was {lastAgo} h ago.</>}
       />
       <NewsFeed items={items} refTs={refTs} nextBefore={news.nextBefore} nowCard={nowCard} sigmaCard={sigmaCard} />
       <Tiles

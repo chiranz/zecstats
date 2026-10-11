@@ -1,8 +1,8 @@
-/** A segmented control whose other options are visible but switched off — the snapshot holds only `active`. */
-export function FixedSeg({ labelledBy, options, active, why = 'Not in this snapshot' }: { labelledBy: string; options: string[]; active: string; why?: string }) {
+/** A segmented control whose other options are visible but disabled — only `active` has data. */
+export function FixedSeg({ labelledBy, options, active }: { labelledBy: string; options: string[]; active: string }) {
   return (
     <div className="seg" role="group" aria-labelledby={labelledBy}>
-      {options.map((k) => <button key={k} type="button" aria-pressed={k === active} disabled={k !== active} title={k === active ? undefined : why}>{k}</button>)}
+      {options.map((k) => <button key={k} type="button" aria-pressed={k === active} disabled={k !== active}>{k}</button>)}
     </div>
   );
 }

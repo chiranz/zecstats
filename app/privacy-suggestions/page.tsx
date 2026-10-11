@@ -158,7 +158,7 @@ export default async function PrivacyTipsPage() {
             <p>Bars are scaled within each range, so the 1,000–10,000 ZEC list is readable even though it holds far fewer transactions than the 1–10 ZEC list.</p>
           </Prose>
           <Prose>
-            <p>Generated {ps.generated} from {num(ps.shieldTx)} shielding + {num(ps.deshieldTx)} deshielding transactions. The live site publishes the same lists as JSON at <span className="mono">/privacy-suggestions.json</span>.</p>
+            <p>Generated {ps.generated} from {num(ps.shieldTx)} shielding + {num(ps.deshieldTx)} deshielding transactions. The same lists are published as JSON at <span className="mono">/privacy-suggestions.json</span>.</p>
             <p>This is guidance from aggregate counts, not a privacy guarantee: timing, address reuse and wallet behaviour can still link transactions.</p>
           </Prose>
         </MoreCols>

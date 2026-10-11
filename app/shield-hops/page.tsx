@@ -5,6 +5,7 @@ import { HopsReport } from '@/components/privacy-tools/HopsReport';
 import { MoreCols, Prose } from '@/components/privacy-tools/parts';
 import { zamt } from '@/components/privacy-tools/fmt';
 import { getActivity, getPrivacySuggestions, getShieldHops, getWallOfShame } from '@/lib/data/privacy-tools';
+import { DATA_SOURCE } from '@/lib/data/core';
 import { compact, num, zat } from '@/lib/format';
 
 export const metadata: Metadata = {
@@ -26,7 +27,7 @@ export default async function ShieldHopsPage() {
         lede={<>Usually not much: the median shield-bound hop is <b className="value">{zamt(med)} ZEC</b>. The mean is {zamt(mean)} ZEC, {num(mean / med, 0)}× higher, because a handful of very large hops pull the average up.</>}
       />
 
-      <HopsReport initial={hops} />
+      <HopsReport initial={hops} fixed={DATA_SOURCE !== 'live'} />
 
       <More summary="What this measures, and what it cannot">
         <MoreCols>

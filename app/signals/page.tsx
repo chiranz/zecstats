@@ -87,7 +87,7 @@ export default async function SignalsPage() {
         <p><b>Under three months is a short record.</b> A handful of calls cannot tell skill from luck, and one big move decides most of the result.</p>
         <p><b>Fills are idealised.</b> Replayed calls trade at the day&apos;s closing price, live ones at the price in the message. Real fills would differ, cash earns nothing here, and taxes are ignored.</p>
         <p><b>Thresholds re-fit daily,</b> so the suggested share can move a long way on a small change in the score. That shows up as trades, and the fees are counted.</p>
-        <p><b>How this page computes the record.</b> The replay above is recomputed here from the call log and daily closes; the live page reports $18,155 following and $21,601 holding through 11 Oct. The call log itself is transcribed from the live page, which has no data API for it.</p>
+        <p><b>How this page computes the record.</b> The replay above is recomputed from the call log and daily closes.</p>
       </More>
       <Tiles
         items={[

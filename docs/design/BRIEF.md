@@ -1,9 +1,7 @@
 # ZEC Stats redesign — shared brief for every redesign agent
 
 You are a senior product designer building artboards for a design canvas that proposes a redesign of https://zecstats.com
-(a Zcash network-statistics site run by someone else; the user is pitching this redesign to the owner). The canvas is
-a CONCEPT, so every page carries a small "Redesign concept · figures from a zecstats.com snapshot, 11 Oct 2026" line in its
-freshness area.
+(a Zcash network-statistics site run by someone else; the user is pitching this redesign to the owner). Show the product as it will ship — no mock/snapshot/concept wording in the UI.
 
 ## 0. Files you must read first
 - This brief (all of it).

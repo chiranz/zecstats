@@ -48,7 +48,7 @@ export default async function Home() {
               <span className="live"><i aria-hidden="true" />Node {f.synced ? 'synced' : 'catching up'}</span>
               <span>block <span className="num">{num(f.height)}</span></span>
               <span>data through {dateLong(f.dataThrough)}</span>
-              <span>snapshot {asOf} · concept</span>
+              <span>updates daily</span>
             </p>
           </div>
           <p className={s.lede}>Computed from a Zebra full node — not copied from an exchange API. {total} charts, updated daily.</p>
@@ -149,7 +149,7 @@ export default async function Home() {
       </KpiBand>
 
       {/* ---------- Today in Zcash ---------- */}
-      <Section id="today" title="Today in Zcash" aside={<span className="small">Written from the {asOf} snapshot</span>}>
+      <Section id="today" title="Today in Zcash" aside={<span className="small">Updated {asOf}</span>}>
         <div className={s.today}>
           <article className="card">
             <p className="kicker">Five-year outlook · ZEC vs Bitcoin</p>

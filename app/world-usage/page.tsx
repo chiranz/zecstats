@@ -57,7 +57,7 @@ export default async function WorldUsagePage() {
         <div className={r.grp}>
           <span className={r.glbl} id="g-period">Period</span>
           <div className={r.grpRow}>
-            <FixedSeg labelledBy="g-period" options={['1M', '3M', '6M', '1Y', 'ALL']} active="ALL" why="Only the all-time capture is in this snapshot" />
+            <FixedSeg labelledBy="g-period" options={['1M', '3M', '6M', '1Y', 'ALL']} active="ALL" />
             <span className={r.count}><b>{dateLong(from)} – {dateLong(to)}</b> · {num(clock.blocks)} blocks · {compact(clock.txs, 2)} transactions</span>
           </div>
         </div>
@@ -138,7 +138,7 @@ export default async function WorldUsagePage() {
 
       <More summary="How to read it, and what it cannot show">
         <p>Each transaction is counted in the UTC hour of the block that mined it. Hours are compared as shares of the same 24-hour total, so the shape is what matters, not the level. Exchange-driven activity follows trading hours, so the peak says as much about where exchanges and bots run as about where people live.</p>
-        <p>The live page also overlays an animated day/night map shaded by exchange access, and a curve of the share of the world’s population awake each hour. The population-by-hour model behind that curve is computed in the browser and is not part of the snapshot, so it is not reproduced here. Exchange access by country — {pct(ex.access_pop_pct, 0)} of the world’s population can reach a regulated exchange that lists ZEC — is on its own page.</p>
+        <p>Exchange access by country — {pct(ex.access_pop_pct, 0)} of the world’s population can reach a regulated exchange that lists ZEC — is on its own page.</p>
       </More>
 
       <Tiles items={[

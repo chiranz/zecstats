@@ -53,7 +53,7 @@ export default async function SwapsPage() {
         <div className={r.grp}>
           <span className={r.glbl} id="g-win">Window</span>
           <div className={r.grpRow}>
-            <FixedSeg labelledBy="g-win" options={['7d', '14d', '30d']} active="14d" why="Only the 14-day capture is in this snapshot" />
+            <FixedSeg labelledBy="g-win" options={['7d', '14d', '30d']} active="14d" />
             <span className={r.count}><b>{window}</b> · {num(net.sync.total_rows)} swap rows · {usdCompact(net.sync.total_volume_usd, 1)} volume</span>
           </div>
         </div>
@@ -138,7 +138,7 @@ export default async function SwapsPage() {
 
       <More summary="What PageRank adds here, and what it cannot">
         <p>On this window PageRank and raw volume rank the assets almost identically, so read the rank as “how much flows through it”, not as a hidden measure of influence. The useful part is the ratio to market cap: ZEC moves through this protocol far out of proportion to its size.</p>
-        <p>NEAR Intents is one route among many; centralised exchanges are not in this data. Bridged ZEC on NEAR stood at {num(wrappedNow.wrapped_supply)} ZEC on {dateLong(wrappedNow.date)}. The live page draws the network as a force-directed graph; this redesign shows the same ranking as bars and a table, because the graph had no legend, no tooltip and never settled.</p>
+        <p>NEAR Intents is one route among many; centralised exchanges are not in this data. Bridged ZEC on NEAR stood at {num(wrappedNow.wrapped_supply)} ZEC on {dateLong(wrappedNow.date)}.</p>
       </More>
 
       <Tiles items={[

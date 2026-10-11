@@ -83,7 +83,7 @@ export default async function TxSizesPage() {
         <div className={r.grp}>
           <span className={r.glbl} id="g-range">Range</span>
           <div className={r.grpRow}>
-            <FixedSeg labelledBy="g-range" options={['1M', '3M', '6M', '1Y', '5Y', 'ALL']} active="1Y" why="Only the 1-year capture is in this snapshot" />
+            <FixedSeg labelledBy="g-range" options={['1M', '3M', '6M', '1Y', '5Y', 'ALL']} active="1Y" />
             <span className={r.count}><b>{rangeLabel}</b> · {nDays} days</span>
           </div>
         </div>
@@ -93,7 +93,6 @@ export default async function TxSizesPage() {
         </div>
         <div className={r.end}><a className="btn" href="/api/tx-values" download="zec-transparent-tx-sizes.json">Download data</a></div>
       </div>
-      <p className="small" style={{ marginTop: -20 }}>This snapshot holds one capture of the report — transparent → transparent over the trailing year — so the other ranges and views are switched off. The per-day charts below still have their own range control.</p>
 
       <section className="hero" aria-label="Answer">
         <div className={r.heroTop}>

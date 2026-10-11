@@ -32,10 +32,6 @@ export default async function DonatePage() {
           </div>
           <p className="note">Paste it into any Zcash wallet and send any amount. A unified address receives into a shielded pool, so the donation is private by default.</p>
         </div>
-        <div className={s.qr} role="img" aria-label="QR code not included in this concept">
-          <span className="small mono">QR code</span>
-          <span className="small">The live page shows a QR image of this address; it was not part of the captured snapshot.</span>
-        </div>
       </section>
       <Section id="cover" title="What would a donation cover?">
         <div className={s.tiers}>
@@ -50,7 +46,7 @@ export default async function DonatePage() {
         <p className="small">For scale only — send whatever you like to the address above. ZEC equivalents at the live price, ${num(px, 2)} ({dateLong(prices.lastComplete)} close: ${num(prices.zec.at(-1)!, 2)}).</p>
       </Section>
       <More summary="Where the money goes">
-        <p>The site runs its own Zebra full node (block {num(f.height)} at this snapshot) and computes every chain number from it rather than copying an exchange API. The monthly cost is the node&apos;s server, the database and services behind the charts, and the tooling that keeps them updating daily.</p>
+        <p>The site runs its own Zebra full node (now at block {num(f.height)}) and computes every chain number from it rather than copying an exchange API. The monthly cost is the node&apos;s server, the database and services behind the charts, and the tooling that keeps them updating daily.</p>
         <p>There is no progress bar here because the site does not publish what it receives; a shielded address does not reveal it either.</p>
       </More>
       <Tiles

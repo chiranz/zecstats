@@ -98,7 +98,7 @@ export default async function NetworkPage() {
         <p className={r.mastNote}>These are the nodes that accept connections from outside. Many more run behind home routers and firewalls, so no crawler can see them.</p>
       </Masthead>
       <p className="small" style={{ marginTop: -20 }}>
-        Crawler {net.crawl_health.stalled ? 'stalled' : 'active'} · last probe {net.crawl_health.minutes_since_probe} min before the snapshot · index {m.complete ? 'complete' : 'still filling'} · crawl running {m.days_running} days
+        Crawler {net.crawl_health.stalled ? 'stalled' : 'active'} · last probe {net.crawl_health.minutes_since_probe} min ago · index {m.complete ? 'complete' : 'still filling'} · crawl running {m.days_running} days
       </p>
 
       <KpiBand label="Network summary">
@@ -171,7 +171,7 @@ export default async function NetworkPage() {
 
       <Section id="directory" title="Which nodes are visible right now?" aside={<span className="small">{num(known)} addresses known · {net.reachable_total} confirmed reachable in the last 24h</span>}>
         <NodeDirectory rows={rows} clients={CLIENT_ORDER.map((k) => ({ key: k, label: CLIENT_LABEL[k] }))} />
-        <p className="small">Addresses are masked to the first two octets. Sync is measured when a node is indexed; “behind” counts blocks below that node’s own reported tip and our node’s tip at the time ({num(lb.height)} at the snapshot).</p>
+        <p className="small">Addresses are masked to the first two octets. Sync is measured when a node is indexed; “behind” counts blocks below that node’s own reported tip and our node’s tip at the time (currently block {num(lb.height)}).</p>
       </Section>
 
       <details className="more" open>

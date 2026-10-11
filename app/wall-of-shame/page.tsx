@@ -116,11 +116,11 @@ export default async function WallOfShamePage() {
         <MoreCols>
           <Prose>
             <p>A shielded hop only buys privacy if the amount doesn’t fingerprint you. An incident is a transaction that shielded an <b>unusual (non-round) amount</b> and was followed by a deshield of a <b>near-identical amount (within 0.5%)</b> within <b>7 days</b>. We match on both the ZEC amount and the dollar value, with a floor of $1,000.</p>
-            <p>The live list holds {num(n)} incidents worth {usd(totalUsd / 1e6, 0)}M on the way in; the smallest is {usd(minUsd, 0)}, well above the $1,000 floor, so the list appears to be capped at its {num(n)} largest or most recent entries.</p>
+            <p>The list holds {num(n)} incidents worth {usd(totalUsd / 1e6, 0)}M on the way in; the smallest is {usd(minUsd, 0)}, well above the $1,000 floor, so the list appears to be capped at its {num(n)} largest or most recent entries.</p>
           </Prose>
           <Prose>
             <p><b>This is heuristic inference from net pool value flows, not proof.</b> Amounts are per-transaction shield and deshield legs, and we link to the containing block (the exact txid isn’t stored). A near-exact match on an arbitrary amount is very unlikely to be coincidence, but it can be.</p>
-            <p>The name is the live site’s. Nothing here identifies a person: the list shows amounts, times and blocks that anyone running a node can already see.</p>
+            <p>Nothing here identifies a person: the list shows amounts, times and blocks that anyone running a node can already see.</p>
           </Prose>
         </MoreCols>
       </More>

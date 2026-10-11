@@ -65,8 +65,8 @@ export default async function WalletAppsPage() {
         <div className={r.grp}>
           <span className={r.glbl} id="g-rng">Leaderboard range</span>
           <div className={r.grpRow}>
-            <FixedSeg labelledBy="g-rng" options={['Today', '7 days', '30 days', '90 days', 'All time']} active="7 days" why="Only the 7-day leaderboard is in this snapshot" />
-            <span className={r.count}><b>{money(wa.summary.usd)}</b> in {num(wa.summary.swaps)} swaps · last 7 days at capture</span>
+            <FixedSeg labelledBy="g-rng" options={['Today', '7 days', '30 days', '90 days', 'All time']} active="7 days" />
+            <span className={r.count}><b>{money(wa.summary.usd)}</b> in {num(wa.summary.swaps)} swaps · last 7 days</span>
           </div>
         </div>
         <p className="small" style={{ flex: '1 1 260px' }}>The range drives the leaderboard only; the chart below always covers all history.</p>
@@ -76,7 +76,7 @@ export default async function WalletAppsPage() {
         title="Who sent the most ZEC swaps this week?"
         takeaway={<>The top three apps carried <b>{pct(top3, 1)}</b> of the week’s volume; {leader.app} alone moved <b>{money(leader.usd)}</b> in {num(leader.swaps)} swaps.</>}
         actions={<ChartActions name="wallet app leaderboard" />}
-        foot="Volume is the dollar value sent in, into or out of ZEC · last 7 days at capture"
+        foot="Volume is the dollar value sent in, into or out of ZEC · last 7 days"
       >
         <BarList label="Share of 7-day ZEC swap volume by app" max={leader.usd} items={board.slice(0, 10).map((b) => ({
           key: b.app, name: <>{b.rank}. {b.app}</>, value: money(b.usd), sub: `${pct(b.share_pct, 1)} · ${num(b.swaps)} swaps`, highlight: b.rank === 1, title: b.app,
@@ -143,12 +143,11 @@ export default async function WalletAppsPage() {
             </tbody>
           </table>
         </div>
-        <p className="small">Among the eight apps the live chart names; everything else is “Other” and is counted in the total only.</p>
+        <p className="small">Among the eight apps the chart names; everything else is “Other” and is counted in the total only.</p>
       </Section>
 
       <More summary="Where these names come from">
         <p>Source: the NEAR Intents explorer, every successful swap into or out of ZEC. Volume is the dollar value sent in. App names come from each swap’s referral code or, for apps that route through SwapKit, from the wallet’s fee account (trustswapkit.near is Trust Wallet, ledgerswapkit.near is Ledger). near-intents.org is the protocol’s own swap page. A swap with ZEC on both sides (ZEC moved between chains) is counted once, as into ZEC.</p>
-        <p>This page’s data is not served by any API route on the live site — it is rendered into the page — so the snapshot parses it out of the captured page.</p>
       </More>
 
       <Tiles items={[

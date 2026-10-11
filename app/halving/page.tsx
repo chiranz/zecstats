@@ -71,7 +71,7 @@ export default async function HalvingPage() {
           </div>
           <div className={r.heroNote}>
             <p>About <b>{num(h.blocksLeft)}</b> blocks to go. The block reward drops from <b>{rewardStr(h.reward)}</b> to <b>{rewardStr(after)}</b>, and new ZEC per day from <b>{num(h.reward * BLOCKS_PER_DAY)}</b> to <b>{num(after * BLOCKS_PER_DAY)}</b>.</p>
-            <p>The date is an estimate from Zcash’s 75-second target spacing, counted from block {num(lb.height)} at the snapshot — not a fixed date. The height is fixed by consensus.</p>
+            <p>The date is an estimate from Zcash’s 75-second target spacing, counted from our node’s current block, {num(lb.height)} — not a fixed date. The height is fixed by consensus.</p>
           </div>
         </div>
         <div className="stack" style={{ gap: 10 }}>
@@ -158,7 +158,7 @@ export default async function HalvingPage() {
       </Section>
 
       <More summary="How the countdown is computed">
-        <p>Blocks to go = {num(next.height)} − {num(lb.height)} (our node’s height at the snapshot, {dateLong(lb.time * 1000)}). Days = blocks × 75 seconds ÷ 86,400. Real blocks arrive a little faster or slower than target as hash rate changes, so the projected date moves by days, not months.</p>
+        <p>Blocks to go = {num(next.height)} − {num(lb.height)} (our node’s current height, {dateLong(lb.time * 1000)}). Days = blocks × 75 seconds ÷ 86,400. Real blocks arrive a little faster or slower than target as hash rate changes, so the projected date moves by days, not months.</p>
         <p>The rewards are the total block subsidy. Since NU6 a share of each block goes to the dev fund lockbox rather than the miner; the halving schedule applies to the whole subsidy either way.</p>
       </More>
 

@@ -3,12 +3,12 @@
 import { useId, useState } from 'react';
 import { Icon } from '@/components/ui/Icon';
 
-/** Sign-in / subscribe gate. UI only: this concept has no accounts, no auth and no payments. */
+/** Sign-in / subscribe gate. UI only: there is no auth backend yet, so a submit shows a neutral message. */
 export function ProGate() {
   const id = useId();
   const [msg, setMsg] = useState<string | null>(null);
   return (
-    <form className="stack" style={{ gap: 14 }} onSubmit={(e) => { e.preventDefault(); setMsg('Sign-in is not part of this redesign concept: there are no accounts here, so nothing was sent.'); }}>
+    <form className="stack" style={{ gap: 14 }} onSubmit={(e) => { e.preventDefault(); setMsg('Sign-in is temporarily unavailable.'); }}>
       <h2 className="h3">Sign in to Pro</h2>
       <div className="stack" style={{ gap: 6 }}>
         <label className="kicker" htmlFor={`${id}-e`}>Email</label>

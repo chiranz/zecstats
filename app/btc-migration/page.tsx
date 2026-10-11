@@ -49,7 +49,7 @@ export default async function BtcMigrationPage() {
         <div className={r.grp}>
           <span className={r.glbl} id="g-win">Window</span>
           <div className={r.grpRow}>
-            <FixedSeg labelledBy="g-win" options={['7D', '30D', '90D', 'ALL']} active="30D" why="Only the 30-day capture is in this snapshot" />
+            <FixedSeg labelledBy="g-win" options={['7D', '30D', '90D', 'ALL']} active="30D" />
             <span className={r.count}><b>{window}</b> · swaps ≥ {bm.min_btc} BTC · {S.pending} awaiting a Bitcoin trace</span>
           </div>
         </div>

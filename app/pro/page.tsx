@@ -14,7 +14,7 @@ const UNLOCKS = [
   { icon: 'bolt', title: 'A message when the model changes its mind', body: 'Not hourly, not daily. The model is checked every hour and only speaks when it has moved far enough to mean it and stayed there.' },
   { icon: 'clock', title: 'One summary a day', body: 'Where the model stands, what it is weighting, and the price move since yesterday. It is allowed to say that nothing happened.' },
   { icon: 'check', title: 'Every number can be checked', body: 'Each message names the last full day behind it, the block height it was worked out through, and where the price came from.' },
-  { icon: 'chart', title: 'The research page', body: 'The experimental “ZEC Trading Signals” research tool, which the live site keeps behind a password.' },
+  { icon: 'chart', title: 'The research page', body: 'The experimental “ZEC Trading Signals” research tool, kept behind a password.' },
 ];
 
 export default function ProPage() {

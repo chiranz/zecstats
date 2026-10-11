@@ -36,7 +36,7 @@ export function BullRun({ prices }: { prices: PriceArrays }) {
       <section className="hero" aria-label="Run comparison">
         {anchorSeg}
         <p className="figure md">Not available at ${num(anchor)}</p>
-        <p className="note">{which}. The live site reads Bitcoin back to 2015; this snapshot&apos;s daily prices start on {dateLong(prices.dates[0])}, so pick another anchor.</p>
+        <p className="note">{which}. Daily prices here start on {dateLong(prices.dates[0])}, so pick another anchor.</p>
       </section>
     );
   }

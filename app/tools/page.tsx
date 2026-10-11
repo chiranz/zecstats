@@ -71,8 +71,8 @@ export default async function ToolsPage() {
       </Section>
 
       <More summary="Data access and freshness">
-        <p>Every page reads the same JSON routes the live site serves under <span className="mono">/api/&lt;name&gt;</span> ({endpoints} of them); chart cards link to the route behind them so the numbers can be downloaded and checked.</p>
-        <p>This redesign concept reads a capture of those routes taken {dateLong(man.capturedAt)} ({new Date(man.capturedAt).toISOString().slice(11, 16)} UTC). Chain data runs through {dateLong(f.dataThrough)}, the last complete UTC day; the node was at block {num(f.height)}.</p>
+        <p>Every page reads the site’s public JSON routes under <span className="mono">/api/&lt;name&gt;</span> ({endpoints} of them); chart cards link to the route behind them so the numbers can be downloaded and checked.</p>
+        <p>The figures were last refreshed {dateLong(man.capturedAt)} ({new Date(man.capturedAt).toISOString().slice(11, 16)} UTC). Chain data runs through {dateLong(f.dataThrough)}, the last complete UTC day; the node was at block {num(f.height)}.</p>
       </More>
       <Tiles
         items={[
