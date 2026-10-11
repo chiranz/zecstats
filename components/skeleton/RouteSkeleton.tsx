@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, type CSSProperties, type ReactNode } from 'react';
+import { Fragment, useEffect, type CSSProperties, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import home from '@/app/page.module.css';
 import search from '@/components/home/HomeSearch.module.css';
@@ -24,6 +24,9 @@ import { shapeFor, type Shape } from './shape';
 export function RouteSkeleton({ shape }: { shape?: Shape }) {
   const path = usePathname();
   const Body = SHAPE[shape ?? shapeFor(path)];
+  // Next scrolls to the new page only when it lands; a click from far down a page would otherwise open the skeleton at
+  // the old scroll position, mid-shape. Start at the top, where the title and the answer are.
+  useEffect(() => { if (!shape) window.scrollTo(0, 0); }, [shape]);
   return (
     <div className={k.root}>
       <p role="status" className="sr-only">Loading</p>
