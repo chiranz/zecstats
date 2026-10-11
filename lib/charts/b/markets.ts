@@ -120,6 +120,27 @@ const nearBridge: ChartDef = {
 };
 
 const ASSET_COLOR: Record<string, string> = { BTC: C.btc, USD: C.s2, ETH: C.s3, SOL: C.s5, NEAR: C.s1 };
+const CHAIN_NAME: Record<string, string> = {
+  btc: 'Bitcoin', eth: 'Ethereum', sol: 'Solana', tron: 'Tron', arb: 'Arbitrum', near: 'NEAR', bsc: 'BNB Chain', base: 'Base', pol: 'Polygon',
+  ltc: 'Litecoin', sui: 'Sui', avax: 'Avalanche', xrp: 'XRP Ledger', hypercore: 'Hyperliquid', doge: 'Dogecoin', starknet: 'Starknet', ton: 'TON',
+  aleo: 'Aleo', dash: 'Dash', bch: 'Bitcoin Cash', cardano: 'Cardano', op: 'Optimism', gnosis: 'Gnosis', aptos: 'Aptos',
+};
+/** The chain's native coin, so a chain grouping keeps the same colour as that coin in the token grouping. */
+const CHAIN_SYM: Record<string, string> = { btc: 'BTC', eth: 'ETH', sol: 'SOL', near: 'NEAR' };
+
+/** One way of naming the asset on the far side of a swap — the live chart's three groupings (`swap-grouping`). */
+type SwapGran = 'token' | 'chain' | 'raw';
+function swapKey(gran: SwapGran, asset: string, chain: string, raw: string): { key: string; label: string; sym: string } | null {
+  if (gran === 'chain') return { key: chain, label: CHAIN_NAME[chain] ?? chain, sym: CHAIN_SYM[chain] ?? chain.toUpperCase() };
+  if (gran === 'raw') {
+    // Contracts that name the same asset on the same chain (two USDC bridges on NEAR) share a row.
+    const sym = (asset || chain || '').toUpperCase();
+    const label = sym.toLowerCase() !== chain ? `${sym}·${chain}` : sym;
+    return { key: label, label, sym };
+  }
+  const t = token(asset, chain, raw);
+  return t === 'other' ? null : { key: t, label: t, sym: t };
+}
 
 const swapAssets: ChartDef = {
   slug: 'swap-assets',
@@ -133,8 +154,8 @@ const swapAssets: ChartDef = {
   api: ['near-swaps'],
   explainer: [
     { heading: 'What does the mix say?', paragraphs: [
-      'The ranking is all time: left of zero is ZEC swapped into the asset, right of zero is the asset swapped into ZEC, and the marker is the net. Below, ZEC→asset volume by month for the four largest assets, with the rest grouped as other.',
-      'Stablecoin volume is not the same as volume against another coin. A swap into USDC or USDT is usually someone stepping out of crypto; a swap into BTC or ETH is a rotation. All dollar stablecoins are grouped as USD and NEAR-chain tokens are named by their underlying asset.',
+      'Three switches set the view. **Direction**: ZEC swapped into an asset, an asset swapped into ZEC, or the net of the two. **Window**: columns by month, or one all-time ranking; the all-time net view shows both directions for each asset, with the marker at the net. **Group by**: token, chain, or every distinct asset — token rolls all dollar stablecoins into USD and names NEAR-chain tokens by their underlying asset, chain groups by network, and asset keeps USDT on Tron apart from USDT on Ethereum.',
+      'Stablecoin volume is not the same as volume against another coin. A swap into USDC or USDT is usually someone stepping out of crypto; a swap into BTC or ETH is a rotation.',
       ROUTE[0] + ' ' + ROUTE[1],
     ] },
   ],
@@ -142,43 +163,50 @@ const swapAssets: ChartDef = {
   load: async () => {
     const end = await through();
     const rows = crossSwaps(await getNearSwaps(), end);
-    const outT: Record<string, number> = {}, inT: Record<string, number> = {};
-    const monthly = new Map<string, Record<string, number>>();
-    for (const r of rows) {
-      if (r.from_chain === 'zec') {
-        const a = token(r.to_asset, r.to_chain, r.to_raw);
-        outT[a] = (outT[a] ?? 0) + r.volume_usd;
-        const m = `${r.date.slice(0, 7)}-01`; const o = monthly.get(m) ?? {}; o[a] = (o[a] ?? 0) + r.volume_usd; monthly.set(m, o);
-      } else { const a = token(r.from_asset, r.from_chain, r.from_raw); inT[a] = (inT[a] ?? 0) + r.volume_usd; }
-    }
-    const assets = [...new Set([...Object.keys(outT), ...Object.keys(inT)])].filter((a) => a !== 'other');
-    const ranked = assets.map((a) => ({ label: a, out: outT[a] ?? 0, in: inT[a] ?? 0 })).sort((x, y) => y.out + y.in - (x.out + x.in));
-    const top = ranked.slice(0, 10);
-    const top4 = Object.entries(outT).filter(([a]) => a !== 'other').sort((x, y) => y[1] - x[1]).slice(0, 4).map(([a]) => a);
-    // Monthly panel: complete months only (a part month reads as a collapse), starting once the route carried
-    // real volume — the first months of the export are a trickle (under 2% of the busiest month).
-    const mTotal = (m: string) => sum(Object.values(monthly.get(m)!));
-    const allMonths = [...monthly.keys()].sort().filter((m) => m < `${end.slice(0, 7)}-01` || addDays(end, 1).slice(8) === '01');
-    const peakM = Math.max(...allMonths.map(mTotal));
-    const months = allMonths.slice(Math.max(0, allMonths.findIndex((m) => mTotal(m) >= peakM * 0.02)));
-    const spare = [C.s5, C.s3, C.s2, C.s1];
-    const series: Series[] = top4.map((a, k) => bars(a, a, ASSET_COLOR[a] ?? spare[k], months.map((m) => monthly.get(m)![a] ?? 0), { agg: 'sum' }));
-    series.push(bars('other', 'Other', C.s6, months.map((m) => sum(Object.entries(monthly.get(m)!).filter(([a]) => !top4.includes(a)).map(([, v]) => v))), { agg: 'sum' }));
-    const totOut = sum(Object.values(outT));
-    const lead = Object.entries(outT).sort((x, y) => y[1] - x[1])[0];
+    // Monthly columns: complete months only (a part month reads as a collapse), starting once the route carried real
+    // volume — the first months of the export are a trickle (under 2% of the busiest month).
+    const mVol = new Map<string, number>();
+    for (const r of rows) { const m = `${r.date.slice(0, 7)}-01`; mVol.set(m, (mVol.get(m) ?? 0) + r.volume_usd); }
+    const allMonths = [...mVol.keys()].sort().filter((m) => m < `${end.slice(0, 7)}-01` || addDays(end, 1).slice(8) === '01');
+    const peakM = Math.max(...allMonths.map((m) => mVol.get(m)!));
+    const months = allMonths.slice(Math.max(0, allMonths.findIndex((m) => mVol.get(m)! >= peakM * 0.02)));
+    const mi = new Map(months.map((m, i) => [m, i]));
+
+    const group = (gran: SwapGran) => {
+      const keys = new Map<string, { label: string; sym: string; out: number; in: number; outM: number[]; inM: number[] }>();
+      for (const r of rows) {
+        const out = r.from_chain === 'zec';
+        const k = out ? swapKey(gran, r.to_asset, r.to_chain, r.to_raw) : swapKey(gran, r.from_asset, r.from_chain, r.from_raw);
+        if (!k) continue;
+        const e = keys.get(k.key) ?? { label: k.label, sym: k.sym, out: 0, in: 0, outM: months.map(() => 0), inM: months.map(() => 0) };
+        const j = mi.get(`${r.date.slice(0, 7)}-01`);
+        if (out) { e.out += r.volume_usd; if (j != null) e.outM[j] += r.volume_usd; }
+        else { e.in += r.volume_usd; if (j != null) e.inM[j] += r.volume_usd; }
+        keys.set(k.key, e);
+      }
+      const list = [...keys.values()].sort((a, b) => b.out + b.in - (a.out + a.in));
+      const round = (v: number) => Math.round(v);
+      return {
+        labels: list.map((e) => e.label),
+        colors: list.map((e) => ASSET_COLOR[e.sym] ?? null),
+        out: list.map((e) => round(e.out)), in: list.map((e) => round(e.in)),
+        outM: list.map((e) => e.outM.map(round)), inM: list.map((e) => e.inM.map(round)),
+      };
+    };
+
+    const tok = group('token');
+    const totOut = sum(tok.out);
+    const order = tok.out.map((v, i) => [v, i]).sort((a, b) => b[0] - a[0]).map(([, i]) => i);
+    const lead = tok.labels[order[0]], leadPct = ((tok.out[order[0]] / totOut) * 100).toFixed(0);
     return {
       panels: [
-        { kind: 'custom', title: 'All time: ZEC → asset (left) and asset → ZEC (right)', component: 'b-ranked', props: {
-          mode: 'diverging', format: 'usdCompact', leftLabel: 'ZEC → asset', rightLabel: 'asset → ZEC',
-          rows: top.map((r) => ({ label: r.label, left: r.out, right: r.in, color: ASSET_COLOR[r.label] })),
-          ariaLabel: `All-time NEAR Intents swap volume by asset, top ${top.length}: ${top.slice(0, 3).map((r) => `${r.label} ${usdCompact(r.out)} out, ${usdCompact(r.in)} in`).join('; ')}.` } },
-        panel({ title: 'ZEC → asset by month', dates: months, format: 'usdCompact', stacked: true, shareToggle: true, height: 260, series }),
+        { kind: 'custom', component: 'b-swap-assets', props: { months, through: end, groups: { token: tok, chain: group('chain'), raw: group('raw') } } },
       ],
-      headline: { label: 'Top asset ZEC is swapped into', value: lead[0], date: end, change: null,
-        sentence: `${lead[0]} took ${((lead[1] / totOut) * 100).toFixed(0)}% of the ${usdCompact(totOut)} of ZEC swapped out on NEAR Intents through ${dateLong(end)}; ${top4.filter((a) => a !== lead[0]).join(', ')} follow.` },
-      indexValue: `${lead[0]} ${((lead[1] / totOut) * 100).toFixed(0)}%`,
+      headline: { label: 'Top asset ZEC is swapped into', value: lead, date: end, change: null,
+        sentence: `${lead} took ${leadPct}% of the ${usdCompact(totOut)} of ZEC swapped out on NEAR Intents through ${dateLong(end)}; ${order.slice(1, 4).map((i) => tok.labels[i]).join(', ')} follow.` },
+      indexValue: `${lead} ${leadPct}%`,
       ranges: false, dataThrough: end,
-      notes: [`Monthly columns run ${monthYear(months[0])} – ${monthYear(months.at(-1)!)}: earlier months carried under 2% of the busiest month's volume, and the month in progress is left out. The all-time ranking includes everything through ${dateLong(end)}.`],
+      notes: [`Monthly columns run ${monthYear(months[0])} – ${monthYear(months.at(-1)!)}: earlier months carried under 2% of the busiest month's volume, and the month in progress is left out. The all-time views include everything through ${dateLong(end)}. Swaps with ZEC on both sides are left out.`],
     };
   },
 };

@@ -149,5 +149,6 @@ export const SITE = {
   name: 'ZEC Stats',
   tagline: 'Every Zcash number, from our own node',
   author: '@jeremiahrogers',
+  authorUrl: 'https://x.com/jeremiahrogers',
   x: 'https://x.com/zecstats_',
 };

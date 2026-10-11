@@ -1,0 +1,20 @@
+/* swap-assets panel: the three live toggles (direction · window · grouping) above one plot. Colours via tokens only. */
+.root { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.ctl { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: flex-end; }
+.grp { display: flex; flex-direction: column; gap: 5px; min-width: 0; max-width: 100%; }
+.glbl { font: 500 12px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.take { margin: 0; font-size: 14.5px; color: var(--text-2); }
+.take b { color: var(--value); font-family: var(--mono); font-weight: 600; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font: 400 12px var(--mono); color: var(--text-2); }
+.legend span { display: inline-flex; align-items: center; gap: 7px; }
+.legend b { display: inline-block; width: 10px; height: 10px; border-radius: 3px; }
+.plot { position: relative; width: 100%; }
+.plot svg { display: block; width: 100%; height: auto; overflow: hidden; }
+.plot text { font-family: var(--mono); font-size: 12px; fill: var(--muted); }
+.plot :global(.gl) { stroke: var(--grid); }
+.plot :global(.ax) { stroke: var(--axis); }
+.plot:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: var(--r-sm); }
+.name { fill: var(--text-2) !important; }
+.val { fill: var(--value) !important; }
+.tipRow { display: grid; grid-template-columns: 12px 1fr auto; gap: 8px; align-items: center; }
+.tipTotal { border-top: 1px solid var(--line); padding-top: 5px; }

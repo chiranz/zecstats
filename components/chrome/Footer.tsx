@@ -20,7 +20,7 @@ export async function Footer() {
             <ul>{g.links.map((l) => <li key={l.href}><Link href={l.href}>{l.label}</Link></li>)}</ul>
           </div>
         ))}
-        <div className="base"><span>by {SITE.author} · Zcash data you can verify</span></div>
+        <div className="base"><span>by <a href={SITE.authorUrl} rel="noreferrer">{SITE.author}</a> · Zcash data you can verify</span></div>
       </div>
     </footer>
   );
