@@ -1,0 +1,2 @@
+.sum{display:grid;grid-template-columns:minmax(0,8fr) minmax(0,4fr);gap:20px}
+@media (max-width:900px){.sum{grid-template-columns:minmax(0,1fr)}}

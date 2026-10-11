@@ -1,0 +1,21 @@
+.best{width:100%;border-collapse:collapse;font:500 13.5px var(--mono)}
+.best th{font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:right;padding:0 0 8px;border-bottom:1px solid var(--line)}
+.best th:first-child,.best td:first-child{text-align:left}
+.best td{padding:9px 0;border-bottom:1px solid var(--line);text-align:right;color:var(--text);font-variant-numeric:tabular-nums}
+.best tr:last-child td{border-bottom:0}
+.best td b{color:var(--value);font-weight:600;font-size:15px}
+.best td span{color:var(--muted);font-size:12px;margin-left:8px}
+.range{color:var(--text-2)}
+.groups{display:flex;flex-direction:column;gap:18px}
+.group{display:flex;flex-direction:column;gap:8px}
+.gh{font:600 12.5px var(--mono);color:var(--text-2);display:flex;justify-content:space-between;gap:8px}
+.gh span{color:var(--muted);font-weight:400}
+.recent{max-height:420px;overflow:auto}
+.check{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px}
+.check .fld{display:flex;flex-direction:column;gap:6px;min-width:0}
+.check label{font:500 11.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.check input,.check select{height:40px;border-radius:8px;border:1px solid var(--line-strong);background:var(--inset);color:var(--value);font:500 14px var(--mono);padding:0 12px}
+.check input{width:160px}
+.check select{appearance:none;-webkit-appearance:none;padding-right:28px;cursor:pointer}
+.check :global(.btn){height:40px}
+@media (max-width:560px){.check input{width:100%}.check .fld{flex:1 1 140px}}
