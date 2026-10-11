@@ -219,6 +219,11 @@
       "route": "/privacy-suggestions",
       "bytes": 12014,
       "parsedFrom": "page html"
+    },
+    "wallet-apps": {
+      "route": "/wallet-apps",
+      "bytes": 33638,
+      "parsedFrom": "page html"
     }
   }
 }

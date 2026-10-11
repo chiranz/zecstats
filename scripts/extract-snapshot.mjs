@@ -70,7 +70,26 @@ function parsePrivacySuggestions(html) {
   return { generated: meta[1], shield_tx: toNum(meta[2]), deshield_tx: toNum(meta[3]), columns: cols };
 }
 
-for (const [name, parse] of [['wall-of-shame', parseWallOfShame], ['privacy-suggestions', parsePrivacySuggestions]]) {
+// /wallet-apps: the 7-day leaderboard table, plus the per-app daily volume the page inlines as `const WA_DATA = {…}`.
+const usdNum = (t) => { const m = t.match(/\$([\d,.]+)\s*([kKmMbB]?)/); return m ? toNum(m[1]) * ({ k: 1e3, m: 1e6, b: 1e9 }[m[2].toLowerCase()] ?? 1) : 0; };
+function parseWalletApps(html) {
+  const table = html.slice(html.indexOf('Code / fee account'), html.indexOf('How has each app'));
+  const leaderboard = [...table.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/g)].map(([, tr]) => [...tr.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)].map(([, c]) => text(c)))
+    .filter((c) => c.length >= 8)
+    .map(([rank, app, vol, share, swaps, into, out, code]) => ({ rank: Number(rank), app, usd: usdNum(vol), share_pct: Number(share.replace('%', '')), swaps: toNum(swaps), into_usd: usdNum(into), out_usd: usdNum(out), code }));
+  const summary = text(html).match(/(\$[\d.,]+[kMB]?) in ([\d,]+) swaps over the last (\d+) days/);
+  const history = text(html).match(/all ([\d,]+) ZEC swaps since (\d+ \w+ \d{4})/);
+  const i = html.indexOf('const WA_DATA = ') + 'const WA_DATA = '.length;
+  let depth = 0, j = i;
+  do { if (html[j] === '{') depth++; else if (html[j] === '}') depth--; j++; } while (depth > 0);
+  const wa = JSON.parse(html.slice(i, j));
+  return {
+    window_days: Number(summary[3]), summary: { usd: usdNum(summary[1]), swaps: toNum(summary[2]) }, history: { swaps: toNum(history[1]), since: history[2] },
+    leaderboard, apps: wa.apps, dates: wa.dates, usd: wa.usd.map((s) => s.map((v) => Math.round(v * 100) / 100)),
+  };
+}
+
+for (const [name, parse] of [['wall-of-shame', parseWallOfShame], ['privacy-suggestions', parsePrivacySuggestions], ['wallet-apps', parseWalletApps]]) {
   const page = snap.pages[`/${name}`];
   if (!page) continue;
   const body = JSON.stringify(parse(page.html));
