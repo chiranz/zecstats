@@ -45,5 +45,7 @@ accent, JetBrains Mono numerals, Orbitron wordmark) and fix hierarchy, contrast 
 
 ## Commands
 - `pnpm dev` · `pnpm build` · `pnpm typecheck` (runs `next typegen` then `tsc`) · `pnpm extract-data`
-- Parallel dev servers: `NEXT_DIST_DIR=.next-<name> pnpm next dev -p <port>` (each distDir has its own lock).
+- Parallel dev servers: `NEXT_DIST_DIR=.next-<name> pnpm next dev -p <port>` (each distDir has its own lock). Reuse a
+  name already listed in `tsconfig.json` `include` (a1 a2 b1 b2 c d lead qa tk nl): `next dev` appends any new distDir
+  to that file, which shows up as an unrelated change.
 - Screenshots: `node scripts/shot.mjs http://localhost:<port> <outDir> /route [/route…] [--light] [--full]`.
