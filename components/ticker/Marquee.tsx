@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import type { TickerItem } from '@/lib/data/ticker';
 import { useMotion } from './useMotion';
-import { EventList, InlineItem, PauseButton, StepButton } from './parts';
+import { InlineItem, StepButton } from './parts';
 import { useItemTips } from './ItemTip';
 import m from './Marquee.module.css';
 
@@ -80,7 +80,6 @@ export function Marquee({ items, label = 'Zcash events ticker', speed = 42 }: { 
   // with tooltips, pointer-over no longer holds the tape (an open card does); keyboard focus still holds it
   const hold = TAPE_TOOLTIPS ? { onFocus: mo.hold.onFocus, onBlur: mo.hold.onBlur } : mo.hold;
   const tape = useTape(mo.running && !th.touch && !(TAPE_TOOLTIPS && tips.open), speed);
-  const manual = mo.reduced || mo.userPaused;
   return (
     <section className={m.strip} aria-label={label}>
       <div className={m.inner}>
@@ -88,12 +87,13 @@ export function Marquee({ items, label = 'Zcash events ticker', speed = 42 }: { 
         <TapeViewport tape={tape} reduced={mo.reduced} hold={hold} touch={th.bind}>
           {(copy) => items.map((it) => <li key={it.id}><InlineItem it={it} tabIndex={copy ? -1 : undefined} tip={TAPE_TOOLTIPS ? tips.bind(it) : undefined} /></li>)}
         </TapeViewport>
-        <div className={m.ctls}>
-          {manual && <StepButton dir="prev" onClick={() => pageBy(tape.vp.current, -1, mo.reduced)} label="Scroll events back" />}
-          {manual && <StepButton dir="next" onClick={() => pageBy(tape.vp.current, 1, mo.reduced)} label="Scroll events forward" />}
-          <PauseButton paused={mo.userPaused} onToggle={mo.toggle} held={mo.held} reduced={mo.reduced} compact />
-          <EventList items={items} label="All" />
-        </div>
+        {/* nothing moves by itself under reduced motion: step through the tape instead */}
+        {mo.reduced && (
+          <div className={m.ctls}>
+            <StepButton dir="prev" onClick={() => pageBy(tape.vp.current, -1, true)} label="Scroll events back" />
+            <StepButton dir="next" onClick={() => pageBy(tape.vp.current, 1, true)} label="Scroll events forward" />
+          </div>
+        )}
         {TAPE_TOOLTIPS && tips.card}
       </div>
     </section>

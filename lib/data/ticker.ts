@@ -18,10 +18,10 @@ export type TickerItem = {
   kind: TickerKind;
   tag: string;             // the symbol on the tape ("IRONWOOD", "ZEC" …)
   qual?: string;           // one-token qualifier when the tag alone is ambiguous ("ATH", "7D", "1D", "Close")
-  label: string;           // full name: the hover card's title and the "All" list; the tape shows it only when there is no value
+  label: string;           // full name: the hover card's title; the tape shows it only when there is no value
   value?: string;
-  delta?: TickerDelta;     // the bare change, always with ▲/▼ ("▲ 1.4%")
-  window?: string;         // what the change is measured over ("in 24 h", "vs previous record"); card and list only
+  delta?: TickerDelta;     // the bare change, always with ▲/▼ ("▲ 1.4%"); dir is the colour: it follows the arrow, except a deshielding spike, which is red
+  window?: string;         // what the change is measured over ("in 24 h", "vs previous record"); hover card only
   href: string;            // feed events: their card on /news (#ev-<ts>-<k>); metrics: the page that explains them
   date: string;            // YYYY-MM-DD (UTC)
   ts: number;              // unix seconds

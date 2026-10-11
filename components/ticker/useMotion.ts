@@ -3,16 +3,13 @@
 import { useEffect, useState, type FocusEvent } from 'react';
 
 /**
- * Shared motion state for every ticker sample.
- * - `reduced`: the visitor prefers reduced motion → nothing moves by itself; only manual controls work.
- * - `userPaused`: the visible Pause/Play button (WCAG 2.2.2).
- * - `held`: pointer over, or keyboard focus inside, the moving area (pauses without changing the button).
- * Bind `hold` to the MOVING area only, not to the controls, so pressing Play while focused on the button resumes.
+ * Motion state for the event tape.
+ * - `reduced`: the visitor prefers reduced motion → nothing moves by itself; the step buttons move it instead.
+ * - `hold`: pointer over, or keyboard focus inside, the moving area holds the tape still.
  */
 export function useMotion() {
   const [mounted, setMounted] = useState(false);
   const [reduced, setReduced] = useState(false);
-  const [userPaused, setUserPaused] = useState(false);
   const [hover, setHover] = useState(false);
   const [focus, setFocus] = useState(false);
 
@@ -35,10 +32,7 @@ export function useMotion() {
   return {
     mounted,
     reduced,
-    userPaused,
-    held: hover || focus,
-    running: mounted && !reduced && !userPaused && !hover && !focus,
-    toggle: () => setUserPaused((p) => !p),
+    running: mounted && !reduced && !hover && !focus,
     hold,
   };
 }
