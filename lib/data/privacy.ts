@@ -56,7 +56,8 @@ export const getPrivacy = cache(async () => {
   const yearAgo = at(365);
   const fiveAgo = at(365 * 5 + 1);
   const last = complete.at(-1)!;
-  const txShare = (r: DailyStat) => (r.tx_count ? (r.shielded_tx_count / r.tx_count) * 100 : null);
+  // share of user transactions (coinbase excluded, as tx/day and the tx-types chart count them)
+  const txShare = (r: DailyStat) => (r.tx_count > r.block_count ? (r.shielded_tx_count / (r.tx_count - r.block_count)) * 100 : null);
   const fourWeeks = complete[complete.length - 1 - 28];
 
   // 5-year shielded share (daily) for the hero chart.

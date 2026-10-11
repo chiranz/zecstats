@@ -213,7 +213,7 @@ export default async function Home() {
               <span className={s.k}>Shielded transactions</span>
               <span className={`${s.v} num`}>{pct(h.shieldedTxShare)}<span>of tx</span></span>
               <span className={s.half} role="img" aria-label={`${pct(h.shieldedTxShare)} of transactions touch a shielded pool`}><i style={{ flex: h.shieldedTxShare, background: 'var(--accent)' }} /><i style={{ flex: 100 - h.shieldedTxShare, background: 'var(--p-transparent)' }} /></span>
-              <span className="small">{num(h.last.shielded_tx_count)} of {num(h.last.tx_count)} transactions on {dayMonth(h.last.date)} touched a shielded pool.</span>
+              <span className="small">{num(h.last.shielded_tx_count)} of {num(h.txDay)} user transactions on {dayMonth(h.last.date)} touched a shielded pool.</span>
             </article>
             <article className={`card ${s.cmp}`}>
               <span className={s.k}>Shield vs deshield · 7 days</span>

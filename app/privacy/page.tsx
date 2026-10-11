@@ -336,7 +336,7 @@ export default async function PrivacyPage() {
             <div className="card-head">
               <div className={s.chHead}>
                 <h3 className="h3">What share of transactions is shielded?</h3>
-                <p className="takeaway">About {p.txShareLast >= 45 && p.txShareLast <= 55 ? 'half' : `${num(p.txShareLast)}%`}: <b>{pct(p.txShareLast)}</b> of transactions on {dateShort(p.last.date)} touched a shielded pool, {p.txShareLast < p.txShareFourWeeks ? 'down' : 'up'} from {pct(p.txShareFourWeeks)} four weeks earlier.</p>
+                <p className="takeaway">{p.txShareLast > 52 ? 'More than half' : p.txShareLast >= 48 ? 'About half' : 'Under half'}: <b>{pct(p.txShareLast)}</b> of transactions on {dateShort(p.last.date)} touched a shielded pool, {p.txShareLast < p.txShareFourWeeks ? 'down' : 'up'} from {pct(p.txShareFourWeeks)} four weeks earlier.</p>
               </div>
               <ChartActions api="daily-stats" name="Shielded share of transactions" />
             </div>

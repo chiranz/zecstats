@@ -73,7 +73,7 @@ export const getHome = cache(async () => {
 
   // Transactions: user-initiated (coinbase excluded), as the live "Transactions per Day" chart does.
   const txDay = last.tx_count - last.block_count;
-  const shieldedTxShare = (last.shielded_tx_count / last.tx_count) * 100;
+  const shieldedTxShare = (last.shielded_tx_count / txDay) * 100;
 
   // Halving.
   const blocksLeft = NEXT_HALVING_HEIGHT - lb.height;
