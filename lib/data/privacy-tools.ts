@@ -76,6 +76,14 @@ export async function getShieldingHistogram(): Promise<HistBucket[]> {
   });
 }
 
+/** Anonymity set at an amount, as /chart/anonymity counts it: Orchard + Ironwood shields of at least that bucket, all time. */
+export async function getAnonymitySet(amount: number): Promise<number> {
+  const rows = await api<HistRow[]>('shielding-histogram');
+  const i = HIST_BUCKETS.findIndex((b) => { const [lo, hi] = bucketRange(b); return amount >= lo && amount < hi; });
+  return rows.filter((r) => (r.pool === 'orchard' || r.pool === 'ironwood') && r.direction === 'shield' && HIST_BUCKETS.indexOf(r.bucket as (typeof HIST_BUCKETS)[number]) >= i)
+    .reduce((a, r) => a + r.cumulative_tx_count, 0);
+}
+
 /* ───────────── /api/shield-hops ───────────── */
 
 export type HopDay = {

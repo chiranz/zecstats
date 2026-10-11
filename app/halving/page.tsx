@@ -87,9 +87,9 @@ export default async function HalvingPage() {
 
       <KpiBand label="Halving facts">
         <Kpi k="Current block reward" v={rewardStr(h.reward)} s="per block, every ~75 s" />
-        <Kpi k="Halvings so far" v={h.halvingsDone} s={`first at block ${num(HALVING.firstHalving)}`} />
+        <Kpi k="Halvings so far" v={h.halvingsDone} unit={h.halvingsDone === 1 ? 'halving' : 'halvings'} s={`first at block ${num(HALVING.firstHalving)}`} />
         <Kpi k="Halving interval" v={num(HALVING.interval)} unit="blocks" s="post-Blossom, about 4 years" />
-        <Kpi k="Current height" v={num(lb.height)} s="from our full node" href="/node" />
+        <Kpi k="Current height" v={num(lb.height)} unit="blocks" s="from our full node" href="/node" />
       </KpiBand>
 
       <Section title="When is every Zcash halving?">
@@ -132,8 +132,8 @@ export default async function HalvingPage() {
             { key: 'a', label: 'Supply', color: 'var(--zec)', values: actVals, width: 2.2, format: 'zecCompact' },
             { key: 'p', label: 'Projected', color: 'var(--text-2)', values: projVals, dashed: true, width: 1.6, format: 'zecCompact' },
           ]}
-          yFormat="zecCompact" yDomain={[0, 22_000_000]} yTicks={[0, 5e6, 10e6, 15e6, 21e6].map((v) => ({ v, label: `${compact(v, 0)}` }))}
-          hLines={[{ y: 21_000_000, label: '21M cap' }]}
+          yFormat="zecCompact" yDomain={[0, 22_000_000]} yTicks={[0, 5e6, 10e6, 15e6, 20e6].map((v) => ({ v, label: `${compact(v, 0)}` }))} yUnit="ZEC"
+          hLines={[{ y: 21_000_000, label: '21M cap', labelPos: 'margin' }]}
           markers={h.rows.slice(0, 4).map((row, i) => ({ x: dayMs(dateOf(row)), label: `H${row.n}`, dy: (i % 2) * 14 }))}
           tipTitles={xs.map((t) => dateLong(t))} height={320}
           ariaLabel={`Zcash supply from launch to today and projected to 2040. ${mZec(supply0)} ZEC today; about ${mZec(nextSupply)} at the next halving.`}

@@ -6,9 +6,9 @@ import { Icon } from '@/components/ui/Icon';
 import { TimeSeriesChart } from '@/components/charts/TimeSeriesChart';
 import { HBars, MoreCols, Prose, poolColor, ui } from '@/components/privacy-tools/parts';
 import { WallTable } from '@/components/privacy-tools/WallTable';
-import { getPrivacySuggestions, getWallOfShame } from '@/lib/data/privacy-tools';
+import { getAnonymitySet, getPrivacySuggestions, getWallOfShame } from '@/lib/data/privacy-tools';
 import { getInflation } from '@/lib/data/turnstile';
-import { getFreshness, getPools } from '@/lib/data/snapshot';
+import { getFreshness } from '@/lib/data/snapshot';
 import { compact, dateLong, iso, num, pct, usd } from '@/lib/format';
 import s from './page.module.css';
 import { pageMetadata } from '@/lib/seo';
@@ -20,7 +20,7 @@ const DAY = 86400000;
 const weekStart = (ms: number) => { const d = new Date(ms); const dow = (d.getUTCDay() + 6) % 7; return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - dow); };
 
 export default async function WallOfShamePage() {
-  const [rows, f, ps, pools, inf] = await Promise.all([getWallOfShame(), getFreshness(), getPrivacySuggestions(), getPools(), getInflation()]);
+  const [rows, f, ps, inf, anon1] = await Promise.all([getWallOfShame(), getFreshness(), getPrivacySuggestions(), getInflation(), getAnonymitySet(1)]);
   const n = rows.length;
   const by = (m: string) => rows.filter((r) => r.match === m).length;
   const asOf = Date.parse(f.capturedAt);
@@ -47,6 +47,8 @@ export default async function WallOfShamePage() {
   const totalUsd = rows.reduce((a, r) => a + r.usdIn, 0);
   const shieldCol = ps.cols.find((c) => c.dir === 'shield')!;
   const popular = shieldCol.buckets.slice(0, 3).map((b) => b.items[0][0]);
+  const roundZec = rows.filter((r) => r.zecIn >= 1 && Number.isInteger(r.zecIn)).length;
+  const cap = (w: string) => w[0].toUpperCase() + w.slice(1);
 
   return (
     <>
@@ -57,10 +59,10 @@ export default async function WallOfShamePage() {
       />
 
       <KpiBand label="Summary">
-        <Kpi k="Incidents" v={num(n)} s="round trips within 7 days, worth $1,000+" />
-        <Kpi k="Matched in ZEC" v={num(by('zec'))} s={`${pct((by('zec') / n) * 100, 0)} · same ZEC amount, within 0.5%`} />
-        <Kpi k="Matched in USD" v={num(by('usd'))} s={`${pct((by('usd') / n) * 100, 0)} · same dollar value, within 0.5%`} />
-        <Kpi k="Matched in both" v={num(by('both'))} s={`${pct((by('both') / n) * 100, 0)} · ZEC and dollars both within 0.5%`} />
+        <Kpi k="Incidents" v={num(n)} unit="trips" s="round trips within 7 days, worth $1,000+" />
+        <Kpi k="Matched in ZEC" v={num(by('zec'))} unit="trips" s={`${pct((by('zec') / n) * 100, 0)} · same unusual ZEC amount, within 0.5%`} />
+        <Kpi k="Matched in USD" v={num(by('usd'))} unit="trips" s={`${pct((by('usd') / n) * 100, 0)} · same dollar value, within 0.5%`} />
+        <Kpi k="Matched in both" v={num(by('both'))} unit="trips" s={`${pct((by('both') / n) * 100, 0)} · ZEC and dollars both within 0.5%`} />
       </KpiBand>
 
       <div className={s.sum}>
@@ -74,6 +76,7 @@ export default async function WallOfShamePage() {
             dates={dates}
             series={[{ key: 'n', label: 'Incidents', color: 'var(--s2)', values: vals, type: 'bar' }]}
             format="count"
+            unit="incidents / week"
             ranges={['1Y', 'ALL']}
             defaultRange="1Y"
             height={240}
@@ -83,15 +86,16 @@ export default async function WallOfShamePage() {
         </Card>
         <Card
           title="Which pool routes leak?"
-          takeaway={<>Most visible leaks start and end in <b>{top.from === top.to ? top.from[0].toUpperCase() + top.from.slice(1) : `${top.from} → ${top.to}`}</b> — {num(top.n)} of {num(n)}.</>}
-          foot="Route = pool shielded into → pool deshielded from."
+          takeaway={<>Most visible leaks start and end in <b>{top.from === top.to ? cap(top.from) : `${cap(top.from)} → ${cap(top.to)}`}</b> — {num(top.n)} of {num(n)}.</>}
+          foot="Route = pool shielded into → pool deshielded from; the two dots are those pools' colours."
         >
           <HBars
             stacked
             label="Incidents by pool route"
             items={routes.map((r) => ({
+              color: 'var(--other)',
               key: `${r.from}-${r.to}`,
-              label: <span className={ui.pools}><i className={ui.dot} style={{ background: poolColor(r.from) }} aria-hidden="true" /><i className={ui.dot} style={{ background: poolColor(r.to), marginLeft: -2 }} aria-hidden="true" />{r.from} → {r.to}</span>,
+              label: <span className={ui.pools}><i className={ui.dot} style={{ background: poolColor(r.from) }} aria-hidden="true" /><i className={ui.dot} style={{ background: poolColor(r.to), marginLeft: -2 }} aria-hidden="true" />{cap(r.from)} → {cap(r.to)}</span>,
               value: r.n,
               text: num(r.n),
             }))}
@@ -114,7 +118,7 @@ export default async function WallOfShamePage() {
       <More summary="How a leak is detected, and what it cannot prove">
         <MoreCols>
           <Prose>
-            <p>A shielded hop only buys privacy if the amount doesn’t fingerprint you. An incident is a transaction that shielded an <b>unusual (non-round) amount</b> and was followed by a deshield of a <b>near-identical amount (within 0.5%)</b> within <b>7 days</b>. We match on both the ZEC amount and the dollar value, with a floor of $1,000.</p>
+            <p>A shielded hop only buys privacy if the amount doesn’t fingerprint you. An incident is a shield followed within <b>7 days</b> by a deshield of a <b>near-identical amount (within 0.5%)</b>, with a floor of $1,000. A <b>ZEC match</b> needs an unusual amount: a round one like 1,000 ZEC is shared by thousands of transactions. A <b>USD match</b> catches the same dollar value, so a round ZEC amount still counts there when the price barely moved — {num(roundZec)} listed trips use a whole-ZEC amount such as 1,000 or 3,000.</p>
             <p>The list holds {num(n)} incidents worth {usd(totalUsd / 1e6, 0)}M on the way in; the smallest is {usd(minUsd, 0)}, well above the $1,000 floor, so the list appears to be capped at its {num(n)} largest or most recent entries.</p>
           </Prose>
           <Prose>
@@ -127,7 +131,7 @@ export default async function WallOfShamePage() {
       <Tiles items={[
         { href: '/privacy-suggestions', title: 'Privacy tips', desc: 'Round amounts with the biggest crowd to hide in.', value: <>{compact(ps.shieldTx + ps.deshieldTx, 1)} txs ranked</> },
         { href: '/amount-suggest', title: 'Amount lookup', desc: 'Check how common an amount is before you send it.', value: 'Any amount, instant' },
-        { href: '/chart/anonymity', title: 'Shielded anonymity set', desc: 'How many coins you blend in with when deshielding.', value: <><b>{pct(pools.shieldedPct)}</b> of ZEC shielded</> },
+        { href: '/chart/anonymity', title: 'Shielded anonymity set', desc: 'How many coins you blend in with when deshielding.', value: <><b>{compact(anon1, 1)}</b> shields cover 1 ZEC</> },
         { href: '/orchard-turnstile', title: 'Orchard turnstile watch', desc: 'Was the Orchard bug used to mint fake ZEC?', value: <>Index <b>{Math.round(inf.index.isi)} / 100</b></> },
       ]} />
     </>

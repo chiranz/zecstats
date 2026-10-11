@@ -9,7 +9,8 @@ import { MoreCols, Prose } from '@/components/privacy-tools/parts';
 import { zamt } from '@/components/privacy-tools/fmt';
 import { getActivity, getPrivacySuggestions, getShieldHops, getWallOfShame, type ShieldHops } from '@/lib/data/privacy-tools';
 import { api, DATA_SOURCE } from '@/lib/data/core';
-import { compact, num, zat } from '@/lib/format';
+import { compact, dateShort, num, usd, zat } from '@/lib/format';
+import { getTxValues } from '@/lib/data/reports';
 import { pageMetadata } from '@/lib/seo';
 import { SectionLd } from '@/components/seo/SectionLd';
 
@@ -22,13 +23,13 @@ export default async function ShieldHopsPage({ searchParams }: PageProps<'/shiel
   const days = Number(pick(one(sp.days), HOP_RANGES.map((r) => String(r[0])), '365'));
   const repeat = one(sp.repeat) === 'drop' ? 'drop' : 'keep';
   const live = DATA_SOURCE === 'live';
-  const [hops, act, ps, wall] = await Promise.all([live ? api<ShieldHops>('shield-hops', { class: cls, days, repeat }) : getShieldHops(), getActivity(), getPrivacySuggestions(), getWallOfShame()]);
+  const [hops, act, ps, wall, tv] = await Promise.all([live ? api<ShieldHops>('shield-hops', { class: cls, days, repeat }) : getShieldHops(), getActivity(), getPrivacySuggestions(), getWallOfShame(), getTxValues()]);
   // the view that came back (the only one there is, unless the data source is live)
   const label = (c: string, r: string) => `${HOP_CLASSES.find((x) => x[0] === c)?.[1] ?? c}${r === 'drop' ? ', repeated amount dropped' : ''}`;
   const unmet = hops.class !== cls || hops.repeat !== repeat;
   const sum = hops.summary[hops.class];
   const med = zat(sum.median_of_daily_medians_zat), mean = zat(sum.mean_zat);
-  const savings = act.buckets.shielded_savings.last_7d;
+  const savedWeek = act.daily_series.at(-2)!; // last complete week (the newest row is the week so far)
 
   return (
     <>
@@ -55,8 +56,8 @@ export default async function ShieldHopsPage({ searchParams }: PageProps<'/shiel
       </More>
 
       <Tiles items={[
-        { href: '/activity', title: 'Transparent activity', desc: 'Where transparent ZEC goes, and who holds it.', value: <>{compact(zat(savings.value_zat), 1)} ZEC to savings, 7d</> },
-        { href: '/tx-sizes', title: 'Transaction sizes', desc: 'How big a transparent transaction is.', value: 'Median, p90, p99' },
+        { href: '/activity', title: 'Transparent activity', desc: `Where transparent ZEC goes. Value: shielded savings, week of ${dateShort(savedWeek.date)}.`, value: <>{compact(zat(savedWeek.shielded_savings_zat), 1)} ZEC</> },
+        { href: '/tx-sizes', title: 'Transaction sizes', desc: 'How big a transparent transaction is.', value: <>{usd(tv.pooled.p50, 0)} median</> },
         { href: '/privacy-suggestions', title: 'Privacy tips', desc: 'Round amounts with the biggest crowd to hide in.', value: <>{compact(ps.shieldTx + ps.deshieldTx, 1)} txs ranked</> },
         { href: '/wall-of-shame', title: 'Wall of Shame', desc: 'Round trips that reused a near-identical amount.', value: <>{num(wall.length)} incidents</> },
       ]} />

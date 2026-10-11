@@ -15,6 +15,7 @@ const zecTxt = (v: number) => num(v, v % 1 === 0 ? 0 : 4);
 const DAY = 86400;
 
 type SortKey = 'shieldTs' | 'usdIn' | 'deshTs' | 'usdOut' | 'gapSecs';
+const SORTS: [SortKey, 1 | -1, string][] = [['shieldTs', -1, 'Newest first'], ['shieldTs', 1, 'Oldest first'], ['usdIn', -1, 'Largest first'], ['usdIn', 1, 'Smallest first'], ['gapSecs', 1, 'Shortest gap first']];
 type Period = 'all' | '90d' | '1y' | `y${number}`;
 
 function MatchIcon({ m }: { m: MatchKind }) {
@@ -96,7 +97,7 @@ export function WallTable({ rows, asOf }: { rows: Incident[]; asOf: number }) {
   const th = (key: SortKey, label: ReactNode, sub?: string) => (
     <th scope="col" aria-sort={sort.key === key ? (sort.dir < 0 ? 'descending' : 'ascending') : undefined}>
       <button type="button" onClick={() => onSort(key)}>
-        {label}{sub && <span className={s.mut} style={{ fontSize: 11 }}>{sub}</span>}
+        {label}{sub && <span className={s.mut} style={{ fontSize: 12 }}>{sub}</span>}
         {sort.key === key && <Icon name={sort.dir < 0 ? 'chevron-down' : 'chevron-up'} size={12} />}
       </button>
     </th>
@@ -157,7 +158,14 @@ export function WallTable({ rows, asOf }: { rows: Incident[]; asOf: number }) {
       <section className="sec" aria-labelledby="h-all">
         <div className="sec-h">
           <h2 className="h2" id="h-all">Every incident</h2>
-          <span className="small">newest first · click a column to sort · block numbers link to the explorer</span>
+          <span className={`small ${s.dOnly}`}>newest first · click a column heading to sort · block numbers link to the explorer</span>
+          <span className={`${s.sel} ${s.mOnly}`}>
+            <label className="sr-only" htmlFor="f-sort">Sort incidents</label>
+            <select id="f-sort" value={`${sort.key}:${sort.dir}`} onChange={(e) => { const [key, dir] = e.target.value.split(':'); setSort({ key: key as SortKey, dir: Number(dir) as 1 | -1 }); setPage(1); }}>
+              {SORTS.map(([k, d, l]) => <option key={`${k}:${d}`} value={`${k}:${d}`}>{l}</option>)}
+            </select>
+            <Icon name="chevron-down" size={12} />
+          </span>
         </div>
 
         <div className={`tbl-wrap ${s.wrap}`}>
@@ -170,7 +178,7 @@ export function WallTable({ rows, asOf }: { rows: Incident[]; asOf: number }) {
                 {th('deshTs', 'Deshielded')}
                 {th('usdOut', 'Amount out ', '$ · ZEC')}
                 {th('gapSecs', 'Gap')}
-                <th scope="col" className={s.left}>Match</th>
+                <th scope="col" className={s.left}>Match <span className={s.mut} style={{ fontSize: 12 }}>· Δ in → out</span></th>
                 <th scope="col" className={s.left}>Pools</th>
               </tr>
             </thead>
@@ -182,7 +190,7 @@ export function WallTable({ rows, asOf }: { rows: Incident[]; asOf: number }) {
                   <td>{dateLong(r.deshTs * 1000)}<a href={explorer(r.blockOut)} target="_blank" rel="noopener noreferrer" aria-label={`Deshield block ${r.blockOut} on Blockchair`}>#{r.blockOut}</a></td>
                   <td>{usd(r.usdOut, 0)}<span className={s.mut}>{zecTxt(r.zecOut)}</span></td>
                   <td>{gap(r.gapSecs)}</td>
-                  <td className={`${s.mt} ${s.left}`}><Tag m={r.match} /><span className={s.pctd}>{r.diffPct.toFixed(2)}%</span></td>
+                  <td className={`${s.mt} ${s.left}`}><Tag m={r.match} /><span className={s.pctd}>Δ {r.diffPct.toFixed(2)}%</span></td>
                   <td className={s.left}><Route from={r.from} to={r.to} /></td>
                 </tr>
               ))}
@@ -196,7 +204,7 @@ export function WallTable({ rows, asOf }: { rows: Incident[]; asOf: number }) {
             <li key={r.id} className={s.rc}>
               <span className={s.rcAmt}>{usd(r.usdIn, 0)} <span>→ {usd(r.usdOut, 0)}</span></span>
               <div className={s.rcZ}>{zecTxt(r.zecIn)} ZEC in · {zecTxt(r.zecOut)} ZEC out</div>
-              <div className={s.rcTop}><span className={s.rcM}><Tag m={r.match} />{r.diffPct.toFixed(2)}%</span><Route from={r.from} to={r.to} /></div>
+              <div className={s.rcTop}><span className={s.rcM}><Tag m={r.match} />Δ {r.diffPct.toFixed(2)}%</span><Route from={r.from} to={r.to} /></div>
               <div className={s.rcBot}><span><b>{dateLong(r.shieldTs * 1000)}</b> · <a href={explorer(r.blockIn)} target="_blank" rel="noopener noreferrer">#{r.blockIn}</a></span><span>out after <b>{gap(r.gapSecs)}</b></span></div>
             </li>
           ))}

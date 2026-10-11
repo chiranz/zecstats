@@ -2,7 +2,7 @@ import 'server-only';
 import { cache } from 'react';
 import { api } from './core';
 import { getCompleteDailyStats, getDailyPrices, getDailyStats, getLatestBlock, getLive, poolsFromRow } from './snapshot';
-import { getActivity, getTurnstileIndex } from './privacy';
+import { getNet7, getTurnstileIndex } from './privacy';
 import { getIronwoodSources } from './ironwood';
 import { zat } from '../format';
 import { CHARTS } from '../charts';
@@ -29,17 +29,26 @@ type NewsItem = { body: string; chart_id: string; date: string; headline: string
 /** Every 7th row, aligned so the last row is kept. */
 const weekly = <T,>(xs: T[]) => xs.filter((_, i) => i % 7 === (xs.length - 1) % 7);
 
+/** Price, market cap, realized price and MVRV, from one source (live price, latest realized row) for every page. */
+export const getValuation = cache(async () => {
+  const [live, all, realized] = await Promise.all([getLive(), getDailyStats(), api<Realized[]>('realized')]);
+  const price = live.zec_usd;
+  const supply = poolsFromRow(all.at(-1)!).supply;
+  const realizedPrice = realized.at(-1)!.realized_price;
+  return { price, change24h: live.zec_usd_change_24h_pct, supply, marketCap: supply * price, realizedPrice, mvrv: price / realizedPrice };
+});
+
 const ratioOn = (prices: { date: string; zec_usd: number; btc_usd: number }[], daysAgo: number) => {
   const r = prices[Math.max(0, prices.length - 1 - daysAgo)];
   return r.zec_usd / r.btc_usd;
 };
 
 export const getHome = cache(async () => {
-  const [live, lb, prices, all, complete, realized, fdv, fees, near, hl, exch, swaps, network, act, src, ti, news] = await Promise.all([
+  const [live, lb, prices, all, complete, val, fdv, fees, near, hl, exch, swaps, network, net7, src, ti, news] = await Promise.all([
     getLive(), getLatestBlock(), getDailyPrices(), getDailyStats(), getCompleteDailyStats(),
-    api<Realized[]>('realized'), api<FdvRow[]>('fdv-vs-btc'), api<FeeStats>('fee-stats'), api<NearStat[]>('near-stats'),
+    getValuation(), api<FdvRow[]>('fdv-vs-btc'), api<FeeStats>('fee-stats'), api<NearStat[]>('near-stats'),
     api<HlRow[]>('hyperliquid'), api<ExchVol>('exchange-volume'), api<NearSwap[]>('near-swaps'), api<Network>('network'),
-    getActivity(), getIronwoodSources(), getTurnstileIndex(), api<{ items: NewsItem[] }>('news'),
+    getNet7(), getIronwoodSources(), getTurnstileIndex(), api<{ items: NewsItem[] }>('news'),
   ]);
   const price = live.zec_usd;
   const pools = poolsFromRow(all.at(-1)!);
@@ -57,7 +66,6 @@ export const getHome = cache(async () => {
   const ratio = live.zec_btc;
   const r5 = ratioOn(prices, 365 * 5), r1 = ratioOn(prices, 365), r3m = ratioOn(prices, 92);
 
-  const rz = realized.at(-1)!;
   const f = fdv.at(-1)!;
   const btcCap = f.btc_usd * f.btc_supply;
   const fdvUsd = price * MAX_SUPPLY;
@@ -106,9 +114,9 @@ export const getHome = cache(async () => {
     prices: { dates: prices.map((p) => p.date), values: prices.map((p) => p.zec_usd) },
     range5y,
     ratio, r5, r1, r3m,
-    marketCap: pools.supply * price,
-    realizedPrice: rz.realized_price,
-    mvrv: price / rz.realized_price,
+    marketCap: val.marketCap,
+    realizedPrice: val.realizedPrice,
+    mvrv: val.mvrv,
     fdvPct: (price / f.btc_usd) * 100,
     fdvUsd, btcCap,
     inflation, coinbasePerDay,
@@ -124,8 +132,8 @@ export const getHome = cache(async () => {
     near: { bridge: nearLast.wrapped_supply, bridgeDate: nearLast.date, net: nearIn - nearOut, netDate: swapDay },
     hl: { oi: hlLast.zec_oi_usd, funding: hlLast.zec_funding_apr, date: hlLast.date },
     exch: { zec: exLast.zec, date: exLast.date },
-    net7: { in: zat(act.direction.shield_zat_7d), out: zat(act.direction.deshield_zat_7d), net: zat(act.direction.net_shield_zat_7d), prior: zat(act.direction.net_shield_zat_prior_7d) },
-    migration: { pct: src.orchard_migration_pct, crossed: zat(src.sources.orchard), base: zat(src.orchard_base_zat), days: Math.floor((lb.time - lb.activation_time) / 86400) },
+    net7,
+    migration: { pct: src.orchard_migration_pct, crossed: zat(src.sources.orchard), base: zat(src.orchard_base_zat), days: Math.floor((lb.time - lb.activation_time) / 86400), activation: lb.activation_time * 1000 },
     turnstile: ti,
     y1,
     fiveRows,

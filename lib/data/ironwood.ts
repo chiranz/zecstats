@@ -75,6 +75,7 @@ export const getIronwood = cache(async () => {
     avgPerDay,
     sizes: {
       count: sizes.count,
+      min: zat(sizes.min_zat),
       median: zat(sizes.median_zat),
       p25: zat(sizes.p25_zat),
       p90: zat(sizes.p90_zat),

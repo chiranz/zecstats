@@ -3,14 +3,18 @@ import { cache } from 'react';
 import { api } from './core';
 import { getCompleteDailyStats, getDailyStats, getLive, poolsFromRow, type DailyStat } from './snapshot';
 import { zat } from '../format';
+import { isiBand } from './turnstile';
+import { getPrivacySuggestions, getWallOfShame } from './privacy-tools';
 
-// Privacy hub: shielded supply, pools, flows, integrity and hygiene. Every figure comes from the snapshot, except the two
-// tables marked SERVER-RENDERED below, which the live site only prints into its HTML (data/raw/pages/*.html).
+// Privacy hub: shielded supply, pools, flows, integrity and hygiene. Every figure comes from the snapshot.
 
+type BucketKey = 'exchanges' | 'shielded_savings' | 'transient_transparent';
 type Activity = {
   as_of: string;
-  buckets: Record<'exchanges' | 'shielded_savings' | 'transient_transparent', { last_7d: { count: number; value_zat: number }; prior_7d: { count: number; value_zat: number }; trend_pct_7d: number }>;
+  buckets: Record<BucketKey, { last_7d: { count: number; value_zat: number }; prior_7d: { count: number; value_zat: number }; trend_pct_7d: number }>;
   direction: { deshield_zat_7d: number; deshield_zat_prior_7d: number; net_shield_zat_7d: number; net_shield_zat_prior_7d: number; shield_zat_7d: number; shield_zat_prior_7d: number };
+  /** One row per week (Monday start); the last row is the week in progress. */
+  daily_series: ({ date: string } & Record<`${BucketKey}_zat`, number>)[];
 };
 type Inflation = {
   index: { isi: number; components: { key: string; label: string; score: number; weight: number | string }[] };
@@ -23,13 +27,12 @@ export const getActivity = () => api<Activity>('activity');
 const getInflationWatch = () => api<Inflation>('inflation');
 const getShieldHops = () => api<ShieldHops>('shield-hops');
 
-/** Turnstile watch composite index (0–100). */
+/** Turnstile watch composite index (0–100), banded by ISI_BANDS (lib/data/turnstile.ts). */
 export const getTurnstileIndex = cache(async () => {
   const inf = await getInflationWatch();
   const isi = inf.index.isi;
-  const band = Math.min(3, Math.floor(isi / 25)); // four equal bands on the gauge
-  const verdict = ['Clean', 'Inconclusive', 'Elevated', 'Suspicious'][band];
-  return { isi, band, verdict, components: inf.index.components, turnstile: inf.turnstile, disclosure: inf.disclosure };
+  const band = isiBand(isi);
+  return { isi, band, verdict: band.verdict, components: inf.index.components, turnstile: inf.turnstile, disclosure: inf.disclosure };
 });
 
 /** Shield-bound hop: median of daily medians, last N days. */
@@ -46,10 +49,19 @@ function shieldFlows(d: DailyStat) {
   return { in: zat(inflow), out: zat(outflow) };
 }
 
+/** Net shielding over the last 7 complete days and the 7 before (same rule as /chart/flow-compare). */
+export const getNet7 = cache(async () => {
+  const f = (await getCompleteDailyStats()).slice(-14).map(shieldFlows);
+  const sum = (xs: typeof f, k: 'in' | 'out') => xs.reduce((a, x) => a + x[k], 0);
+  const [prev, cur] = [f.slice(0, 7), f.slice(7)];
+  const inn = sum(cur, 'in'), out = sum(cur, 'out');
+  return { in: inn, out, net: inn - out, prior: sum(prev, 'in') - sum(prev, 'out') };
+});
+
 const everyNth = <T,>(xs: T[], n: number) => xs.filter((_, i) => i % n === (xs.length - 1) % n);
 
 export const getPrivacy = cache(async () => {
-  const [all, complete, live, act] = await Promise.all([getDailyStats(), getCompleteDailyStats(), getLive(), getActivity()]);
+  const [all, complete, live, act, net7] = await Promise.all([getDailyStats(), getCompleteDailyStats(), getLive(), getActivity(), getNet7()]);
   const price = live.zec_usd;
   const now = poolsFromRow(all.at(-1)!);
   const at = (daysAgo: number) => poolsFromRow(all[Math.max(0, all.length - 1 - daysAgo)]);
@@ -89,8 +101,8 @@ export const getPrivacy = cache(async () => {
   };
   const lastOrchardDay = [...d92].reverse().find((r) => r.orchard_actions > 0)!;
 
-  const dir = act.direction;
-  const b = act.buckets;
+  // transparent-activity buckets: the last complete week against the one before (the newest row is the week so far)
+  const wk = act.daily_series.slice(-3, -1);
   return {
     price,
     now,
@@ -110,31 +122,34 @@ export const getPrivacy = cache(async () => {
     orchardZzPct: (lastOrchardDay.orchard_actions_shielded / lastOrchardDay.orchard_actions) * 100,
     orchardZzDate: lastOrchardDay.date,
     orchardZzPerDay: lastOrchardDay.orchard_actions_shielded,
-    net7: { in: zat(dir.shield_zat_7d), out: zat(dir.deshield_zat_7d), net: zat(dir.net_shield_zat_7d), prior: zat(dir.net_shield_zat_prior_7d) },
-    buckets: (['exchanges', 'shielded_savings', 'transient_transparent'] as const).map((k) => ({
-      key: k,
-      now: zat(b[k].last_7d.value_zat),
-      prev: zat(b[k].prior_7d.value_zat),
-      count: b[k].last_7d.count,
-      trend: b[k].trend_pct_7d,
-    })),
+    net7,
+    bucketWeek: wk[1].date,
+    buckets: (['exchanges', 'shielded_savings', 'transient_transparent'] as const).map((k) => {
+      const now = zat(wk[1][`${k}_zat`]), prev = zat(wk[0][`${k}_zat`]);
+      return { key: k, now, prev, trend: prev ? (now / prev - 1) * 100 : null };
+    }),
     dataThrough: last.date,
   };
 });
 
-/* ---------- SERVER-RENDERED on the live site (data/raw/pages/privacy-suggestions.html, generated 10 Oct 2026 12:35 UTC) ---------- */
-export const ROUND_AMOUNTS = {
-  generated: '2026-10-10',
-  shieldTx: 843_651,
-  deshieldTx: 760_646,
-  bands: [
-    { band: '0–1', shield: [0.1, 51_993], runner: [0.5, 32_393], deshield: 0.1 },
-    { band: '1–10', shield: [2.5, 132_414], runner: [5, 108_551], deshield: 5 },
-    { band: '10–100', shield: [10, 114_501], runner: [50, 69_913], deshield: 10 },
-    { band: '100–1k', shield: [100, 52_800], runner: [200, 18_782], deshield: 100 },
-    { band: '1k–10k', shield: [1000, 5_472], runner: [2000, 1_890], deshield: 1000 },
-  ] as { band: string; shield: [number, number]; runner: [number, number]; deshield: number }[],
-};
+/** Most-used shielding amount per size band, its runner-up and the most-used deshield amount (Privacy tips data). */
+export const getRoundAmounts = cache(async () => {
+  const ps = await getPrivacySuggestions();
+  const [sh, de] = (['shield', 'deshield'] as const).map((d) => ps.cols.find((c) => c.dir === d)!);
+  return {
+    generated: ps.generated,
+    shieldTx: ps.shieldTx,
+    deshieldTx: ps.deshieldTx,
+    bands: sh.buckets.map((b, i) => ({ band: b.range.replace(/ ZEC$/, ''), shield: b.items[0], runner: b.items[1], deshield: de.buckets[i]?.items[0] })),
+  };
+});
 
-/* ---------- SERVER-RENDERED (data/raw/pages/wall-of-shame.html): 500 matched round trips, by match type ---------- */
+/** Matched round trips on the Wall of Shame, by match type. */
+export const getRoundTrips = cache(async () => {
+  const rows = await getWallOfShame();
+  const n = (m: string) => rows.filter((r) => r.match === m).length;
+  return { total: rows.length, zec: n('zec'), usd: n('usd'), both: n('both') };
+});
+
+/** @deprecated hard-coded; use getRoundTrips(). Kept only for lib/data/nav.ts and components/navlab until they switch. */
 export const ROUND_TRIPS = { total: 500, zec: 123, usd: 197, both: 180 };

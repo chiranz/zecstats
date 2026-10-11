@@ -119,7 +119,7 @@ export function HopsReport({ initial, fixed = false, initialDays = 365 }: { init
           <Kpi k="Mean hop" v={zamt(z(meanZ))} unit="ZEC" s="total ZEC ÷ total hops" />
           <Kpi k="p10 (latest day)" v={last ? zamt(z(last.p10_zat)) : '—'} unit="ZEC" s="9 in 10 hops were larger" />
           <Kpi k="p90 (latest day)" v={last ? zamt(z(last.p90_zat)) : '—'} unit="ZEC" s="9 in 10 hops were smaller" />
-          <Kpi k="Hops in range" v={num(hops)} s={`${num(hops / Math.max(1, rows.length), 0)} per day`} />
+          <Kpi k="Hops in range" v={num(hops)} unit="hops" s={`${num(hops / Math.max(1, rows.length), 0)} per day`} />
           {drop && last
             ? <Kpi k="Dropped (latest day)" v={num(last.removed_count)} unit="hops" s={`all at exactly ${zamt(z(last.removed_zat))} ZEC — ${num(last.removed_share * 100, 0)}% of that day`} />
             : <Kpi k="ZEC in range" v={zamt(z(total))} unit="ZEC" s="shielded through these hops" />}
@@ -132,15 +132,15 @@ export function HopsReport({ initial, fixed = false, initialDays = 365 }: { init
           title="Has the typical hop size changed?"
           actions={<ChartActions api="shield-hops" name="Hop size over time" />}
           takeaway={<>The daily median ranged from <b>{zamt(Math.min(...p50s))}</b> ({lo ? dateLong(lo.date) : ''}) to <b>{zamt(Math.max(...p50s))} ZEC</b> ({hi ? dateLong(hi.date) : ''}), and was <b>{last ? zamt(z(last.p50_zat)) : '—'} ZEC</b> on the latest day.</>}
-          foot={`Daily median with the p10 and p90 hop sizes and the daily mean · ${clsLabel} · log scale · data through ${last ? dateLong(last.date) : '—'}`}
+          foot={`Daily median, with the p10 and p90 lines bounding the middle 80% of hops and the daily mean (that day's total ÷ hops) · ${clsLabel} · log scale · data through ${last ? dateLong(last.date) : '—'}`}
         >
           <TimeSeriesChart
             dates={dates}
             series={[
-              { key: 'p90', label: 'p90', color: 'var(--p-transparent)', values: rows.map((r) => z(r.p90_zat)), width: 1.2 },
-              { key: 'p50', label: 'Median', color: 'var(--accent)', values: p50s, width: 2.2 },
-              { key: 'p10', label: 'p10', color: 'var(--p-transparent)', values: rows.map((r) => z(r.p10_zat)), width: 1.2 },
-              { key: 'mean', label: 'Mean', color: 'var(--s4)', values: rows.map((r) => z(r.mean_zat)), dashed: true, width: 1.4 },
+              { key: 'p90', label: 'p90', color: 'var(--other)', values: rows.map((r) => z(r.p90_zat)), width: 1.2, dash: '6 3' },
+              { key: 'p50', label: 'Median', color: 'var(--s1)', values: p50s, width: 2.2 },
+              { key: 'p10', label: 'p10', color: 'var(--other)', values: rows.map((r) => z(r.p10_zat)), width: 1.2, dash: '1.5 3' },
+              { key: 'mean', label: 'Daily mean', color: 'var(--s4)', values: rows.map((r) => z(r.mean_zat)), dashed: true, width: 1.4 },
             ]}
             format="zecCompact"
             ranges={false}
@@ -158,9 +158,9 @@ export function HopsReport({ initial, fixed = false, initialDays = 365 }: { init
           foot="Two panels instead of two y-axes: a count and a volume are different quantities · bucketed bars show the daily average"
         >
           <span className="small">Hops per day</span>
-          <TimeSeriesChart dates={dates} series={[{ key: 'c', label: 'Hops', color: 'var(--s2)', values: rows.map((r) => r.count), type: 'bar', agg: 'mean' }]} format="count" ranges={false} height={170} showLegend={false} ariaLabel="Columns: shield-bound hops per day." />
+          <TimeSeriesChart dates={dates} series={[{ key: 'c', label: 'Hops', color: 'var(--s2)', values: rows.map((r) => r.count), type: 'bar', agg: 'mean' }]} format="count" unit="hops" ranges={false} height={170} showLegend={false} ariaLabel="Columns: shield-bound hops per day." />
           <span className="small">ZEC per day</span>
-          <TimeSeriesChart dates={dates} series={[{ key: 'v', label: 'ZEC', color: 'var(--accent)', values: rows.map((r) => z(r.total_zat)), type: 'bar', agg: 'mean' }]} format="zecCompact" ranges={false} height={170} showLegend={false} ariaLabel="Columns: ZEC shielded through hops per day." />
+          <TimeSeriesChart dates={dates} series={[{ key: 'v', label: 'ZEC', color: 'var(--s1)', values: rows.map((r) => z(r.total_zat)), type: 'bar', agg: 'mean' }]} format="zecCompact" ranges={false} height={170} showLegend={false} ariaLabel="Columns: ZEC shielded through hops per day." />
         </Card>
 
         <Card
@@ -171,7 +171,7 @@ export function HopsReport({ initial, fixed = false, initialDays = 365 }: { init
             : <>No day in this range was dominated by one repeated amount; the most common top amount was <b>{zamt(z(modeTop?.[0] ?? 0))} ZEC</b>.</>}
           foot={drop ? 'Share of each day’s hops at the single most common exact amount, after the biggest repeat was dropped — the runner-up' : 'Share of each day’s hops that were all exactly the same amount · fixed 0–100% axis'}
         >
-          <TimeSeriesChart dates={dates} series={[{ key: 's', label: 'Share at one amount', color: 'var(--p-transparent)', values: rows.map((r) => r.top_value_share * 100), type: 'bar', agg: 'mean' }]} format="pct0" ranges={false} yDomain={[0, 100]} height={180} showLegend={false} ariaLabel="Columns: share of each day's hops at one exact amount, 0 to 100%." />
+          <TimeSeriesChart dates={dates} series={[{ key: 's', label: 'Share at one amount', color: 'var(--other)', values: rows.map((r) => r.top_value_share * 100), type: 'bar', agg: 'mean' }]} format="pct0" ranges={false} yDomain={[0, 100]} height={180} showLegend={false} ariaLabel="Columns: share of each day's hops at one exact amount, 0 to 100%." />
         </Card>
       </section>
     </>

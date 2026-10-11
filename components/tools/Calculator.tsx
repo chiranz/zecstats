@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { TimeSeriesChart, type Series } from '@/components/charts/TimeSeriesChart';
 import { Icon } from '@/components/ui/Icon';
-import { dateLong, num, usd } from '@/lib/format';
+import { dateLong, delta, num, usd } from '@/lib/format';
 import type { PriceArrays } from '@/lib/data/tools';
 import { CopyButton } from './CopyButton';
 import { runDca, yearsBefore, type DcaResult, type Freq } from './dca';
@@ -20,7 +20,9 @@ type AssetKey = 'zec' | 'btc';
 const ASSET: Record<AssetKey, { label: string; color: string }> = { zec: { label: 'Zcash', color: 'var(--zec)' }, btc: { label: 'Bitcoin', color: 'var(--btc)' } };
 // On the live site, but their prices are not part of this snapshot (the live /api/dca fetches them per request).
 
-const pctTxt = (v: number | null, d = 1) => (v == null ? '—' : `${v < 0 ? '▼ ' : ''}${num(Math.abs(v * 100), d)}%`);
+/** A return as a signed change (▲ / ▼, or flat), its colour class in `.cls`. */
+const ret = (v: number | null, d = 1) => delta(v == null ? null : v * 100, d);
+const pctTxt = (v: number | null, d = 1) => ret(v, d).text;
 const isoOk = (v: string) => /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(Date.parse(`${v}T00:00:00Z`));
 
 /** Scale max = 4 equal, round steps (25K, 50K, 100K …) so every tick label is a clean number. */
@@ -240,7 +242,7 @@ function ReturnsCard({ res, windows, start, shown, invested }: { res: Record<Ass
             {shown.map((k) => (
               <tr key={k} className={k === 'zec' ? s.sel : undefined}>
                 <td><i className={s.dot} style={{ background: ASSET[k].color, display: 'inline-block', marginRight: 8 }} />{ASSET[k].label}</td>
-                {[windows.inception[k], windows.five[k], windows.one[k], res[k].xirr].map((v, i) => <td key={i} className={i >= 2 ? s.hideMob : undefined}><span className={(v ?? 0) < 0 ? 'dn' : undefined}>{pctTxt(v)}</span></td>)}
+                {[windows.inception[k], windows.five[k], windows.one[k], res[k].xirr].map((v, i) => <td key={i} className={i >= 2 ? s.hideMob : undefined}><span className={ret(v).cls}>{pctTxt(v)}</span></td>)}
                 <td className={s.hideMob}><b className="value">{usd(res[k].finalValue, 0)}</b></td>
               </tr>
             ))}

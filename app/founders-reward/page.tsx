@@ -23,6 +23,9 @@ export default async function FoundersRewardPage() {
   const stage1 = fr.schedule_zec - stage2 - stage3;
   const holder = fr.unmoved.still_holding[0];
   const sweptPct = (1 - fr.unmoved.balance_zec / fr.unmoved.received_zec) * 100;
+  // never print a rounded 100%: past five nines, say "99.99999%+"
+  const swept = sweptPct >= 99.99999 && sweptPct < 100 ? '99.99999%+' : `${num(sweptPct, 5)}%`;
+  const launchWords = stage1 < 100 ? 'a few dozen' : stage1 < 1000 ? 'a few hundred' : `about ${num(stage1)}`;
 
   return (
     <>
@@ -51,14 +54,14 @@ export default async function FoundersRewardPage() {
         <Kpi k="Same coins today" v={usdCompact(fr.value_today_usd, 2)} s="if not one had been sold" />
         <Kpi k="Worst it ever got" v={usdCompact(fr.min_held.usd, 1)} s={`holding, on ${dateLong(fr.min_held.date)}`} />
         <Kpi k="Share of ZEC today" v={pct(fr.pct_of_supply, 1)} s="of all ZEC in existence" />
-        <Kpi k="Never moved" v={num(fr.unmoved.balance_zec, 4)} unit="ZEC" s={`left on the ${fr.unmoved.addresses_total} reward addresses`} />
+        <Kpi k="Still on reward addresses" v={num(fr.unmoved.balance_zec, 4)} unit="ZEC" s={`balance left on the ${fr.unmoved.addresses_total} reward addresses`} />
       </KpiBand>
 
       <Section title="What was the Founders' Reward?">
         <div className="split">
           <div className={r.prose}>
             <p>Zcash launched on 28 October 2016 with no premine and no ICO. Instead, for the first four years, <b>20% of every block reward</b> went not to the miner but to a fixed list of {fr.unmoved.addresses_total} addresses belonging to the founders, early investors, employees and advisors, the company now called Electric Coin Co., and the Zcash Foundation.</p>
-            <p>It ran to block {num(fr.era.last_height)} and stopped at the first halving on 18 November 2020. The <b>slow start</b> ramped the subsidy up over the first {num(fr.era.slow_start_interval)} blocks, so launch week issued only a few dozen founders’ coins even though ZEC briefly printed above $19,000. <b>Blossom</b> halved the block time and the per-block reward together, so the reward ran at a steady {num(st.pre_blossom_per_day_zec)} ZEC per day throughout.</p>
+            <p>It ran to block {num(fr.era.last_height)} and stopped at the first halving on 18 November 2020. The <b>slow start</b> ramped the subsidy up over the first {num(fr.era.slow_start_interval)} blocks, so those blocks issued only {launchWords} founders’ coins ({num(stage1)} ZEC) even though ZEC briefly printed above $19,000. <b>Blossom</b> halved the block time and the per-block reward together, so the reward ran at a steady {num(st.pre_blossom_per_day_zec)} ZEC per day throughout.</p>
           </div>
           <div className="tbl-wrap">
             <table className="t">
@@ -78,11 +81,11 @@ export default async function FoundersRewardPage() {
       <Section title="What was it worth day by day?" aside={<a className="btn" href="/api/founders-reward" download="zec-founders-reward.json">Download data</a>}>
         <Card
           title="How many dollars did the reward bring in each day?"
-          takeaway={<>The best single day was <b>{dateLong(best.date)}</b>, at <b>{usdCompact(best.usd, 2)}</b>; the bars peak in the January 2018 mania and never come close again.</>}
+          takeaway={<>The best single day was <b>{dateLong(best.date)}</b>, at <b>{usdCompact(best.usd, 2)}</b>; the bars peak in the {best.date.slice(0, 7) === '2018-01' ? 'January 2018 mania' : `${dateLong(best.date).replace(/^\d+ /, '')} peak`} and never come close again.</>}
           actions={<ChartActions api="founders-reward" name="dollars received per day" />}
-          foot="That day’s Founders’ Reward in ZEC × that day’s ZEC/USD close — the sell-as-you-receive figure. Bars are summed into periods when they would be thinner than a pixel."
+          foot="That day’s Founders’ Reward in ZEC × that day’s ZEC/USD close — the sell-as-you-receive figure. Where bars would be thinner than a pixel, each shows the average day of its period (the tooltip gives the dates), so no bar reaches the best single day."
         >
-          <TimeSeriesChart dates={dates} format="usdCompact" ranges={false} height={260} series={[{ key: 'u', label: 'Dollars received', color: 'var(--zec)', type: 'bar', values: pts.map((p) => p.usd) }]} ariaLabel={`Founders' Reward dollars received per day, 2016–2020; best day ${dateLong(best.date)} at ${usdCompact(best.usd, 2)}.`} />
+          <TimeSeriesChart dates={dates} format="usdCompact" unit="USD / day" ranges={false} height={260} series={[{ key: 'u', label: 'Dollars received', color: 'var(--zec)', type: 'bar', values: pts.map((p) => p.usd) }]} ariaLabel={`Founders' Reward dollars received per day, 2016–2020; best day ${dateLong(best.date)} at ${usdCompact(best.usd, 2)}.`} />
         </Card>
 
         <Card
@@ -131,9 +134,9 @@ export default async function FoundersRewardPage() {
               <caption className="sr-only">Founders' Reward recipients, as disclosed</caption>
               <thead><tr><th scope="col">Recipient</th><th scope="col">Before mid-2018</th><th scope="col">After</th></tr></thead>
               <tbody>
-                <tr><td className="l">Founders &amp; vested employees</td><td>12.8%</td><td>9.6%</td></tr>
-                <tr><td className="l">Electric Coin Co. &amp; employee compensation</td><td>4.2%</td><td>8.2%</td></tr>
-                <tr><td className="l">Zcash Foundation</td><td>3.0%</td><td>2.2%</td></tr>
+                <tr><td className="l" style={{ whiteSpace: 'normal' }}>Founders &amp; vested employees</td><td>12.8%</td><td>9.6%</td></tr>
+                <tr><td className="l" style={{ whiteSpace: 'normal' }}>Electric Coin Co. &amp; employee compensation</td><td>4.2%</td><td>8.2%</td></tr>
+                <tr><td className="l" style={{ whiteSpace: 'normal' }}>Zcash Foundation</td><td>3.0%</td><td>2.2%</td></tr>
                 <tr className={r.rgrp}><td>Total</td><td>20%</td><td>20%</td></tr>
               </tbody>
             </table>
@@ -142,10 +145,10 @@ export default async function FoundersRewardPage() {
         </Section>
       </div>
 
-      <Section title="How much has never moved?">
+      <Section title="How much is still on the reward addresses?">
         <div className={r.heroGrid}>
           <div className="stack" style={{ gap: 8 }}>
-            <p className="figure md">{num(sweptPct, 6)}%<small> swept out</small></p>
+            <p className="figure md">{swept}<small> swept out</small></p>
             <p className="note">Of the {num(fr.unmoved.received_zec, 2)} ZEC the {fr.unmoved.addresses_total} reward addresses ever received, only <b className="value">{num(fr.unmoved.balance_zec, 8)} ZEC</b> ({usd(fr.unmoved.balance_usd)}) is still there. “Moved” is not “sold”: most of it went to a shielded pool, where the chain stops answering questions by design.</p>
           </div>
           <div className="tbl-wrap">

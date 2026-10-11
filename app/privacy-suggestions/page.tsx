@@ -4,8 +4,7 @@ import { Masthead } from '@/components/chrome/Masthead';
 import { Callout, Card, Kpi, KpiBand, More, Section, Table, Tiles } from '@/components/ui/blocks';
 import { Icon } from '@/components/ui/Icon';
 import { HBars, MoreCols, Prose, ui } from '@/components/privacy-tools/parts';
-import { getPrivacySuggestions, getShieldHops, getWallOfShame, type PsColumn } from '@/lib/data/privacy-tools';
-import { getPools } from '@/lib/data/snapshot';
+import { getAnonymitySet, getPrivacySuggestions, getShieldHops, getWallOfShame, type PsColumn } from '@/lib/data/privacy-tools';
 import { compact, dateLong, num, pct, zat } from '@/lib/format';
 import { ramt, zamt } from '@/components/privacy-tools/fmt';
 import s from './page.module.css';
@@ -21,7 +20,7 @@ function Column({ col, total }: { col: PsColumn; total: number }) {
   return (
     <Card
       title={DIR_LABEL[col.dir]}
-      takeaway={<>Ranked by how many of {num(total)} past {col.dir === 'shield' ? 'shields' : 'deshields'} sit nearest each round amount. Bars compare amounts <b>within</b> a range.</>}
+      takeaway={<>Ranked by how many of {num(total)} past {col.dir === 'shield' ? 'shields' : 'deshields'} sit nearest each round amount. Bars compare amounts <b>within</b> a range; the <b>bold</b> row is the most used.</>}
     >
       <div className={s.groups}>
         {col.buckets.map((b) => {
@@ -31,7 +30,7 @@ function Column({ col, total }: { col: PsColumn; total: number }) {
               <div className={s.gh}>{b.range}<span>{num(sum)} txs</span></div>
               <HBars
                 label={`${DIR_LABEL[col.dir]}, ${b.range}`}
-                items={b.items.map(([a, c], i) => ({ key: String(a), label: amt(a), value: c, text: num(c), strong: i === 0, color: i === 0 ? 'var(--accent)' : 'var(--s2)' }))}
+                items={b.items.map(([a, c], i) => ({ key: String(a), label: i === 0 ? <b>{amt(a)}</b> : amt(a), value: c, text: i === 0 ? <b>{num(c)}</b> : num(c), strong: i === 0, color: 'var(--s1)' }))}
               />
             </div>
           );
@@ -43,13 +42,14 @@ function Column({ col, total }: { col: PsColumn; total: number }) {
 
 type Recent = { date: string; amount: number; rounded: number | null };
 function RecentTable({ col }: { col: PsColumn }) {
-  const rows: Recent[] = col.recent.map(([date, amount, rounded]) => ({ date, amount, rounded }));
+  const rows: Recent[] = col.recent.filter(([, amount]) => amount > 0).map(([date, amount, rounded]) => ({ date, amount, rounded }));
+  const smallest = Math.min(...col.buckets.flatMap((b) => b.items.map(([a]) => a)));
   const near = rows.filter((r) => r.rounded && Math.abs(r.amount - r.rounded) / r.rounded < 0.01).length;
   return (
     <Card
       title={`What did the last ${rows.length} ${col.dir === 'shield' ? 'shields' : 'deshields'} use?`}
       takeaway={<>Only <b>{near} of {rows.length}</b> landed within 1% of a round amount; the rest are distinctive.</>}
-      foot="Nearest round amount from the ranked lists above · “—” = below 0.01 ZEC or above 10,000 ZEC, no round amount to compare"
+      foot={`Nearest round amount from the ranked lists above · “—” = too far from every listed amount to compare (the smallest listed is ${ramt(smallest)} ZEC) · zero-value rows left out`}
     >
       <div className={s.recent}>
         <Table<Recent>
@@ -69,19 +69,23 @@ function RecentTable({ col }: { col: PsColumn }) {
 }
 
 export default async function PrivacyTipsPage() {
-  const [ps, wall, hops, pools] = await Promise.all([getPrivacySuggestions(), getWallOfShame(), getShieldHops(), getPools()]);
+  const [ps, wall, hops, anon1] = await Promise.all([getPrivacySuggestions(), getWallOfShame(), getShieldHops(), getAnonymitySet(1)]);
   const [sh, de] = [ps.cols.find((c) => c.dir === 'shield')!, ps.cols.find((c) => c.dir === 'deshield')!];
   const topOf = (c: PsColumn) => c.buckets.flatMap((b) => b.items).reduce((a, x) => (x[1] > a[1] ? x : a));
   const [topS, topD] = [topOf(sh), topOf(de)];
   const picks = sh.buckets.map((b, i) => ({ range: b.range, s: b.items[0], d: de.buckets[i]?.items[0] }));
   const headline = picks.slice(0, 4).map((p) => ramt(p.s[0]));
+  const deshPicks = picks.slice(0, 4).map((p) => p.d && ramt(p.d[0])).filter(Boolean) as string[];
+  const same = deshPicks.join() === headline.join();
+  const list = (xs: string[]) => `${xs.slice(0, -1).join(', ')} or ${xs.at(-1)}`;
+
 
   return (
     <>
       <SectionLd path="/privacy-suggestions" />
       <Masthead
         title="Which ZEC amounts blend in best?"
-        lede={<>Shield and deshield in common round amounts — <b className="value">{headline.slice(0, -1).join(', ')} or {headline.at(-1)} ZEC</b> — and you hide among tens of thousands of identical transactions. A distinctive amount fingerprints you: the inverse of the <Link href="/wall-of-shame">Wall of Shame</Link>.</>}
+        lede={<>{same ? <>Shield and deshield in common round amounts — <b className="value">{list(headline)} ZEC</b> —</> : <>Shield in common round amounts — <b className="value">{list(headline)} ZEC</b> — and deshield in <b className="value">{list(deshPicks)} ZEC</b>,</>} and you hide among thousands of identical transactions. A distinctive amount fingerprints you: the inverse of the <Link href="/wall-of-shame">Wall of Shame</Link>.</>}
       />
 
       <section className="hero" aria-labelledby="h-best">
@@ -96,13 +100,13 @@ export default async function PrivacyTipsPage() {
           </div>
           <table className={s.best}>
             <caption className="sr-only">Best round amount per range, shielding and deshielding</caption>
-            <thead><tr><th scope="col">Range</th><th scope="col">Best to shield</th><th scope="col">Best to deshield</th></tr></thead>
+            <thead><tr><th scope="col">Range</th><th scope="col">Best to shield, ZEC</th><th scope="col">Best to deshield, ZEC</th></tr></thead>
             <tbody>
               {picks.map((p) => (
                 <tr key={p.range}>
                   <td className={s.range}>{p.range}</td>
-                  <td><b>{ramt(p.s[0])}</b><span>{compact(p.s[1], 1)}</span></td>
-                  <td>{p.d ? <><b>{ramt(p.d[0])}</b><span>{compact(p.d[1], 1)}</span></> : '—'}</td>
+                  <td><b>{ramt(p.s[0])}</b><span>{compact(p.s[1], 1)} uses</span></td>
+                  <td>{p.d ? <><b>{ramt(p.d[0])}</b><span>{compact(p.d[1], 1)} uses</span></> : '—'}</td>
                 </tr>
               ))}
             </tbody>
@@ -111,8 +115,8 @@ export default async function PrivacyTipsPage() {
       </section>
 
       <KpiBand label="Index">
-        <Kpi k="Shields analysed" v={num(ps.shieldTx)} s="transparent → shielded" />
-        <Kpi k="Deshields analysed" v={num(ps.deshieldTx)} s="shielded → transparent" />
+        <Kpi k="Shields analysed" v={num(ps.shieldTx)} unit="txs" s="transparent → shielded" />
+        <Kpi k="Deshields analysed" v={num(ps.deshieldTx)} unit="txs" s="shielded → transparent" />
         <Kpi k="Top shield amount" v={ramt(topS[0])} unit="ZEC" s={`${num(topS[1])} nearby shields`} />
         <Kpi k="Top deshield amount" v={ramt(topD[0])} unit="ZEC" s={`${num(topD[1])} nearby deshields`} />
       </KpiBand>
@@ -166,7 +170,7 @@ export default async function PrivacyTipsPage() {
       <Tiles items={[
         { href: '/amount-suggest', title: 'Amount lookup', desc: 'Check any amount before you send it.', value: 'Any amount' },
         { href: '/wall-of-shame', title: 'Wall of Shame', desc: 'Round trips that reused a near-identical amount.', value: <>{num(wall.length)} incidents</> },
-        { href: '/chart/anonymity', title: 'Shielded anonymity set', desc: 'How many coins you blend in with when deshielding.', value: <>{pct(pools.shieldedPct)} shielded</> },
+        { href: '/chart/anonymity', title: 'Shielded anonymity set', desc: 'How many coins you blend in with when deshielding.', value: <>{compact(anon1, 1)} shields cover 1 ZEC</> },
         { href: '/shield-hops', title: 'Shield-bound hops', desc: 'How much ZEC moves when a coin goes shielded.', value: <>Typical {zamt(zat(hops.summary[hops.class]?.median_of_daily_medians_zat ?? 0))} ZEC</> },
       ]} />
     </>

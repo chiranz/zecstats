@@ -1,16 +1,16 @@
 import type { Metadata } from 'next';
 import { Masthead } from '@/components/chrome/Masthead';
-import { Card, ChartActions, Kpi, Legend, More, Tiles } from '@/components/ui/blocks';
+import { Card, ChartActions, Kpi, KpiBand, Legend, More, Tiles } from '@/components/ui/blocks';
 import { TimeSeriesChart } from '@/components/charts/TimeSeriesChart';
 import { ColumnChart } from '@/components/privacy-tools/ColumnChart';
 import { K3, MoreCols, Prose, Q, ui } from '@/components/privacy-tools/parts';
 import { Toc } from '@/components/privacy-tools/Toc';
 import { Gauge } from '@/components/turnstile/Gauge';
-import { cumulativeFlows, getInflation, isiLabel, madLabel } from '@/lib/data/turnstile';
+import { cumulativeFlows, getInflation, ISI_BANDS, isiBand, madLabel } from '@/lib/data/turnstile';
+import { getIronwood } from '@/lib/data/ironwood';
 import { getWallOfShame } from '@/lib/data/privacy-tools';
-import { getFreshness, getPools } from '@/lib/data/snapshot';
-import { dateLong, num, pct } from '@/lib/format';
-import { fz } from '@/components/privacy-tools/fmt';
+import { getDailyPrices, getFreshness, getPools } from '@/lib/data/snapshot';
+import { compact, dateLong, num, pct } from '@/lib/format';
 import s from './page.module.css';
 import { pageMetadata } from '@/lib/seo';
 import { SectionLd } from '@/components/seo/SectionLd';
@@ -18,9 +18,11 @@ import { SectionLd } from '@/components/seo/SectionLd';
 export const metadata: Metadata = pageMetadata('/orchard-turnstile');
 
 const short = (d: string) => dateLong(d).replace(/ \d{4}$/, '');
+const fz = (v: number) => compact(v);
+const zc = (v: number) => `${compact(v)} ZEC`;
 
 export default async function TurnstilePage() {
-  const [d, f, pools, wall] = await Promise.all([getInflation(), getFreshness(), getPools(), getWallOfShame()]);
+  const [d, f, pools, wall, iw, prices] = await Promise.all([getInflation(), getFreshness(), getPools(), getWallOfShame(), getIronwood(), getDailyPrices()]);
   const { turnstile: t, disclosure: ds, masking: mk, benford: bf, index: ix } = d;
   const isi = Math.round(ix.isi);
   const comp = (k: string) => ix.components.find((c) => c.key === k);
@@ -33,9 +35,22 @@ export default async function TurnstilePage() {
   const accel = ds.deshield_acceleration;
   const slower = accel < 1;
   const d1 = bf.digits.find((x) => x.digit === 1)!;
-  const zoneLabel = isiLabel(ix.isi);
+  const band = isiBand(ix.isi);
   const r2 = (v: number | null) => (v == null ? 'n/a' : v.toFixed(2));
+  const rAt = (lag: number) => lags.find((p) => p.lag === lag)?.r ?? null;
+  const peakR = rAt(mk.peak_lag) ?? 0;
+  // the strongest lag on the "deshields after" side, against its mirror on the "before" side
+  const after = lags.filter((p) => p.lag > 0).reduce((a, p) => ((p.r ?? -1) > (a.r ?? -1) ? p : a), { lag: 1, r: null as number | null });
+  const before = rAt(-after.lag);
+  const leanAfter = after.r != null && before != null && after.r - before >= 0.1 && peakR - after.r <= 0.05;
   const launch = d.series[0].date;
+  // drain time at the pace the copy names (post-disclosure), and at the faster pre-disclosure pace
+  const drainPost = ds.current_balance_zec / ds.post_deshield_rate_zec_day;
+  const drainPre = ds.current_balance_zec / ds.pre_deshield_rate_zec_day;
+  // price move: close the day before disclosure → lowest close in the 30 days from it
+  const pi = prices.findIndex((p) => p.date >= ds.date);
+  const priceFall = pi > 0 ? (Math.min(...prices.slice(pi, pi + 31).map((p) => p.zec_usd)) / prices[pi - 1].zec_usd - 1) * 100 : null;
+  const fall = priceFall != null && priceFall < 0 ? `${num(-priceFall)}%` : null;
 
   return (
     <>
@@ -52,9 +67,9 @@ export default async function TurnstilePage() {
         <div className={s.verdict}>
           <div className={s.gauge}><Gauge value={ix.isi} /></div>
           <div className={s.vcol}>
-            <span className={s.vtag}><i aria-hidden="true" />Verdict · {zoneLabel}</span>
-            <h2 className={s.vh} id="h-verdict">{t.ever_negative ? 'Turnstile breach detected' : `${zoneLabel} — no direct evidence of counterfeit ZEC; the signals are confounded`}</h2>
-            <p className="note" style={{ fontSize: 15 }}>A turnstile breach would be hard proof and would pin the index at 100. The turnstile is {t.ever_negative ? 'broken' : 'clean'}, which caps the needle in the inconclusive band; what is left are soft signals that ordinary behaviour also produces.</p>
+            <span className={s.vtag} style={{ color: band.color }}><i aria-hidden="true" style={{ background: band.color }} />Verdict · {band.name} ({band.from}–{band.to})</span>
+            <h2 className={s.vh} id="h-verdict">{t.ever_negative ? 'Turnstile breach detected' : `${band.verdict}: no direct evidence of counterfeit ZEC`}</h2>
+            <p className="note" style={{ fontSize: 15 }}>A turnstile breach would be hard proof and would pin the index at 100. The turnstile is {t.ever_negative ? 'broken' : 'clean'}, so the needle shows only soft signals, which ordinary behaviour also produces.</p>
             <div className={s.comp} role="list" aria-label="Index components">
               {soft.map((c) => {
                 const p = Math.round(c.score * 100);
@@ -79,7 +94,7 @@ export default async function TurnstilePage() {
               <span>Bug found <b>{dateLong(ds.found_date)}</b></span>
               <span>Patched <b>{short(ds.patch_date)}</b></span>
               <span>Disclosed <b>{short(ds.date)}</b></span>
-              <span>ZEC fell <b>~38%</b></span>
+              {fall && <span>ZEC low within a month <b>−{fall}</b></span>}
             </div>
           </div>
         </div>
@@ -102,7 +117,7 @@ export default async function TurnstilePage() {
               <Kpi k="Pool balance floor" v={num(t.min_balance_zec)} unit="ZEC" s="lowest point since launch" />
               <Kpi k="Ever negative?" v={t.ever_negative ? 'Yes' : 'No'} s="the hard guarantee holds" />
               <Kpi k="Flow ↔ balance gap" v={t.reconcile_gap_zec.toFixed(2)} unit="ZEC" s="integer rounding only" />
-              <Kpi k="Total shielded in" v={fz(t.total_shield_zec)} unit="ZEC" s="from transparent; pool-to-pool inflows excluded" />
+              <Kpi k="Total shielded in" v={fz(t.total_shield_zec)} unit="ZEC" s="from transparent only; migration in is not counted" />
               <Kpi k="Total deshielded out" v={fz(t.total_deshield_zec)} unit="ZEC" s="to transparent; excludes migration" />
               <Kpi k="Deshield / shield" v={pct(t.deshield_shield_ratio * 100)} s={`cumulative, since ${new Date(launch).getUTCFullYear()}`} />
             </K3>
@@ -110,13 +125,13 @@ export default async function TurnstilePage() {
               title="Has more ever left Orchard than entered it?"
               takeaway={<>No — cumulative <b>in</b> stays above cumulative <b>out</b> the whole way. The gap is the pool balance: <b>{fz(ds.balance_at_disclosure_zec)} ZEC</b> at disclosure, <b>{fz(ds.current_balance_zec)}</b> today after the Ironwood migration.</>}
               actions={<ChartActions api="inflation" name="Orchard cumulative flows" />}
-              foot={`Cumulative ZEC since Orchard’s launch (${dateLong(launch)}) · out includes deshields and migration to Ironwood (${fz(totalOut)} in all) · data through ${dateLong(f.dataThrough)}`}
+              foot={`Cumulative ZEC since Orchard’s launch (${dateLong(launch)}) · “In” is shields plus pool-to-pool inflows (${zc(cum.cin.at(-1)!)}), so it runs above the ${zc(t.total_shield_zec)} shielded from transparent · “Out” is deshields plus migration to Ironwood (${zc(totalOut)}) · data through ${dateLong(f.dataThrough)}`}
             >
               <TimeSeriesChart
                 dates={cum.dates}
                 series={[
-                  { key: 'in', label: 'In', color: 'var(--s2)', values: cum.cin, width: 2.2 },
-                  { key: 'out', label: 'Out', color: 'var(--s4)', values: cum.cout, width: 2.2 },
+                  { key: 'in', label: 'In, incl. migration', color: 'var(--s1)', values: cum.cin, width: 2.2 },
+                  { key: 'out', label: 'Out, incl. migration', color: 'var(--s2)', values: cum.cout, width: 2.2 },
                   { key: 'bal', label: 'Balance', color: 'var(--p-orchard)', values: cum.bal, type: 'area' },
                 ]}
                 format="zecCompact"
@@ -125,36 +140,37 @@ export default async function TurnstilePage() {
                 zeroBaseline
                 events={[{ date: ds.date, label: 'Disclosed' }, { date: '2026-07-28', label: 'Ironwood' }]}
                 height={320}
-                ariaLabel={`Cumulative ZEC into and out of the Orchard pool since its launch, with the pool balance. Inflow always stays above outflow. Totals: ${fz(t.total_shield_zec)} shielded in, ${fz(totalOut)} out including Ironwood migration; balance ${fz(ds.balance_at_disclosure_zec)} at disclosure and ${fz(ds.current_balance_zec)} today.`}
+                ariaLabel={`Cumulative ZEC into and out of the Orchard pool since its launch, with the pool balance. Inflow always stays above outflow. Totals: ${zc(cum.cin.at(-1)!)} in, ${zc(totalOut)} out including Ironwood migration; balance ${fz(ds.balance_at_disclosure_zec)} at disclosure and ${fz(ds.current_balance_zec)} today.`}
               />
             </Card>
           </Q>
 
           <Q id="s2" n="2" title="Could a fake be hidden in real shields?"
             answer={mk.peak_lag <= 0
-              ? <><b>No sign of it.</b> An attacker hiding counterfeit deshields behind legitimate shields would make deshields trail shields by a day or two. The correlation peaks at the same day instead, and the profile is roughly symmetric.</>
+              ? <><b>{leanAfter ? 'Not clearly.' : 'No sign of it.'}</b> An attacker hiding counterfeit deshields behind legitimate shields would make deshields trail shields by a day or two. The correlation peaks on the same day (r = {r2(peakR)}){leanAfter ? <>, but lag +{after.lag} comes close (r = {r2(after.r)}) while lag −{after.lag} is only {r2(before)}: a lean toward deshields following shields that ordinary activity can also produce.</> : <>, and the two sides of the profile are similar.</>}</>
               : <><b>Possibly.</b> Deshields peak {mk.peak_lag} day{mk.peak_lag === 1 ? '' : 's'} after shields — the lean a masked cash-out would leave, though shared activity can produce it too.</>}>
-            <K3 one label="Masking test">
+            <KpiBand label="Masking test">
               <Kpi k="Same-day correlation" v={`r = ${r2(mk.same_day_r)}`} s="shields vs deshields, daily" />
               <Kpi k="Peak lag" v={String(mk.peak_lag)} unit="days" s={mk.peak_lag <= 0 ? 'not after shields' : 'deshields after shields'} />
+              <Kpi k={`Lag +${after.lag} vs −${after.lag}`} v={`${r2(after.r)} vs ${r2(before)}`} s="r with deshields after vs before shields" />
               <Kpi k="Masked-deshield score" v={pct((comp('masking')?.score ?? 0) * 100, 0)} s={`weight ${comp('masking')?.weight} in the index`} />
-            </K3>
+            </KpiBand>
             <Card
               title="Do deshields follow shields?"
-              takeaway={<>The peak sits at <b>lag {mk.peak_lag}</b> (r = {r2(lags[peakIdx]?.r ?? null)}): shields and deshields rise and fall together with overall activity, which is expected and not a masking fingerprint.</>}
+              takeaway={<>The peak sits at <b>lag {mk.peak_lag}</b> (r = {r2(peakR)}): shields and deshields rise and fall together with overall activity, which is expected.{leanAfter ? <> Lag <b>+{after.lag}</b> is nearly as high (r = {r2(after.r)}) and higher than lag −{after.lag} ({r2(before)}) — a mild lean, not a clear masking fingerprint.</> : ' Not a masking fingerprint.'}</>}
               actions={<ChartActions api="inflation" name="Lag correlation" />}
               foot="Pearson r between daily shield and deshield totals, deshields offset by −7 to +7 days · same-day correlation is expected because both follow overall activity"
             >
               <ColumnChart
                 categories={lags.map((p) => (p.lag > 0 ? `+${p.lag}` : String(p.lag)))}
-                series={[{ key: 'r', label: 'Correlation r', color: 'var(--p-transparent)', values: lags.map((p) => p.r) }]}
-                highlight={[{ index: peakIdx, color: 'var(--s2)' }]}
+                series={[{ key: 'r', label: 'Correlation r', color: 'var(--other)', values: lags.map((p) => p.r) }]}
+                highlight={[{ index: peakIdx, color: 'var(--s1)' }]}
                 labels={[{ index: peakIdx, text: `r = ${r2(lags[peakIdx]?.r ?? null)}` }]}
                 format="dec2"
                 height={260}
                 axisNotes={['← deshields before', 'lag in days', 'deshields after →']}
                 tipTitle={{ prefix: 'Lag ', suffix: ' days' }}
-                ariaLabel={`Correlation between daily shields and deshields at lags from minus 7 to plus 7 days. The peak is at lag ${mk.peak_lag}, r = ${r2(mk.same_day_r)}; positive and negative lags are similar.`}
+                ariaLabel={`Correlation between daily shields and deshields at lags from minus 7 to plus 7 days. The peak is at lag ${mk.peak_lag}, r = ${r2(peakR)}; lag +${after.lag} is ${r2(after.r)} and lag −${after.lag} is ${r2(before)}.`}
               />
             </Card>
           </Q>
@@ -169,39 +185,41 @@ export default async function TurnstilePage() {
               <Kpi k="Retained, net of migration" v={pct(ds.retained_fraction * 100, 0)} s="share of value that stayed shielded" />
               <Kpi k="Deshield pace pre → post" v={`${fz(ds.pre_deshield_rate_zec_day)} → ${fz(ds.post_deshield_rate_zec_day)}`} s={`ZEC/day · ${accel.toFixed(1)}× — ${slower ? 'slower, not faster' : 'faster'}`} />
             </K3>
-            <p className="note">A large counterfeit stash would be cashed out fast once the bug was public. {slower ? 'The pool did the opposite.' : 'The pool did speed up — but'} A surge would not have proven an attack either: a ~38% price crash makes ordinary holders exit too.</p>
+            <p className="note">A large counterfeit stash would be cashed out fast once the bug was public. {slower ? 'The pool did the opposite.' : 'The pool did speed up — but'} A surge would not have proven an attack either: {fall ? `a ${fall} price drop` : 'a price crash'} makes ordinary holders exit too.</p>
           </Q>
 
           <Q id="s4" n="4" title="How fast could value leave?"
-            answer={<><b>Slowly and visibly.</b> Value can only leave Orchard as fast as deshields are made. At the post-disclosure pace, emptying the pool would take about <b>{Math.round(ds.drain_days_at_peak_rate)} days</b> of sustained, conspicuous outflow.</>}>
-            <K3 one label="Extraction feasibility">
-              <Kpi k="Days to drain the pool" v={`~${Math.round(ds.drain_days_at_peak_rate)}`} unit="days" s="at the post-disclosure pace" />
+            answer={<><b>Slowly and visibly.</b> Value can only leave Orchard as fast as deshields are made. At the post-disclosure pace, emptying the remaining {zc(ds.current_balance_zec)} would take about <b>{Math.round(drainPost)} days</b> of sustained, conspicuous outflow (about {Math.round(drainPre)} at the faster pre-disclosure pace).</>}>
+            <KpiBand label="Extraction feasibility">
+              <Kpi k="Days to drain the pool" v={`~${Math.round(drainPost)}`} unit="days" s={`at the post-disclosure pace; ~${Math.round(drainPre)} at the pre-disclosure pace`} />
+              <Kpi k="Left in Orchard" v={fz(ds.current_balance_zec)} unit="ZEC" s="the most that could still leave" />
               <Kpi k="Post-disclosure deshield rate" v={fz(ds.post_deshield_rate_zec_day)} unit="ZEC/day" s={`${accel.toFixed(1)}× the pre-disclosure rate`} />
               <Kpi k="Biggest single deshield day" v={fz(ds.max_daily_deshield_zec)} unit="ZEC" s="largest one-day outflow on record" />
-            </K3>
+            </KpiBand>
           </Q>
 
           <Q id="s5" n="5" title="Do the amounts look natural?"
             answer={<><b>{bf.mad < 0.012 ? 'Yes.' : 'Mostly.'}</b> Leading digits broadly follow Benford’s law. The fit (MAD {bf.mad.toFixed(4)}) is {madLabel(bf.mad) === 'nonconformity' ? 'just past Nigrini’s 0.015 line for “nonconformity”' : `within Nigrini’s “${madLabel(bf.mad)}” band`}, driven by a mild excess of amounts starting with 1 — typical of round numbers and exchange batches.</>}>
-            <K3 one label="Benford test">
-              <Kpi k="Deshields tested" v={num(bf.n)} s="every Orchard → transparent ≥ 0.001 ZEC" />
+            <KpiBand label="Benford test">
+              <Kpi k="Deshields tested" v={num(bf.n)} unit="deshields" s="every Orchard → transparent ≥ 0.001 ZEC" />
+              <Kpi k="Leading digit 1" v={pct(d1.observed * 100)} s={`against ${pct(d1.expected * 100)} expected by Benford`} />
               <Kpi k="Mean absolute deviation" v={bf.mad.toFixed(4)} s="nonconformity starts at 0.015" />
               <Kpi k="Benford score" v={pct((comp('benford')?.score ?? 0) * 100, 0)} s={`weight ${comp('benford')?.weight} in the index`} />
-            </K3>
+            </KpiBand>
             <Card
               title="How often does each leading digit appear?"
               takeaway={<>Amounts starting with <b>1</b> appear <b>{pct(d1.observed * 100)}</b> of the time against <b>{pct(d1.expected * 100)}</b> expected; digits 2–9 sit close to the curve.</>}
-              legend={<Legend items={[{ label: 'Observed', color: 'var(--s2)' }, { label: 'Benford expected', color: 'var(--p-transparent)' }]} />}
+              legend={<Legend items={[{ label: 'Observed', color: 'var(--s1)' }, { label: 'Benford expected', color: 'var(--other)' }]} />}
               actions={<ChartActions api="inflation" name="Benford first digits" />}
               foot={`n = ${num(bf.n)} deshields · MAD ${bf.mad.toFixed(4)} → ${madLabel(bf.mad)} (Nigrini) · χ² deliberately omitted: at this sample size it rejects any real dataset`}
             >
               <ColumnChart
                 categories={bf.digits.map((x) => String(x.digit))}
                 series={[
-                  { key: 'o', label: 'Observed', color: 'var(--s2)', values: bf.digits.map((x) => x.observed * 100) },
-                  { key: 'e', label: 'Benford expected', color: 'var(--p-transparent)', values: bf.digits.map((x) => x.expected * 100) },
+                  { key: 'o', label: 'Observed', color: 'var(--s1)', values: bf.digits.map((x) => x.observed * 100) },
+                  { key: 'e', label: 'Benford expected', color: 'var(--other)', values: bf.digits.map((x) => x.expected * 100) },
                 ]}
-                labels={[{ index: 0, series: 0, text: pct(d1.observed * 100, 0) }, { index: 0, series: 1, text: pct(d1.expected * 100, 1) }]}
+                labels={[{ index: 0, series: 0, text: pct(d1.observed * 100, 1) }]}
                 format="pct"
                 height={250}
                 tipTitle={{ prefix: 'Leading digit ' }}
@@ -213,7 +231,7 @@ export default async function TurnstilePage() {
           <Q id="verdict" n="→" title="Verdict">
             <dl className={ui.vlist}>
               <div><dt>Turnstile held</dt><dd>Over {num(t.days)} days the balance {t.ever_negative ? 'went negative' : 'never went negative'} (floor {num(t.min_balance_zec)} ZEC). Cumulative deshields are {pct(t.deshield_shield_ratio * 100)} of cumulative shields, so no unbounded inflation is present and any extraction is capped by the running balance.</dd></div>
-              <div><dt>Masking signature</dt><dd>Same-day correlation r = {r2(mk.same_day_r)}, peaking at lag {mk.peak_lag}, with a roughly flat profile. {mk.peak_lag <= 0 ? <>That is shared daily activity, not deshields <b>following</b> shields.</> : <>Deshields lean after shields — consistent with masking, but also with ordinary activity.</>}</dd></div>
+              <div><dt>Masking signature</dt><dd>Same-day correlation r = {r2(mk.same_day_r)}, peaking at lag {mk.peak_lag}; lag +{after.lag} reaches {r2(after.r)} against {r2(before)} at lag −{after.lag}. {mk.peak_lag <= 0 && !leanAfter ? <>That is shared daily activity, not deshields <b>following</b> shields.</> : <>Deshields lean after shields — consistent with masking, but also with ordinary activity.</>}</dd></div>
               <div><dt>After disclosure</dt><dd>Orchard held {fz(ds.balance_at_disclosure_zec)} ZEC on {dateLong(ds.date)} and holds {fz(ds.current_balance_zec)} today — <b>{pct(ds.retained_fraction * 100, 0)} retained</b> once the {fz(ds.migrated_since_zec)} ZEC Ironwood migration is excluded. Deshielding <b>{slower ? 'slowed' : 'rose'}</b> to about {accel.toFixed(1)}× its prior rate ({fz(ds.deshielded_since_zec)} ZEC out).</dd></div>
               <div><dt>Amount distribution</dt><dd>Leading digits {bf.mad < 0.012 ? 'conform to' : 'broadly track'} Benford (MAD {bf.mad.toFixed(4)}). The mild excess of 1s fits round-number and exchange-batch clustering, not a structuring fingerprint.</dd></div>
               <div className={ui.bl}><dt>Bottom line · {isi} / 100</dt><dd>The hard guarantee holds: no <b>net</b> value left Orchard that hadn’t entered it. Every softer signal is real but confounded by legitimate behaviour. This does not prove the bug was never used — skimming within the pool’s own balance is invisible to flow analysis. The honest reading is <b>“no detectable exploitation, and behaviour inconsistent with a large active cash-out”</b> — not “safe”.</dd></div>
@@ -228,7 +246,7 @@ export default async function TurnstilePage() {
                   <p><b>Why the turnstile matters.</b> Minting inside the pool does not change its declared value. A counterfeit only becomes visible when it is deshielded — crossing the turnstile, the consensus rule that a pool can never hold negative value. The sharpest attack deshields fake value under cover of incoming legitimate shields, so the balance never drops suspiciously; test 2 looks for exactly that lean.</p>
                 </Prose>
                 <Prose>
-                  <p><b>The index.</b> A weighted blend of three soft signals — masked-deshield lean ({comp('masking')?.weight}), post-disclosure net drain ({comp('extraction')?.weight}) and Benford anomaly ({comp('benford')?.weight}). A turnstile breach overrides everything and pins it to 100. Bands: 0–25 quiet, 25–55 inconclusive, 55–80 suspicious, 80–100 breach.</p>
+                  <p><b>The index.</b> A weighted blend of three soft signals — masked-deshield lean ({comp('masking')?.weight}), post-disclosure net drain ({comp('extraction')?.weight}) and Benford anomaly ({comp('benford')?.weight}). A turnstile breach overrides everything and pins it to 100. Bands: {ISI_BANDS.map((b) => `${b.from}–${b.to} ${b.name.toLowerCase()}`).join(', ')}. Ordinary activity alone scores each soft signal around 30%, which is why 25–55 reads as inconclusive.</p>
                   <p><b>Data.</b> Orchard’s entire per-block flow history, reconstructed from our Zebra node, starting at Orchard’s launch on {dateLong(launch)}. Deshields ≥ 0.001 ZEC enter the Benford test; χ² is omitted because at this sample size it rejects any real dataset.</p>
                 </Prose>
               </MoreCols>
@@ -238,7 +256,7 @@ export default async function TurnstilePage() {
       </div>
 
       <Tiles items={[
-        { href: '/ironwood', title: 'Ironwood migration', desc: 'How much of Orchard has crossed into Ironwood.', value: <><b>89.24%</b> crossed</> },
+        { href: '/ironwood', title: 'Ironwood migration', desc: 'How much of Orchard has crossed into Ironwood.', value: <><b>{num(iw.pct, 2)}%</b> crossed</> },
         { href: '/chart/flow-orchard', title: 'Orchard flows + balance', desc: 'The daily chart behind section 1.', value: <><b>{num(pools.orchard)} ZEC</b> in Orchard</> },
         { href: '/chart/pools', title: 'Shielded pool balances', desc: 'Every pool, transparent to Ironwood.', value: <><b>{pct(pools.shieldedPct)}</b> of ZEC shielded</> },
         { href: '/wall-of-shame', title: 'Wall of Shame', desc: 'Round trips that reused a near-identical amount.', value: <><b>{num(wall.length)}</b> incidents</> },

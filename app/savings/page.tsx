@@ -3,8 +3,8 @@ import { Masthead } from '@/components/chrome/Masthead';
 import { More, Tiles } from '@/components/ui/blocks';
 import { Calculator } from '@/components/tools/Calculator';
 import s from '@/components/tools/calc.module.css';
-import { getPriceArrays, getMetricsTable, ZEC_MAX } from '@/lib/data/tools';
-import { getLive } from '@/lib/data/snapshot';
+import { getPriceArrays, ZEC_MAX } from '@/lib/data/tools';
+import { getValuation } from '@/lib/data/home';
 import { dateLong, delta, num, usd } from '@/lib/format';
 import { pageMetadata } from '@/lib/seo';
 import { SectionLd } from '@/components/seo/SectionLd';
@@ -12,9 +12,8 @@ import { SectionLd } from '@/components/seo/SectionLd';
 export const metadata: Metadata = pageMetadata('/savings');
 
 export default async function SavingsPage() {
-  const [prices, live, table] = await Promise.all([getPriceArrays(), getLive(), getMetricsTable()]);
-  const row = (n: string) => table.rows.find((r) => r.name === n);
-  const realized = row('Realized Price (all pools)'), mvrv = row('MVRV (spot ÷ realized)'), mcap = row('Market Cap');
+  const [prices, val] = await Promise.all([getPriceArrays(), getValuation()]);
+  const ch = delta(val.change24h);
   // 1% of gold's $20.0T (the /what-if reference size) spread over every ZEC that will ever exist
   const goldOnePct = (20.0e12 * 0.01) / ZEC_MAX;
   return (
@@ -35,9 +34,9 @@ export default async function SavingsPage() {
       </More>
       <Tiles
         items={[
-          { href: '/chart/price', title: 'ZEC price', desc: 'The price behind every Zcash purchase above, with log scale and moving averages.', value: <>${num(live.zec_usd, 2)} <span className={live.zec_usd_change_24h_pct >= 0 ? 'up' : 'dn'} style={{ fontSize: 13 }}>{delta(live.zec_usd_change_24h_pct).text}</span></> },
-          { href: '/chart/realized-all', title: 'Realized price', desc: 'The average price coins last moved at: what the market as a whole paid.', value: realized && mvrv ? `${usd(realized.now, 0)} · MVRV ${num(mvrv.now, 2)}×` : undefined },
-          { href: '/chart/market-cap', title: 'Market cap', desc: 'Price × supply, the number most comparisons start from.', value: mcap ? `$${num(mcap.now / 1e9, 2)}B` : undefined },
+          { href: '/chart/price', title: 'ZEC price', desc: 'The price behind every Zcash purchase above, with log scale and moving averages.', value: <>{usd(val.price)} <span className={ch.cls} style={{ fontSize: 13 }}>{ch.text} 24h</span></> },
+          { href: '/chart/realized-all', title: 'Realized price', desc: 'The average price coins last moved at: what the market as a whole paid.', value: `${usd(val.realizedPrice, 0)} · MVRV ${num(val.mvrv, 2)}×` },
+          { href: '/chart/market-cap', title: 'Market cap', desc: 'Price × supply, the number most comparisons start from.', value: `$${num(val.marketCap / 1e9, 2)}B` },
           { href: '/what-if', title: 'What if gold', desc: "What one ZEC would be worth if Zcash took a share of gold's value.", value: `${usd(goldOnePct, 0)} a ZEC at 1%` },
         ]}
       />

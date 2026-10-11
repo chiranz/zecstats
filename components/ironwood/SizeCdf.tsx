@@ -19,7 +19,7 @@ export function SizeCdf({ points, median, p90, max, ariaLabel }: { points: { zec
   }, []);
   const narrow = w < 520;
   const h = narrow ? 240 : 320;
-  const m = { top: 16, right: narrow ? 10 : 20, bottom: 28, left: narrow ? 40 : 48 };
+  const m = { top: 24, right: narrow ? 10 : 20, bottom: 28, left: narrow ? 40 : 48 };
   const iw = w - m.left - m.right;
   const ih = h - m.top - m.bottom;
   const pts = useMemo(() => points.filter((p) => p.zec > 0), [points]);
@@ -60,16 +60,16 @@ export function SizeCdf({ points, median, p90, max, ariaLabel }: { points: { zec
           {ticks.map((t, i) => <text key={`t${t}`} x={x(t)} y={ih + 18} textAnchor={i === 0 ? 'start' : i === ticks.length - 1 ? 'end' : 'middle'}>{fmtTick(t)}</text>)}
           <path d={ar} fill="var(--p-ironwood)" opacity={0.1} />
           <path d={ln} fill="none" stroke="var(--p-ironwood)" strokeWidth={2} />
-          {[{ v: median, c: 0.5, label: `Median ${num(median, 2)} ZEC` }, { v: p90, c: 0.9, label: `P90 ${num(p90)} ZEC` }].map((mk) => (
+          {[{ v: median, c: 0.5, label: `Median ${num(median, 2)} ZEC`, dx: 8, dy: 16 }, { v: p90, c: 0.9, label: `P90 ${num(p90)} ZEC`, dx: 8, dy: 18 }].map((mk) => (
             <g key={mk.label}>
               <line x1={x(mk.v)} x2={x(mk.v)} y1={y(mk.c)} y2={ih} stroke="var(--text-2)" strokeDasharray="3 3" />
               <line x1={0} x2={x(mk.v)} y1={y(mk.c)} y2={y(mk.c)} stroke="var(--text-2)" strokeDasharray="3 3" />
               <circle cx={x(mk.v)} cy={y(cumAt(mk.v) || mk.c)} r={3.5} fill="var(--card)" stroke="var(--value)" strokeWidth={1.5} />
-              <text x={mk.c === 0.5 ? x(mk.v) + 8 : x(mk.v) - 8} y={y(mk.c) + (mk.c === 0.5 ? 16 : -8)} textAnchor={mk.c === 0.5 ? 'start' : 'end'} style={{ fill: 'var(--text-2)' }}>{mk.label}</text>
+              <text x={x(mk.v) + mk.dx} y={y(mk.c) + mk.dy} textAnchor="start" style={{ fill: 'var(--text-2)', paintOrder: 'stroke', stroke: 'var(--card)', strokeWidth: 3 }}>{mk.label}</text>
             </g>
           ))}
           <circle cx={x(max)} cy={y(1)} r={4} fill="var(--p-ironwood)" stroke="var(--card)" strokeWidth={2} />
-          <text x={x(max) - 8} y={y(1) + 16} textAnchor="end" style={{ fill: 'var(--value)' }}>Largest {num(max)}</text>
+          <text x={x(max) - 8} y={y(1) - 6} textAnchor="end" style={{ fill: 'var(--value)', paintOrder: 'stroke', stroke: 'var(--card)', strokeWidth: 3 }}>Largest {num(max)} ZEC</text>
           {hp && (
             <g>
               <line x1={x(Math.max(lo, hp.zec))} x2={x(Math.max(lo, hp.zec))} y1={0} y2={ih} stroke="var(--axis)" />
@@ -80,7 +80,7 @@ export function SizeCdf({ points, median, p90, max, ariaLabel }: { points: { zec
       </svg>
       {hp && (
         <div className="tip" style={{ top: 8, left: Math.min(Math.max(0, x(Math.max(lo, hp.zec)) + m.left + 14), w - 200), pointerEvents: 'none' }}>
-          <b>{num(hp.zec, hp.zec < 1 ? 4 : hp.zec < 100 ? 2 : 0)} ZEC or less</b>
+          <b>{hp.zec < 1e-4 ? hp.zec.toPrecision(2) : num(hp.zec, hp.zec < 1 ? 4 : hp.zec < 100 ? 2 : 0)} ZEC or less</b>
           <span>{num(hp.cum * 100, 1)}% of migrations</span>
         </div>
       )}

@@ -4,9 +4,9 @@ import s from './ui.module.css';
 
 export { s as ui };
 
-/** KPI band of 3 (or 6) tiles; `one` = a lone row of 3 stacks to 1-up on phones instead of 2+1. */
-export function K3({ children, label, one = false }: { children: ReactNode; label?: string; one?: boolean }) {
-  return <div className={`kpis ${s.k3}${one ? ` ${s.one}` : ''}`} role="list" aria-label={label}>{children}</div>;
+/** KPI band of 6 tiles as two rows of 3 (2-up on phones). A band of 4 uses the shared KpiBand. */
+export function K3({ children, label }: { children: ReactNode; label?: string }) {
+  return <div className={`kpis ${s.k3}`} role="list" aria-label={label}>{children}</div>;
 }
 
 /** Numbered question section: "1  Does the turnstile hold?" + bold one-line answer. */

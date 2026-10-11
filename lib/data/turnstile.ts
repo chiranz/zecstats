@@ -25,8 +25,22 @@ export type Inflation = {
 
 export const getInflation = () => api<Inflation>('inflation');
 
-/** Same bands and wording as the live gauge. */
-export const isiLabel = (v: number) => (v < 25 ? 'No detectable signature' : v < 55 ? 'Inconclusive' : v < 80 ? 'Elevated — investigate' : 'Hard evidence');
+/**
+ * The one band scheme for the Inflation Suspicion Index, used by every gauge and verdict label. Thresholds are the live
+ * gauge's (25 / 55 / 80) and suit the method: ordinary activity alone scores each soft signal at about 0.3, so
+ * 25–55 is the range normal behaviour produces (inconclusive); below 25 the signals are quieter than that; above 55
+ * they are stronger than confounding explains; 80+ needs every soft signal near its maximum, or a turnstile breach,
+ * which pins the index at 100.
+ */
+export const ISI_BANDS = [
+  { from: 0, to: 25, name: 'Quiet', verdict: 'No detectable signature', color: 'var(--up)' },
+  { from: 25, to: 55, name: 'Inconclusive', verdict: 'Inconclusive — signals confounded', color: 'var(--warn)' },
+  { from: 55, to: 80, name: 'Elevated', verdict: 'Elevated — investigate', color: 'color-mix(in oklab, var(--warn), var(--down))' },
+  { from: 80, to: 100, name: 'Severe', verdict: 'Severe — breach-level signal', color: 'var(--down)' },
+] as const;
+export type IsiBand = (typeof ISI_BANDS)[number];
+export const isiBand = (v: number): IsiBand => ISI_BANDS.find((b) => v < b.to) ?? ISI_BANDS[ISI_BANDS.length - 1];
+export const isiLabel = (v: number) => isiBand(v).verdict;
 
 /** Nigrini's MAD bands for first-digit tests. */
 export const madLabel = (v: number) => (v < 0.006 ? 'close conformity' : v < 0.012 ? 'acceptable conformity' : v < 0.015 ? 'marginal conformity' : 'nonconformity');

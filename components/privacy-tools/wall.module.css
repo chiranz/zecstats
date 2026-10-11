@@ -3,7 +3,7 @@
 :global(html[data-theme="light"]) .fbar{background:color-mix(in srgb,var(--card) 94%,transparent)}
 .grp{display:flex;flex-direction:column;gap:6px;min-width:0;max-width:100%}
 .grpRow{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
-.glbl{font:500 11.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.glbl{font:500 12px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 .end{margin-left:auto;display:flex;align-items:center;gap:10px}
 .count{font:500 12.5px var(--mono);color:var(--text-2);white-space:nowrap}
 .count b{color:var(--value);font-weight:600}
@@ -16,6 +16,7 @@
 .inp input::placeholder{color:var(--muted)}
 .inp:focus-within{outline:2px solid var(--accent);outline-offset:1px}
 .mOnly{display:none!important}
+
 
 /* table */
 .wrap{max-height:640px;overflow:auto}
@@ -58,6 +59,7 @@
   .fbar .grp{display:none}
   .fbar.open .grp{display:flex;width:100%}
   .mOnly{display:inline-flex!important}
+  .dOnly{display:none}
   .end{margin-left:0;width:100%;justify-content:space-between}
   .reset{display:none!important}
   .fbar.open .reset{display:inline-flex!important}
