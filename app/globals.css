@@ -128,6 +128,12 @@ html[data-theme="light"] .topbar{background:rgba(242,246,242,.88)}
 
 /* ---------- charts (SVG drawn inline) ---------- */
 .chart{position:relative;width:100%}
+/* A chart's plot height in CSS, so the server HTML already has the height the chart will measure and draw at: --h, or
+   on a card narrower than 520px --hk% of its width (default 70), at least --hmin (default 220px). --hk:0 gives a fixed
+   phone height (--hmin). Each chart's `h` uses the same rule; .chart-box (an ancestor as wide as the plot) is the container. */
+.chart-box{container-type:inline-size}
+.chart-h{height:var(--h)}
+@container (max-width:519.98px){.chart-h{height:max(var(--hmin,220px),min(var(--h),calc(var(--hk,70) * 1cqw)))}}
 .chart svg{display:block;width:100%;height:auto;overflow:visible}
 .chart text{font-family:var(--mono);font-size:11px;fill:var(--muted)}
 .chart .gl{stroke:var(--grid)} .chart .ax{stroke:var(--axis)}

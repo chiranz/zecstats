@@ -3,7 +3,7 @@
 // A small general-purpose chart for the report pages: categorical columns, numeric/log x (CDFs), date x with bands
 // (median + p10–p90), and scatter dots. Same look and tooltip as TimeSeriesChart; everything passed in is
 // serialisable so server components configure it. Ticks are computed by the caller so labels read exactly as intended.
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { scaleBand, scaleLinear, scaleLog } from 'd3-scale';
 import { area as d3area, line as d3line, curveLinear } from 'd3-shape';
 import { formatValue, type ValueFormat } from '@/components/charts/valueFormat';
@@ -139,11 +139,11 @@ export function XYChart(props: XYChartProps) {
   const yZero = yLog ? ih : y(Math.max(0, (y.domain() as number[])[0]));
 
   return (
-    <div className="stack" style={{ gap: 10 }}>
+    <div className="stack chart-box" style={{ gap: 10 }}>
       <div
         ref={wrapRef}
-        className="chart"
-        style={{ height: h, touchAction: 'pan-y' }}
+        className="chart chart-h"
+        style={{ '--h': `${height}px`, '--hk': 75, touchAction: 'pan-y' } as CSSProperties}
         tabIndex={0}
         role="img"
         aria-label={ariaLabel}

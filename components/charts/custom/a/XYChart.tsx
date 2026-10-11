@@ -2,7 +2,7 @@
 
 // Line chart over a NUMERIC x-axis (coins issued, ZEC amount …) — the non-date counterpart of TimeSeriesChart.
 // Same visual language: faint gridlines, mono ticks, one tooltip style, chips for series, Linear/Log switch.
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { scaleLinear, scaleLog } from 'd3-scale';
 import { line as d3line, curveLinear, curveStepBefore } from 'd3-shape';
 import { formatValue, type ValueFormat } from '@/components/charts/valueFormat';
@@ -122,7 +122,7 @@ export function XYChart(p: XYChartProps) {
   const flip = hpx != null && hpx + m.left + 240 > width;
 
   return (
-    <div className="stack" style={{ gap: 12 }}>
+    <div className="stack chart-box" style={{ gap: 12 }}>
       <div className="row" style={{ gap: 10, flexWrap: 'wrap' }}>
         {logToggle && (
           <div className="seg" role="group" aria-label="Scale">
@@ -139,7 +139,7 @@ export function XYChart(p: XYChartProps) {
           );
         })}
       </div>
-      <div ref={ref} className="chart" style={{ height: h, touchAction: 'pan-y' }} tabIndex={0} role="img" aria-label={ariaLabel}
+      <div ref={ref} className="chart chart-h" style={{ '--h': `${height}px`, '--hk': 80, '--hmin': '240px', touchAction: 'pan-y' } as CSSProperties} tabIndex={0} role="img" aria-label={ariaLabel}
         onPointerMove={(e) => onMove(e.clientX)}
         onKeyDown={(e) => {
           const pts = Array.from(new Set(vis.flatMap((s) => s.points.map((d) => d[0])))).sort((a, b) => a - b);

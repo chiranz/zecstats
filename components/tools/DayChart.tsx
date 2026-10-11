@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { scaleLinear, scaleLog } from 'd3-scale';
 import { line as d3line } from 'd3-shape';
 import { useWidth } from './useWidth';
@@ -46,7 +46,8 @@ export function DayChart({ series, xMax, log = false, yFmt, xFmt = (x) => `day $
   const flip = hover != null && x(hover) + m.left + 240 > width;
 
   return (
-    <div ref={ref} className="chart" style={{ height: h, touchAction: 'pan-y' }} tabIndex={0} role="img" aria-label={ariaLabel}
+    <div className="chart-box">
+    <div ref={ref} className="chart chart-h" style={{ '--h': `${height}px`, '--hk': 72, touchAction: 'pan-y' } as CSSProperties} tabIndex={0} role="img" aria-label={ariaLabel}
       onPointerMove={(e) => onMove(e.clientX)} onPointerLeave={() => setHover(null)} onBlur={() => setHover(null)}
       onKeyDown={(e) => {
         if (e.key === 'ArrowLeft') { e.preventDefault(); setHover((v) => Math.max(0, (v ?? xMax) - 1)); }
@@ -103,6 +104,7 @@ export function DayChart({ series, xMax, log = false, yFmt, xFmt = (x) => `day $
           })}
         </div>
       )}
+    </div>
     </div>
   );
 }

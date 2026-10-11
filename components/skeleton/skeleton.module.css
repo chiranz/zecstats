@@ -26,10 +26,8 @@
 /* block: icons, swatches, sparklines, plots */
 .b { display: block; border-radius: var(--r-sm); }
 
-/* chart plot: TimeSeriesChart's height rule (narrow plots are 70% of their width — DayChart's 72%, as --k — at least 220px) */
-.plotBox { container-type: inline-size; }
-.plot { height: var(--h, 360px); border-radius: var(--r); opacity: .7; }
-@container (max-width: 519.98px) { .plot { height: max(220px, min(var(--h, 360px), calc(var(--k, 70) * 1cqw))); } }
+/* chart plot: its height is the charts' own rule (.chart-box / .chart-h in globals.css; DayChart's 72% via --hk) */
+.plot { border-radius: var(--r); opacity: .7; }
 
 /* small signal-bars mark beside the title: the bars rise in turn (option A's loop) */
 .mark { display: inline-block; width: .78em; height: .78em; margin-right: .42em; vertical-align: -.06em; } /* 1.2em: two mono characters */

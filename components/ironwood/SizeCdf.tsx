@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { scaleLinear, scaleLog } from 'd3-scale';
 import { line as d3line, area as d3area, curveStepAfter } from 'd3-shape';
 import { num } from '@/lib/format';
@@ -44,7 +44,8 @@ export function SizeCdf({ points, median, p90, max, ariaLabel }: { points: { zec
   };
 
   return (
-    <div ref={ref} className="chart" style={{ height: h, touchAction: 'pan-y' }} role="img" aria-label={ariaLabel} tabIndex={0}
+    <div className="chart-box">
+    <div ref={ref} className="chart chart-h" style={{ '--h': '320px', '--hk': 0, '--hmin': '240px', touchAction: 'pan-y' } as CSSProperties} role="img" aria-label={ariaLabel} tabIndex={0}
       onPointerMove={(e) => onMove(e.clientX)} onPointerLeave={() => setHover(null)} onBlur={() => setHover(null)}>
       <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} aria-hidden="true">
         <g transform={`translate(${m.left},${m.top})`}>
@@ -83,6 +84,7 @@ export function SizeCdf({ points, median, p90, max, ariaLabel }: { points: { zec
           <span>{num(hp.cum * 100, 1)}% of migrations</span>
         </div>
       )}
+    </div>
     </div>
   );
 }

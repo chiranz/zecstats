@@ -1,6 +1,6 @@
 'use client';
 
-import { useId, useMemo, useState } from 'react';
+import { useId, useMemo, useState, type CSSProperties } from 'react';
 import { scaleLinear, scaleLog } from 'd3-scale';
 import { line as d3line } from 'd3-shape';
 import s from './b.module.css';
@@ -58,18 +58,18 @@ export function IssuanceChart(props: Record<string, unknown>) {
   const both = hits.length === 2 && hits[0].p && hits[1].p ? hits[0].p[1] / hits[1].p[1] : null;
 
   return (
-    <div>
+    <div className="chart-box">
       <div className={s.legend} aria-hidden="true">
         {series.map((q) => <span key={q.key} className={s.key}><i style={{ background: q.color }} />{q.label}</span>)}
         {log && <span>Log scale — each gridline is 10×</span>}
       </div>
       <div
         ref={ref}
-        className={s.wrap}
+        className={`${s.wrap} chart-h`}
         role="img"
         aria-label={ariaLabel ?? 'Issuance-aligned comparison'}
         tabIndex={0}
-        style={{ touchAction: 'pan-y' }}
+        style={{ '--h': '380px', '--hk': 0, '--hmin': '300px', touchAction: 'pan-y' } as CSSProperties}
         onPointerMove={(e) => { const v = e.clientX - e.currentTarget.getBoundingClientRect().left - m.left; setHx(v >= 0 && v <= iw ? v : null); }}
         onPointerLeave={() => setHx(null)}
         onBlur={() => setHx(null)}

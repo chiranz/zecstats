@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { scaleLinear, scaleLog, scaleUtc } from 'd3-scale';
 import { area as d3area, line as d3line, curveLinear, curveStepAfter } from 'd3-shape';
 import { formatValue, type ValueFormat } from './valueFormat';
@@ -223,10 +223,13 @@ export function TimeSeriesChart(props: TimeSeriesChartProps) {
           })}
         </div>
       )}
+      {/* the box's height comes from CSS (.chart-h, the same rule as `h`), so the server-rendered page already has the
+          phone height and nothing below it moves when the chart measures itself and redraws */}
+      <div className="chart-box">
       <div
         ref={wrapRef}
-        className="chart"
-        style={{ height: h, touchAction: 'pan-y' }}
+        className="chart chart-h"
+        style={{ '--h': `${height}px`, touchAction: 'pan-y' } as CSSProperties}
         tabIndex={0}
         role="img"
         aria-label={ariaLabel}
@@ -326,6 +329,7 @@ export function TimeSeriesChart(props: TimeSeriesChartProps) {
             )}
           </div>
         )}
+      </div>
       </div>
     </div>
   );
