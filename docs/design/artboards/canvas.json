@@ -361,6 +361,14 @@
    "h": 2490,
    "title": "Link-preview cards (1200×630): default, chart, Privacy, Ironwood (built)",
    "expand": "fill"
+  },
+  "Loading-skeleton.dc.html": {
+   "x": 5030,
+   "y": 67065,
+   "w": 1440,
+   "h": 8863,
+   "title": "Loading state: answer skeleton — real page vs skeleton at laptop, tablet, phone (built)",
+   "expand": "fill"
   }
  },
  "order": [
@@ -407,7 +415,8 @@
   "Nav-D-states.dc.html",
   "Nav-D-states-mobile.dc.html",
   "Ticker-compact.dc.html",
-  "OG-cards.dc.html"
+  "OG-cards.dc.html",
+  "Loading-skeleton.dc.html"
  ],
  "notes": {
   "t_system": {
@@ -476,9 +485,9 @@
   "t_iter3_nav": {
    "x": 0,
    "y": 66765,
-   "text": "Iteration 3 — navigation D, event tape, link-preview cards",
+   "text": "Iteration 3 — navigation D, event tape, link-preview cards, loading skeleton",
    "kind": "title1",
-   "maxW": 4950
+   "maxW": 6470
   }
  },
  "designSystems": []
