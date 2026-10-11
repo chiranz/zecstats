@@ -103,7 +103,7 @@ export default async function TurnstilePage() {
               <Kpi k="Pool balance floor" v={num(t.min_balance_zec)} unit="ZEC" s="lowest point since launch" />
               <Kpi k="Ever negative?" v={t.ever_negative ? 'Yes' : 'No'} s="the hard guarantee holds" />
               <Kpi k="Flow ↔ balance gap" v={t.reconcile_gap_zec.toFixed(2)} unit="ZEC" s="integer rounding only" />
-              <Kpi k="Total shielded in" v={fz(t.total_shield_zec)} unit="ZEC" s="every unit that entered" />
+              <Kpi k="Total shielded in" v={fz(t.total_shield_zec)} unit="ZEC" s="from transparent; pool-to-pool inflows excluded" />
               <Kpi k="Total deshielded out" v={fz(t.total_deshield_zec)} unit="ZEC" s="to transparent; excludes migration" />
               <Kpi k="Deshield / shield" v={pct(t.deshield_shield_ratio * 100)} s={`cumulative, since ${new Date(launch).getUTCFullYear()}`} />
             </K3>

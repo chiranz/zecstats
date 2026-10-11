@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import s from './AmountLookup.module.css';
 
-/** "Check an amount" → the Amount lookup tool (GET /amount-suggest?amount=…&direction=…). */
+/** "Check an amount" → the Amount lookup tool (GET /amount-suggest?amount=…&dir=…). */
 export function AmountLookup({ id = 'amt-in', compact = false }: { id?: string; compact?: boolean }) {
   const [dir, setDir] = useState<'shield' | 'deshield'>('shield');
   if (compact) {
@@ -25,7 +25,7 @@ export function AmountLookup({ id = 'amt-in', compact = false }: { id?: string; 
           <input id={id} name="amount" type="number" inputMode="decimal" min="0" step="any" placeholder="e.g. 3.7" />
           <span>ZEC</span>
         </div>
-        <input type="hidden" name="direction" value={dir} />
+        <input type="hidden" name="dir" value={dir} />
         <div className="seg" role="group" aria-label="Direction">
           <button type="button" aria-pressed={dir === 'shield'} onClick={() => setDir('shield')}>Shield t→z</button>
           <button type="button" aria-pressed={dir === 'deshield'} onClick={() => setDir('deshield')}>Deshield z→t</button>

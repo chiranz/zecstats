@@ -23,7 +23,7 @@ type NearStat = { date: string; wrapped_supply: number };
 type HlRow = { date: string; zec_oi_usd: number; zec_funding_apr: number };
 type ExchVol = { rows: { date: string; zec: number }[] };
 type NearSwap = { date: string; from_chain: string; to_chain: string; volume_usd: number };
-type Network = { reachable_total: number; by_country: { nodes: number }[] };
+type Network = { reachable_total: number; by_country: { cc: string; nodes: number }[] };
 type NewsItem = { body: string; chart_id: string; date: string; headline: string; importance: number; severity: string; theme: string; z: number; live?: boolean };
 
 /** Every 7th row, aligned so the last row is kept. */
@@ -118,7 +118,8 @@ export const getHome = cache(async () => {
     txDay, shieldedTxShare,
     avgBlockKb: last.total_block_bytes / last.block_count / 1000,
     halving: { blocksLeft, days: halvingDays, date: new Date(lb.time * 1000 + blocksLeft * BLOCK_SECS * 1000), eraPct },
-    nodes: { reachable: network.reachable_total || network.by_country.reduce((a, c) => a + c.nodes, 0), countries: network.by_country.length, synced: lb.node_estimated_height - lb.height <= 2 },
+    // countries by ISO code: the API lists "The Netherlands" and "Netherlands" apart
+    nodes: { reachable: network.reachable_total || network.by_country.reduce((a, c) => a + c.nodes, 0), countries: new Set(network.by_country.map((c) => c.cc)).size, synced: lb.node_estimated_height - lb.height <= 2 },
     near: { bridge: nearLast.wrapped_supply, bridgeDate: nearLast.date, net: nearIn - nearOut, netDate: swapDay },
     hl: { oi: hlLast.zec_oi_usd, funding: hlLast.zec_funding_apr, date: hlLast.date },
     exch: { zec: exLast.zec, date: exLast.date },

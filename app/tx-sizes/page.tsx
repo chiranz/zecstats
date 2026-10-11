@@ -258,7 +258,7 @@ export default async function TxSizesPage() {
       <Tiles items={[
         { href: '/shield-hops', title: 'Shield-bound hop sizes', desc: 'The same report for coins going private.' },
         { href: '/wall-of-shame', title: 'Wall of Shame', desc: 'Round trips that reused a near-identical amount.' },
-        { href: '/chart/tx', title: 'Transactions per day', desc: 'Every transaction type, not just transparent.', value: <>{num(stats.at(-1)!.tx_count)} / day</> },
+        { href: '/chart/tx', title: 'Transactions per day', desc: 'Every transaction type, not just transparent.', value: <>{num(stats.at(-1)!.tx_count - stats.at(-1)!.block_count)} / day</> },
         { href: '/privacy-suggestions', title: 'Privacy tips', desc: 'Round amounts with the biggest crowd to hide in.' },
       ]} />
     </>

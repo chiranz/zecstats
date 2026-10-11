@@ -119,7 +119,7 @@ export default async function NodePage() {
         { href: '/network', title: 'Network nodes', desc: 'Every reachable node, by country and client.' },
         { href: '/chart/hashrate', title: 'Hashrate + difficulty', desc: 'How much mining power secures the chain.' },
         { href: '/chart/block-size', title: 'Average block size', desc: 'How full blocks are, day by day.' },
-        { href: '/chart/tx', title: 'Transactions per day', desc: 'How much the chain is used.', value: <>{num(stats.at(-1)!.tx_count)} / day</> },
+        { href: '/chart/tx', title: 'Transactions per day', desc: 'How much the chain is used.', value: <>{num(stats.at(-1)!.tx_count - stats.at(-1)!.block_count)} / day</> },
       ]} />
     </>
   );
