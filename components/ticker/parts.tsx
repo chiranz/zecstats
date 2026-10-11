@@ -1,11 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import type { TickerDelta, TickerItem } from '@/lib/data/ticker';
 import s from './ticker.module.css';
 
-/* Small building blocks shared by the ticker samples. */
+/* Small building blocks of the event tape. */
+
+/** Client-side navigation to a hash on the page you are already on fires no hashchange; send one so /news opens the card. */
+const nudgeHash = (href: string) => { if (href.includes('#')) window.setTimeout(() => window.dispatchEvent(new HashChangeEvent('hashchange')), 60); };
 
 export function Tag({ item }: { item: Pick<TickerItem, 'tag' | 'hot'> }) {
   return <span className={`${s.tag} ${item.hot ? s.hot : ''}`}>{item.tag}</span>;
@@ -44,8 +47,18 @@ export function StepButton({ dir, onClick, label }: { dir: 'prev' | 'next'; onCl
 export function EventList({ items, label = 'All events' }: { items: TickerItem[]; label?: string }) {
   const [open, setOpen] = useState(false);
   const id = useId();
+  const wrap = useRef<HTMLDivElement>(null);
+  // the tape lives in the layout and survives navigation: close on Escape, outside click, or after following a link
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    const onDown = (e: MouseEvent) => { if (!wrap.current?.contains(e.target as Node)) setOpen(false); };
+    window.addEventListener('keydown', onKey);
+    document.addEventListener('mousedown', onDown);
+    return () => { window.removeEventListener('keydown', onKey); document.removeEventListener('mousedown', onDown); };
+  }, [open]);
   return (
-    <div className={s.listWrap}>
+    <div className={s.listWrap} ref={wrap}>
       <button type="button" className={`${s.ctl} ${s.listBtn}`} aria-expanded={open} aria-controls={id} onClick={() => setOpen((o) => !o)}>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
         <span className={s.ctlTxt}>{label}</span><span className={s.count}>{items.length}</span>
@@ -55,7 +68,7 @@ export function EventList({ items, label = 'All events' }: { items: TickerItem[]
           <ol>
             {items.map((it) => (
               <li key={it.id}>
-                <Link href={it.href} className={s.listLink}>
+                <Link href={it.href} className={s.listLink} onClick={() => { setOpen(false); nudgeHash(it.href); }}>
                   <Tag item={it} />
                   <span className={s.listLabel}>{it.label}</span>
                   {it.value && <b className={s.value}>{it.value}</b>}
@@ -65,7 +78,7 @@ export function EventList({ items, label = 'All events' }: { items: TickerItem[]
               </li>
             ))}
           </ol>
-          <p className={s.listNote}>Feed events open their chart. The full feed is on <Link href="/news">News</Link>.</p>
+          <p className={s.listNote}>Feed events open their card on <Link href="/news">News</Link>; figures open the page that explains them.</p>
         </div>
       )}
     </div>
@@ -75,7 +88,7 @@ export function EventList({ items, label = 'All events' }: { items: TickerItem[]
 /** One-line item used by the strip tickers. */
 export function InlineItem({ it, tabIndex }: { it: TickerItem; tabIndex?: number }) {
   return (
-    <Link href={it.href} className={s.inline} tabIndex={tabIndex}>
+    <Link href={it.href} className={s.inline} tabIndex={tabIndex} onClick={() => nudgeHash(it.href)}>
       <Tag item={it} />
       <span className={s.label}>{it.label}</span>
       {it.value && <b className={s.value}>{it.value}</b>}

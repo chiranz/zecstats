@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Fragment, useEffect, useState, type ReactNode } from 'react';
+import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Icon } from '@/components/ui/Icon';
 import { Spark } from '@/components/tools/Spark';
 import { useWidth } from '@/components/tools/useWidth';
@@ -90,12 +90,15 @@ function MiniChart({ ctx, label }: { ctx: NewsCtx; label: string }) {
   );
 }
 
-function Card({ it, refTs, open, onToggle }: { it: NewsItem; refTs: number; open: boolean; onToggle: () => void }) {
-  const bodyId = `ev-${it.id}`;
+/** The card's anchor: /news#ev-<ts>-<k> (the ticker links here). A merged card answers to either of its keys. */
+const anchorOf = (it: NewsItem) => `ev-${it.id.split('+')[0]}`;
+
+function Card({ it, refTs, open, onToggle, target }: { it: NewsItem; refTs: number; open: boolean; onToggle: () => void; target: boolean }) {
+  const bodyId = `evb-${it.id.split('+')[0]}`;
   const themes = it.merged ? 'Price · ZEC/BTC' : THEME_LABEL[it.theme];
   const chartName = CHART_NAME[it.chartHref.replace('/chart/', '')] ?? 'related';
   return (
-    <article className={`${s.ev} ${open ? s.open : ''}`}>
+    <article className={`${s.ev} ${open ? s.open : ''} ${target ? s.target : ''}`} id={anchorOf(it)}>
       <button type="button" className={s.evBtn} aria-expanded={open} aria-controls={bodyId} onClick={onToggle}>
         <span className={s.evIc} aria-hidden="true"><Icon name={THEME_ICON[it.theme]} size={15} /></span>
         <span className={s.evMain}>
@@ -142,6 +145,39 @@ export function NewsFeed({ items: initial, refTs, nextBefore, nowCard, sigmaCard
   const [openId, setOpenId] = useState<string | null>(initial[0]?.id ?? null);
   const [before, setBefore] = useState<number | null>(nextBefore);
   const [loading, setLoading] = useState(false);
+
+  // deep link: /news#ev-<ts>-<k> opens that card, clears filters that would hide it, and scrolls to it
+  const [target, setTarget] = useState<string | null>(null);
+  const [hit, setHit] = useState(0); // re-scroll when the same link is followed again
+  const itemsRef = useRef(items);
+  itemsRef.current = items;
+  useEffect(() => {
+    const onHash = () => {
+      const items = itemsRef.current;
+      const key = /^#ev-(.+)$/.exec(decodeURIComponent(window.location.hash))?.[1];
+      if (!key) return;
+      const at = items.findIndex((it) => it.id.split('+').includes(key));
+      if (at < 0) return;
+      setFilter('all');
+      setMajorOnly(false);
+      setShown((n) => Math.max(n, at + 1));
+      setOpenId(items[at].id);
+      setTarget(items[at].id);
+      setHit((n) => n + 1);
+    };
+    onHash();
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, []);
+  useEffect(() => {
+    if (!target) return;
+    const it = itemsRef.current.find((x) => x.id === target);
+    const el = it && document.getElementById(anchorOf(it));
+    if (!el) return;
+    const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    el.scrollIntoView({ block: 'start', behavior: smooth ? 'smooth' : 'auto' });
+    el.querySelector('button')?.focus({ preventScroll: true });
+  }, [target, hit]);
 
   // filters live in the URL so a filtered feed can be shared (?type=price&major=1)
   useEffect(() => {
@@ -195,7 +231,7 @@ export function NewsFeed({ items: initial, refTs, nextBefore, nowCard, sigmaCard
         {groups.map((g) => (
           <Fragment key={g.name}>
             <h2 className={s.bucket}>{g.name}<span className={s.c}>{g.items.length} event{g.items.length === 1 ? '' : 's'}</span></h2>
-            {g.items.map((it) => <Card key={it.id} it={it} refTs={refTs} open={openId === it.id} onToggle={() => setOpenId((o) => (o === it.id ? null : it.id))} />)}
+            {g.items.map((it) => <Card key={it.id} it={it} refTs={refTs} open={openId === it.id} target={target === it.id} onToggle={() => setOpenId((o) => (o === it.id ? null : it.id))} />)}
           </Fragment>
         ))}
         {canMore && <button type="button" className={`btn ${s.moreBtn}`} onClick={loadMore} disabled={loading}>{loading ? 'Loading…' : 'Load older events'}</button>}

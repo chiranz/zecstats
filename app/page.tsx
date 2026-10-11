@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { Masthead } from '@/components/chrome/Masthead';
 import { ChartActions, Kpi, KpiBand, Legend, Section } from '@/components/ui/blocks';
 import { Icon } from '@/components/ui/Icon';
 import { TimeSeriesChart } from '@/components/charts/TimeSeriesChart';
@@ -39,9 +38,23 @@ export default async function Home() {
 
   return (
     <>
-      <Masthead kicker="Zcash network statistics" title="Every Zcash number, from our own node" lede={`Computed from a Zebra full node — not copied from an exchange API. ${total} charts, updated daily.`} />
-
-      <HomeSearch index={searchIndex} />
+      {/* Landing top (composition A): the event tape is the page's first line (app/layout.tsx), so the header is
+          slim — smaller H1, no kicker, freshness on one line — and the search field moves up. */}
+      <div className={s.landTop}>
+        <header className={s.slim}>
+          <div className={s.slimHead}>
+            <h1 className={`h1 ${s.h1}`}>Every Zcash number, from our own node</h1>
+            <p className={s.fresh}>
+              <span className="live"><i aria-hidden="true" />Node {f.synced ? 'synced' : 'catching up'}</span>
+              <span>block <span className="num">{num(f.height)}</span></span>
+              <span>data through {dateLong(f.dataThrough)}</span>
+              <span>snapshot {asOf} · concept</span>
+            </p>
+          </div>
+          <p className={s.lede}>Computed from a Zebra full node — not copied from an exchange API. {total} charts, updated daily.</p>
+        </header>
+        <HomeSearch index={searchIndex} />
+      </div>
 
       {/* ---------- HERO: price + privacy ---------- */}
       <div className={s.heroPair}>

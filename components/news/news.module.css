@@ -42,6 +42,9 @@
 .ev{border:1px solid var(--line);border-radius:var(--r-lg);background:var(--card);min-width:0}
 .ev:hover{border-color:var(--line-strong)}
 .open{border-color:var(--line-strong);box-shadow:var(--shadow)}
+.ev{scroll-margin-top:calc(var(--barh) + 16px)}
+/* the card a link pointed at (/news#ev-…): accent outline + wash, so it is found at a glance */
+.target{border-color:var(--accent-line);box-shadow:0 0 0 1px var(--accent-line),var(--shadow);background:linear-gradient(var(--accent-wash),var(--accent-wash)),var(--card)}
 .evBtn{display:grid;grid-template-columns:32px minmax(0,1fr) auto 18px;gap:6px 14px;align-items:center;width:100%;padding:14px 16px;border:0;background:none;color:inherit;text-align:left;cursor:pointer;border-radius:var(--r-lg)}
 .evIc{display:grid;place-items:center;width:32px;height:32px;border-radius:8px;background:var(--inset);border:1px solid var(--line);align-self:start;color:var(--text-2)}
 .evMain{display:flex;flex-direction:column;gap:6px;min-width:0}

@@ -1,5 +1,17 @@
 /* Dashboard — ported from the "Main" / "Home-mobile" artboards. */
 
+/* landing top (composition A): slim header under the event tape, search right after it */
+.landTop{display:flex;flex-direction:column;gap:18px;margin-top:-6px}
+.slim{display:flex;flex-direction:column;gap:6px}
+.slimHead{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:6px 24px}
+.h1{font-size:clamp(22px,2.3vw,26px)}
+/* one line; when a phone wraps it, the "·" that would start a line is clipped away */
+.fresh{display:flex;flex-wrap:wrap;gap:2px 0;overflow:hidden;font:400 12px var(--mono);color:var(--muted)}
+.fresh>span{white-space:nowrap;margin:0 18px 0 -18px}
+.fresh>span::before{content:"·";display:inline-block;width:18px;text-align:center}
+.lede{font-size:14.5px;color:var(--text-2);max-width:var(--measure)}
+@media (max-width:560px){.landTop{gap:14px}}
+
 /* hero pair */
 .heroPair{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:20px;align-items:stretch}
 @media (max-width:980px){.heroPair{grid-template-columns:minmax(0,1fr)}}

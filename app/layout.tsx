@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next';
 import { IBM_Plex_Sans, JetBrains_Mono, Orbitron } from 'next/font/google';
 import { TopBar } from '@/components/chrome/TopBar';
 import { Footer } from '@/components/chrome/Footer';
+import { Marquee } from '@/components/ticker/Marquee';
+import { getTicker } from '@/lib/data/ticker';
 import { getSearchIndex } from '@/lib/data/search-index';
 import './globals.css';
 import './chrome.css';
@@ -30,6 +32,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body>
         <a className="skip" href="#main">Skip to content</a>
         <TopBar searchIndex={await getSearchIndex()} />
+        {/* event tape: hot topic + on-chain events, under the top bar on every page (not sticky) */}
+        <Marquee items={(await getTicker()).items} />
         <main id="main" className="shell page">{children}</main>
         <Footer />
       </body>
