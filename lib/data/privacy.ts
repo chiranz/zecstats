@@ -1,4 +1,5 @@
 import 'server-only';
+import { shieldingWindows } from './flows';
 import { cache } from 'react';
 import { api } from './core';
 import { getCompleteDailyStats, getDailyStats, getLive, poolsFromRow, type DailyStat } from './snapshot';
@@ -51,11 +52,8 @@ function shieldFlows(d: DailyStat) {
 
 /** Net shielding over the last 7 complete days and the 7 before (same rule as /chart/flow-compare). */
 export const getNet7 = cache(async () => {
-  const f = (await getCompleteDailyStats()).slice(-14).map(shieldFlows);
-  const sum = (xs: typeof f, k: 'in' | 'out') => xs.reduce((a, x) => a + x[k], 0);
-  const [prev, cur] = [f.slice(0, 7), f.slice(7)];
-  const inn = sum(cur, 'in'), out = sum(cur, 'out');
-  return { in: inn, out, net: inn - out, prior: sum(prev, 'in') - sum(prev, 'out') };
+  const { now, prior } = await shieldingWindows(7);
+  return { in: now.shield, out: now.deshield, net: now.net, prior: prior.net };
 });
 
 const everyNth = <T,>(xs: T[], n: number) => xs.filter((_, i) => i % n === (xs.length - 1) % n);
