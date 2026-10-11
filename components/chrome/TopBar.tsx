@@ -44,7 +44,7 @@ export function TopBar({ searchIndex, nav }: { searchIndex: SearchItem[]; nav: N
             <button className="nl" type="button" aria-expanded={toolsOpen} aria-haspopup="true" aria-current={current === 'Tools' ? 'page' : undefined} onClick={() => setToolsOpen((o) => !o)}>
               Tools <Icon name={toolsOpen ? 'chevron-up' : 'chevron-down'} size={10} />
             </button>
-            {toolsOpen && <ToolsMenu values={nav.values} />}
+            {toolsOpen && <ToolsMenu nav={nav} />}
           </div>
           {navItem('/news', 'News')}
         </nav>
@@ -68,21 +68,40 @@ export function TopBar({ searchIndex, nav }: { searchIndex: SearchItem[]; nav: N
   );
 }
 
-/** Tools mega menu: Privacy first (its own column, Ironwood with its value), then six groups in three columns. */
-function ToolsMenu({ values }: { values: Record<string, string> }) {
+/** Tools mega menu: the Privacy group on its own card (Ironwood first, with its progress), then six groups in three
+ *  columns, and a footer link to every tool. */
+function ToolsMenu({ nav }: { nav: NavData }) {
+  const [priv, ...rest] = toolGroups;
+  const iw = nav.ironwood;
   return (
     <div className="mega" role="menu" aria-label="Tools">
-      {toolGroups.map((g, i) => (
-        <div className={`grp${i === 0 ? ' grp-priv' : ''}`} key={g.title}>
+      <div className="grp grp-priv">
+        <h4>{priv.title}</h4>
+        {priv.links.map((l) => l.href === '/ironwood' ? (
+          <Link className="mi mi-iw" role="menuitem" href={l.href} key={l.href}>
+            <b><i className="cx-dot" aria-hidden="true" />{l.label}<span className="mi-v">{nav.values[l.href]}</span></b>
+            <span className="mi-bar" aria-hidden="true"><i style={{ width: `${iw.pct}%` }} /></span>
+            <span>{iw.crossed} of {iw.base} Orchard ZEC crossed · live {iw.days} days</span>
+          </Link>
+        ) : (
+          <Link className="mi" role="menuitem" href={l.href} key={l.href}>
+            <b>{l.label}{nav.values[l.href] && <span className="mi-r">{nav.values[l.href]}</span>}</b>
+            {l.desc && <span>{l.desc}</span>}
+          </Link>
+        ))}
+      </div>
+      {rest.map((g) => (
+        <div className="grp" key={g.title}>
           <h4>{g.title}</h4>
           {g.links.map((l) => (
             <Link className="mi" role="menuitem" href={l.href} key={l.href}>
-              <b>{l.label}{l.tag && <span className="tag">{l.tag}</span>}{i === 0 && l.href === '/ironwood' && values[l.href] && <span className="mi-v">{values[l.href]}</span>}</b>
+              <b>{l.label}{l.tag && <span className="tag">{l.tag}</span>}</b>
               {l.desc && <span>{l.desc}</span>}
             </Link>
           ))}
         </div>
       ))}
+      <div className="mega-foot"><Link role="menuitem" href="/tools">All tools &amp; methodology <Icon name="arrow-right" size={12} /></Link></div>
     </div>
   );
 }

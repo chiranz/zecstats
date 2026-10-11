@@ -3,10 +3,18 @@
 .skip:focus{left:12px}
 .topbar>.shell{position:relative}
 .tools-wrap{display:contents}
-.mega{position:absolute;top:calc(100% + 1px);left:clamp(16px,4vw,32px);right:clamp(16px,4vw,32px);z-index:30;background:var(--raised);border:1px solid var(--line-strong);border-top:0;border-radius:0 0 var(--r-lg) var(--r-lg);box-shadow:var(--pop);padding:22px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px 28px}
-/* Privacy column first, full height; the other six groups fill three columns */
-.grp-priv{grid-row:span 2;padding-right:20px;border-right:1px solid var(--line)}
-.mi-v{margin-left:8px;font:600 12px var(--mono);color:var(--accent)}
+.mega{position:absolute;top:calc(100% + 1px);left:clamp(16px,4vw,32px);right:clamp(16px,4vw,32px);z-index:30;background:var(--raised);border:1px solid var(--line-strong);border-top:0;border-radius:0 0 var(--r-lg) var(--r-lg);box-shadow:var(--pop);padding:22px;display:grid;grid-template-columns:minmax(0,1.3fr) repeat(3,minmax(0,1fr));gap:18px 28px}
+/* Privacy group on its own card, full height; the other six groups fill three columns */
+.grp-priv{grid-row:span 2;align-self:start;padding:12px 8px;border:1px solid var(--line);border-radius:var(--r);background:var(--card)}
+.grp-priv h4{padding-left:10px}
+.mi b{display:flex;align-items:center;gap:8px}
+.mi-r{margin-left:auto;font:400 12px var(--mono);color:var(--text-2);white-space:nowrap}
+.mi-v{margin-left:auto;padding:1px 6px;border-radius:5px;background:var(--accent-wash);font:600 12px var(--mono);color:var(--accent)}
+.mi-iw{gap:6px;margin-bottom:4px;border:1px solid var(--accent-line);background:var(--accent-wash)}
+.mi-bar{position:relative;display:block;height:4px;border-radius:999px;background:var(--inset);overflow:hidden}
+.mi-bar>i{position:absolute;inset:0 auto 0 0;background:var(--p-ironwood);border-radius:999px}
+.mega-foot{grid-column:1/-1;display:flex;border-top:1px solid var(--line);padding-top:14px;font:500 13px var(--mono)}
+.mega-foot a{display:inline-flex;align-items:center;gap:6px}
 .grp{display:flex;flex-direction:column;gap:2px}
 .grp h4{font:500 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
 .mi{display:flex;flex-direction:column;padding:7px 10px;border-radius:8px;color:var(--text)!important;text-decoration:none!important}
@@ -39,7 +47,7 @@ html[data-theme="light"] .backdrop{background:rgba(12,27,17,.35)}
 .m-grid a{padding:11px 10px;border-radius:8px;font:500 14px var(--mono);color:var(--text)!important;text-decoration:none!important}
 .m-grid a.on{background:var(--raised);box-shadow:inset 0 0 0 1px var(--line-strong);color:var(--value)!important}
 @media (min-width:1021px){.m-sheet{display:none}}
-@media (max-width:1180px){.mega{grid-template-columns:repeat(3,minmax(0,1fr))}.grp-priv{grid-row:span 3}}
+@media (max-width:1180px){.mega{grid-template-columns:minmax(0,1.3fr) repeat(2,minmax(0,1fr))}.grp-priv{grid-row:span 3}}
 
 /* mobile sheet: Privacy list with values */
 .m-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
