@@ -36,7 +36,12 @@
   - Node status appears once, as a pill in the global bar.
 - **Event tape (iteration 3):** per-item hover card instead of hold-on-hover (revert: `TAPE_TOOLTIPS = false` or commit 2851fed);
   tape reads like a ticker — TAG [qualifier] · value · ▲Δ · age; the full name and the delta's window live in the card
-  and the "All" list (commit 3740705).
+  (commit 3740705).
+  - 11 Oct (user): the tape's Pause and "All 12" buttons are removed (News lists every event). Known trade-off: no
+    explicit stop button (WCAG 2.2.2); the tape still holds on keyboard focus, an open hover card and touch (until 2.5 s
+    after the finger lifts), and doesn't move at all under reduced motion (step buttons instead).
+  - Arrows and colours agree (▲ green, ▼ red) with one deliberate exception (user, 11 Oct): a deshielding spike is a
+    red ▲, because deshielding is the negative activity even when it rises.
 - **Standing rules:**
   - Make design calls yourself from AGENTS.md, BRIEF.md and the artboards, and record each one. Ask before pushing, publishing or deleting, or adding npm dependencies.
   - Small commits, made by the lead only. Subagents never run git; every subagent runs on Opus.
