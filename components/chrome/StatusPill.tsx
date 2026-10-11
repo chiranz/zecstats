@@ -10,17 +10,17 @@ import { useDisclosure } from './useDisclosure';
 export function StatusPill({ fresh }: { fresh: NavData['fresh'] }) {
   const d = useDisclosure();
   const cadence = usePageCadence();
-  const state = fresh.synced ? 'synced' : 'syncing';
+  const dot = `st-dot${fresh.stateCls ? ` ${fresh.stateCls}` : ''}`;
   return (
     <div className="st-wrap" {...d.wrap}>
-      <button {...d.button} className="st-pill" aria-label={`Node ${state}, block ${fresh.height}, data through ${fresh.through}. Details`}>
-        <i className="st-dot" aria-hidden="true" />
+      <button {...d.button} className="st-pill" aria-label={`Node: ${fresh.stateText.toLowerCase()}, block ${fresh.height}, data through ${fresh.through}. Details`}>
+        <i className={dot} aria-hidden="true" />
         <span className="st-t" aria-hidden="true">data through {fresh.throughShort}</span>
       </button>
       {d.open && (
         <div id={d.id} className="st-pop" role="region" aria-label="Data freshness">
           <dl>
-            <div><dt>Node</dt><dd><i className="st-dot" aria-hidden="true" />{fresh.synced ? 'Synced' : 'Catching up'} · Zebra full node</dd></div>
+            <div><dt>Node</dt><dd><i className={dot} aria-hidden="true" />{fresh.stateText} · Zebra full node</dd></div>
             <div><dt>Block</dt><dd className="num">{fresh.height}</dd></div>
             <div><dt>Data through</dt><dd>{fresh.through} · updates daily</dd></div>
             {cadence && <div><dt>This page</dt><dd>{cadence}</dd></div>}

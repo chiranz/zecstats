@@ -94,6 +94,7 @@ function TipCard({ tip, onEnter, onLeave, onNavigate }: { tip: Tip; onEnter: () 
           {it.delta && <div><dt>Change</dt><dd><DeltaText d={it.delta} window={it.window} /></dd></div>}
         </dl>
       )}
+      {it.note && <p className={t.note}>{it.note}</p>}
       <Link href={it.href} className={t.go} onClick={() => { onNavigate(); nudgeHash(it.href); }} tabIndex={-1}>{destination(it.href)} <span aria-hidden="true">→</span></Link>
     </div>
   );

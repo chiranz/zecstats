@@ -1,7 +1,10 @@
 import type { ReactNode } from 'react';
+import { StackSeg } from '@/components/ui/blocks';
+import { num } from '@/lib/format';
 import s from './report.module.css';
 
-export type BarPart = { key: string; value: number; color: string; label?: string };
+/** `display`: the part's value as text for its tooltip (e.g. "$1.2M"); omit when `label` already says it. */
+export type BarPart = { key: string; value: number; color: string; label?: string; display?: string };
 export type BarItem = { key: string; name: ReactNode; value: ReactNode; sub?: ReactNode; parts: BarPart[]; highlight?: boolean; title?: string };
 
 /** Ranked horizontal bars, name above the bar, value at the right. Bars share one scale (`max`). */
@@ -13,12 +16,29 @@ export function BarList({ items, max, label }: { items: BarItem[]; max?: number;
         <li key={it.key} className={`${s.barRow} ${it.highlight ? s.hl : ''}`}>
           <span className={s.nm} title={it.title}>{it.name}</span>
           <span className={s.n}>{it.value}{it.sub && <small>{it.sub}</small>}</span>
-          <span className={s.track} aria-hidden="true">
-            {it.parts.map((p) => (p.value > 0 ? <span key={p.key} style={{ width: `${(p.value / top) * 100}%`, background: p.color }} title={p.label} /> : null))}
-          </span>
+          <Track parts={it.parts} top={top} />
         </li>
       ))}
     </ol>
+  );
+}
+
+/** A row's bar. With more than one part, each segment is focusable and shows "label · display · share of the row" on hover,
+ *  keyboard focus or tap; a single part is decoration (the row already prints the value). */
+function Track({ parts, top }: { parts: BarPart[]; top: number }) {
+  const live = parts.filter((p) => p.value > 0);
+  if (live.length < 2) return <span className={s.track} aria-hidden="true">{live.map((p) => <span key={p.key} style={{ width: `${(p.value / top) * 100}%`, background: p.color }} />)}</span>;
+  const sum = live.reduce((a, p) => a + p.value, 0);
+  let acc = 0;
+  return (
+    <span className={s.track} role="list" aria-label="Breakdown" style={{ overflow: 'visible' }}>
+      {live.map((p) => {
+        const w = (p.value / top) * 100;
+        const mid = (acc + w / 2) / 100;
+        acc += w;
+        return <StackSeg key={p.key} text={`${p.label ?? p.key}${p.display ? ` · ${p.display}` : ''} · ${num((p.value / sum) * 100, 1)}% of this row`} color={p.color} width={`${w}%`} mid={mid} />;
+      })}
+    </span>
   );
 }
 

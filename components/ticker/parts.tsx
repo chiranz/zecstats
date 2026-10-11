@@ -14,12 +14,12 @@ export function Tag({ item }: { item: Pick<TickerItem, 'tag' | 'qual' | 'hot'> }
   return <span className={`${s.tag} ${item.hot ? s.hot : ''}`}>{item.tag}{item.qual && <span className={s.qual}>{item.qual}</span>}</span>;
 }
 
-/** The change, arrow always included; `window` ("in 24 h") is added in the hover card, never on the tape. */
-export function DeltaText({ d, window, className }: { d?: TickerDelta; window?: string; className?: string }) {
+/** The change: arrow = direction, colour = good/bad (`tone`). `per` ("24h") follows it on the tape; the hover card adds `window` in words. */
+export function DeltaText({ d, per, window, className }: { d?: TickerDelta; per?: string; window?: string; className?: string }) {
   if (!d) return null;
   return (
-    <span className={`${s.delta} ${d.dir === 'up' ? s.up : d.dir === 'dn' ? s.dn : ''} ${className ?? ''}`}>
-      {d.text}{window && <span className={s.window}> {window}</span>}
+    <span className={`${s.delta} ${d.tone === 'good' ? s.up : d.tone === 'bad' ? s.dn : ''} ${className ?? ''}`}>
+      {d.text}{per && <span className={s.per}> {per}</span>}{window && <span className={s.window}> {window}</span>}
     </span>
   );
 }
@@ -44,9 +44,9 @@ export function InlineItem({ it, tabIndex, tip }: { it: TickerItem; tabIndex?: n
       <Tag item={it} />
       {it.value ? <b className={s.value}>{it.value}</b> : <span className={s.label}>{it.label}</span>}
       {it.progress != null && <Mini value={it.progress} />}
-      <DeltaText d={it.delta} />
+      <DeltaText d={it.delta} per={it.per} />
       {it.when !== 'Now' && <time className={s.when} dateTime={it.date}>{shortWhen(it.when)}</time>}
-      {it.value && <span className="sr-only">{it.label}{it.window ? `, ${it.window}` : ''}</span>}
+      {it.value && <span className="sr-only">{it.label}{it.window ? `, ${it.window}` : ''}{it.note ? `. ${it.note}` : ''}</span>}
     </Link>
   );
 }

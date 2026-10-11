@@ -125,6 +125,16 @@ export const getMetricsTable = cache(async (): Promise<MetricsTable> => {
   return { date: ms.dates[last], periodDates, rows };
 });
 
+/**
+ * How many metrics the site tracks, for copy ("43 metrics"). `tracked`: rows in the /metrics table, i.e. every
+ * metric-series entry with a label here and a latest value (the two forward-shifted price series are not metrics).
+ * `defaults`: the rows shown before "show all". `series`: raw entries in /api/metric-series, forward series included.
+ */
+export const metricCount = cache(async (): Promise<{ tracked: number; defaults: number; series: number }> => {
+  const [t, ms] = await Promise.all([getMetricsTable(), getMetricSeries()]);
+  return { tracked: t.rows.length, defaults: t.rows.filter((r) => r.def).length, series: ms.metrics.length };
+});
+
 /* ───────────────────────── correlations ───────────────────────── */
 
 export const CORR_WINDOWS = [

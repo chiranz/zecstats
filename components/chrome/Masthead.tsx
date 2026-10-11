@@ -1,7 +1,31 @@
 import type { ReactNode } from 'react';
+import { delta, type Good } from '@/lib/format';
 import { PageCadence } from './cadence';
 
-export type KeyFigure = { value: ReactNode; delta?: ReactNode; dir?: 'up' | 'dn' | 'flat'; label: string };
+/**
+ * Key figure beside the H1. `change` (preferred) formats the delta with lib/format `delta()`: arrow = direction, colour =
+ * good/bad per `good`, flat when it rounds to 0. The older `delta` + `dir` pair still works: 'flat' (or no dir) is muted,
+ * and `good` decides whether 'up' is green. `label` is what a screen reader hears for the whole figure.
+ */
+export type KeyFigure = {
+  value: ReactNode;
+  change?: { v: number; digits?: number; suffix?: string; good?: Good; after?: string };
+  delta?: ReactNode;
+  dir?: 'up' | 'dn' | 'flat';
+  good?: Good;
+  label: string;
+};
+
+function figDelta(f: KeyFigure): { text: ReactNode; cls: 'up' | 'dn' | 'muted' } | null {
+  if (f.change) {
+    const d = delta(f.change.v, f.change.digits ?? 1, f.change.suffix ?? '%', f.change.good ?? f.good);
+    return { text: `${d.text}${f.change.after ? ` ${f.change.after}` : ''}`, cls: d.cls };
+  }
+  if (!f.delta) return null;
+  const g = f.good ?? 'up';
+  const cls = !f.dir || f.dir === 'flat' || g === 'neutral' ? 'muted' : (f.dir === 'up') === (g === 'up') ? 'up' : 'dn';
+  return { text: f.delta, cls };
+}
 
 /**
  * Page header (navigation direction D, "answer first"): the H1 and the one-sentence answer. Where the page sits is
@@ -10,6 +34,7 @@ export type KeyFigure = { value: ReactNode; delta?: ReactNode; dir?: 'up' | 'dn'
  * `cadence` is this page's own update rhythm when it differs from the site's daily update; the status popover shows it.
  */
 export function Masthead({ title, lede, children, figure, cadence }: { title: ReactNode; lede?: ReactNode; children?: ReactNode; figure?: KeyFigure; cadence?: string }) {
+  const d = figure && figDelta(figure);
   return (
     <header className={`mast${figure ? ' with-fig' : ''}`}>
       {cadence && <PageCadence value={cadence} />}
@@ -19,10 +44,11 @@ export function Masthead({ title, lede, children, figure, cadence }: { title: Re
         {children}
       </div>
       {figure && (
-        <div className="mast-fig" aria-label={figure.label}>
+        <p className="mast-fig">
+          <span className="sr-only">{figure.label}</span>
           <span className="mast-fv" aria-hidden="true">{figure.value}</span>
-          {figure.delta && <span className={`delta${figure.dir === 'dn' ? ' dn' : ''}`} aria-hidden="true">{figure.delta}</span>}
-        </div>
+          {d && <span className={`delta${d.cls === 'dn' ? ' dn' : d.cls === 'muted' ? ' flat' : ''}`} aria-hidden="true">{d.text}</span>}
+        </p>
       )}
     </header>
   );

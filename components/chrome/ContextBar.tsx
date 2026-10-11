@@ -90,8 +90,8 @@ function Tabs({ items, current }: { items: NavItem[]; current: string }) {
       {items.map((it) => (
         <li key={it.href}>
           <Link href={it.href} className={`cx-tab${it.featured ? ' feat' : ''}`} aria-current={current === it.href ? 'page' : undefined}>
-            {it.featured && <i className="cx-dot" aria-hidden="true" />}
             {it.label}
+            {it.featured && <span className="tag live" title="In progress now">LIVE</span>}
             {it.featured && it.value && <span className="cx-tv">{it.value}</span>}
           </Link>
         </li>

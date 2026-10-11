@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { CSSProperties, ReactNode } from 'react';
 import { Icon } from './Icon';
+import { delta, num, type Good } from '@/lib/format';
 import { ChartActionsClient, type ChartActionsCsv } from '@/components/charts/ChartActionsClient';
 
 /* ---------- section header with the terminal "//" prefix ---------- */
@@ -24,19 +25,20 @@ export function Kpi({ k, v, unit, s, href }: { k: ReactNode; v: ReactNode; unit?
   const body = (
     <>
       <span className="k">{k}</span>
-      <span className="v">{v}{unit && <span>{unit}</span>}</span>
+      <span className="v">{v}{unit && <span className="u">{unit}</span>}</span>
       {s && <span className="s">{s}</span>}
     </>
   );
   return href ? <Link className="kpi kpi-link" role="listitem" href={href}>{body}</Link> : <div className="kpi" role="listitem">{body}</div>;
 }
 
-/* ---------- delta badge: arrow glyph + colour ---------- */
-export function Delta({ v, digits = 1, suffix = '%', badge = false, label }: { v: number | null | undefined; digits?: number; suffix?: string; badge?: boolean; label?: string }) {
-  if (v == null || !Number.isFinite(v)) return <span className="muted">—</span>;
-  const up = v > 0;
-  const txt = `${up ? '▲' : v < 0 ? '▼' : ''} ${Math.abs(v).toLocaleString('en-US', { maximumFractionDigits: digits, minimumFractionDigits: digits })}${suffix}`;
-  return badge ? <span className={`delta${up ? '' : ' dn'}`}>{txt}{label && <span className="muted" style={{ marginLeft: 4 }}>{label}</span>}</span> : <span className={up ? 'up' : v < 0 ? 'dn' : 'muted'}>{txt}{label && <span className="muted"> {label}</span>}</span>;
+/* ---------- delta: the arrow shows direction, the colour good/bad (`good`); a change that rounds to 0 is flat (muted, no arrow) ---------- */
+export function Delta({ v, digits = 1, suffix = '%', badge = false, label, good = 'up' }: { v: number | null | undefined; digits?: number; suffix?: string; badge?: boolean; label?: string; good?: Good }) {
+  const d = delta(v, digits, suffix, good);
+  if (d.text === '—') return <span className="muted">—</span>;
+  return badge
+    ? <span className={`delta${d.cls === 'dn' ? ' dn' : d.cls === 'muted' ? ' flat' : ''}`}>{d.text}{label && <span className="muted" style={{ marginLeft: 4 }}>{label}</span>}</span>
+    : <span className={d.cls}>{d.text}{label && <span className="muted"> {label}</span>}</span>;
 }
 
 /* ---------- card with question title + takeaway + actions ---------- */
@@ -116,12 +118,47 @@ export function Legend({ items }: { items: { label: ReactNode; color: string; li
   );
 }
 
-/* ---------- 100% stacked bar ---------- */
-export function StackBar({ parts, height = 26, label }: { parts: { key: string; value: number; color: string; label?: string }[]; height?: number; label: string }) {
-  const total = parts.reduce((a, p) => a + p.value, 0) || 1;
+/* ---------- 100% stacked bar + its key ---------- */
+export type StackPart = { key: string; value: number; color: string; label?: string; display?: string };
+const sharePct = (p: number) => (p > 0 && p < 0.05 ? '<0.1%' : `${num(p, 1)}%`);
+const stackRows = (parts: StackPart[], fmt?: (v: number) => string) => {
+  const live = parts.filter((p) => p.value > 0);
+  const total = live.reduce((a, p) => a + p.value, 0) || 1;
+  return live.map((p) => ({ ...p, name: p.label ?? p.key, share: (p.value / total) * 100, shown: p.display ?? (fmt ? fmt(p.value) : undefined) }));
+};
+const tipText = (r: { name: string; share: number; shown?: string }) => `${r.name} · ${sharePct(r.share)}${r.shown ? ` · ${r.shown}` : ''}`;
+
+/** Key row for a stacked bar, in segment order: swatch · label · % · value. Reuse it under a hand-rolled bar. Zero parts are dropped. */
+export function StackKey({ parts, fmt, hidden = false }: { parts: StackPart[]; fmt?: (v: number) => string; hidden?: boolean }) {
   return (
-    <div role="img" aria-label={label} style={{ display: 'flex', height, borderRadius: 6, overflow: 'hidden', gap: 2 }}>
-      {parts.map((p) => <i key={p.key} title={`${p.label ?? p.key}: ${((p.value / total) * 100).toFixed(1)}%`} style={{ flex: `${Math.max(p.value / total, 0.004)} 0 0`, background: p.color }} />)}
+    <ul className="sk" aria-hidden={hidden || undefined}>
+      {stackRows(parts, fmt).map((r) => (
+        <li key={r.key}><i className="sw" style={{ background: r.color }} />{r.name}<b>{sharePct(r.share)}</b>{r.shown && <span className="muted">{r.shown}</span>}</li>
+      ))}
+    </ul>
+  );
+}
+
+/** One segment of a stacked bar: hover or keyboard focus shows the tooltip; the label is also its accessible name. */
+export function StackSeg({ text, color, flex, width, mid }: { text: string; color: string; flex?: number; width?: string; mid: number }) {
+  return (
+    <span className="sb-seg" role="listitem" tabIndex={0} aria-label={text} style={{ background: color, ...(width ? { width } : { flex: `${flex} 0 0` }) }}>
+      <span className={`sb-tip${mid < 0.4 ? ' l' : mid > 0.6 ? ' r' : ''}`} aria-hidden="true">{text}</span>
+    </span>
+  );
+}
+
+/** 100% stacked bar with its key underneath (`legend={false}` only where the page already shows an equivalent visible key).
+ *  `fmt` (or a part's `display`) adds the value to the key and tooltip. */
+export function StackBar({ parts, height = 26, label, legend = true, fmt }: { parts: StackPart[]; height?: number; label: string; legend?: boolean; fmt?: (v: number) => string }) {
+  const rows = stackRows(parts, fmt);
+  let acc = 0;
+  return (
+    <div className="stack" style={{ gap: 10 }}>
+      <div className="sb" role="list" aria-label={label} style={{ height }}>
+        {rows.map((r) => { const mid = (acc + r.share / 2) / 100; acc += r.share; return <StackSeg key={r.key} text={tipText(r)} color={r.color} flex={Math.max(r.share, 0.4)} mid={mid} />; })}
+      </div>
+      {legend && <StackKey parts={parts} fmt={fmt} hidden />}
     </div>
   );
 }

@@ -17,13 +17,17 @@ export function TopBar({ searchIndex, nav }: { searchIndex: SearchItem[]; nav: N
   const [sheetOpen, setSheetOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const toolsRef = useRef<HTMLDivElement>(null);
+  const toolsBtn = useRef<HTMLButtonElement>(null);
 
   useEffect(() => { setToolsOpen(false); setSheetOpen(false); setSearchOpen(false); }, [pathname]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setSearchOpen((o) => !o); }
-      if (e.key === 'Escape') { setToolsOpen(false); setSearchOpen(false); setSheetOpen(false); }
+      if (e.key === 'Escape') {
+        setToolsOpen((o) => { if (o && toolsRef.current?.contains(document.activeElement)) toolsBtn.current?.focus(); return false; });
+        setSearchOpen(false); setSheetOpen(false);
+      }
     };
     const onClick = (e: MouseEvent) => { if (toolsRef.current && !toolsRef.current.contains(e.target as Node)) setToolsOpen(false); };
     window.addEventListener('keydown', onKey);
@@ -42,7 +46,7 @@ export function TopBar({ searchIndex, nav }: { searchIndex: SearchItem[]; nav: N
         <nav className="nav" aria-label="Main">
           {primaryNav.slice(0, 3).map((l) => navItem(l.href, l.label))}
           <div className="tools-wrap" ref={toolsRef}>
-            <button className="nl" type="button" aria-expanded={toolsOpen} aria-haspopup="true" aria-current={current === 'Tools' ? 'page' : undefined} onClick={() => setToolsOpen((o) => !o)}>
+            <button ref={toolsBtn} className="nl" type="button" aria-expanded={toolsOpen} aria-controls="tools-menu" aria-current={current === 'Tools' ? 'page' : undefined} onClick={() => setToolsOpen((o) => !o)}>
               Tools <Icon name={toolsOpen ? 'chevron-up' : 'chevron-down'} size={10} />
             </button>
             {toolsOpen && <ToolsMenu nav={nav} />}
@@ -70,22 +74,22 @@ export function TopBar({ searchIndex, nav }: { searchIndex: SearchItem[]; nav: N
 }
 
 /** Tools mega menu: the Privacy group on its own card (Ironwood first, with its progress), then six groups in three
- *  columns, and a footer link to every tool. */
+ *  columns, and a footer link to every tool. A plain disclosure of links (Tab moves through them; Escape closes). */
 function ToolsMenu({ nav }: { nav: NavData }) {
   const [priv, ...rest] = toolGroups;
   const iw = nav.ironwood;
   return (
-    <div className="mega" role="menu" aria-label="Tools">
+    <div className="mega" id="tools-menu">
       <div className="grp grp-priv">
         <h4>{priv.title}</h4>
         {priv.links.map((l) => l.href === '/ironwood' ? (
-          <Link className="mi mi-iw" role="menuitem" href={l.href} key={l.href}>
-            <b><i className="cx-dot" aria-hidden="true" />{l.label}<span className="mi-v">{nav.values[l.href]}</span></b>
+          <Link className="mi mi-iw" href={l.href} key={l.href}>
+            <b>{l.label}<span className="tag live">LIVE</span><span className="mi-v">{nav.values[l.href]}</span></b>
             <span className="mi-bar" aria-hidden="true"><i style={{ width: `${iw.pct}%` }} /></span>
             <span>{iw.crossed} of {iw.base} Orchard ZEC crossed · live {iw.days} days</span>
           </Link>
         ) : (
-          <Link className="mi" role="menuitem" href={l.href} key={l.href}>
+          <Link className="mi" href={l.href} key={l.href}>
             <b>{l.label}{nav.values[l.href] && <span className="mi-r">{nav.values[l.href]}</span>}</b>
             {l.desc && <span>{l.desc}</span>}
           </Link>
@@ -95,14 +99,14 @@ function ToolsMenu({ nav }: { nav: NavData }) {
         <div className="grp" key={g.title}>
           <h4>{g.title}</h4>
           {g.links.map((l) => (
-            <Link className="mi" role="menuitem" href={l.href} key={l.href}>
+            <Link className="mi" href={l.href} key={l.href}>
               <b>{l.label}{l.tag && <span className="tag">{l.tag}</span>}</b>
               {l.desc && <span>{l.desc}</span>}
             </Link>
           ))}
         </div>
       ))}
-      <div className="mega-foot"><Link role="menuitem" href="/tools">All tools &amp; methodology <Icon name="arrow-right" size={12} /></Link></div>
+      <div className="mega-foot"><Link href="/tools">All tools &amp; methodology <Icon name="arrow-right" size={12} /></Link></div>
     </div>
   );
 }
@@ -121,7 +125,7 @@ function MobileSheet({ current, nav, onSearch }: { current: string | null; nav: 
           <span className="kicker">Privacy</span>
           <ul className="m-list">
             {nav.privacy.map((l) => (
-              <li key={l.href}><Link href={l.href}>{l.featured && <i className="cx-dot" aria-hidden="true" />}{l.href === '/privacy' ? 'Privacy hub' : l.label}{l.value && <span className="m-v">{l.value}</span>}</Link></li>
+              <li key={l.href}><Link href={l.href}>{l.href === '/privacy' ? 'Privacy hub' : l.label}{l.featured && <span className="tag live">LIVE</span>}{l.value && <span className="m-v">{l.value}</span>}</Link></li>
             ))}
           </ul>
         </div>
@@ -162,7 +166,12 @@ function SearchPalette({ index, values, onClose }: { index: SearchItem[]; values
   const [q, setQ] = useState('');
   const [sel, setSel] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
-  useEffect(() => { inputRef.current?.focus(); }, []);
+  // focus the input on open; give focus back to whatever opened the palette on close
+  useEffect(() => {
+    const prev = document.activeElement as HTMLElement | null;
+    inputRef.current?.focus();
+    return () => { if (prev?.isConnected) prev.focus(); };
+  }, []);
 
   const results = useMemo(() => {
     const t = q.trim().toLowerCase();
@@ -185,48 +194,60 @@ function SearchPalette({ index, values, onClose }: { index: SearchItem[]; values
   const go = (href: string) => { onClose(); startNavigation(href); router.push(href); };
   const groups = (['Page', 'Chart', 'Tool'] as const).map((k) => ({ k, items: results.filter((r) => r.kind === k) })).filter((g) => g.items.length);
   const flat = groups.flatMap((g) => g.items);
+  const shown: { k: string; items: SearchItem[] }[] = q ? groups.map((g) => ({ k: `${g.k}s`, items: g.items })) : [{ k: 'Popular', items: flat }];
+  const optId = (i: number) => `search-opt-${i}`;
+  useEffect(() => { document.getElementById(optId(sel))?.scrollIntoView({ block: 'nearest' }); }, [sel]);
 
   return (
     <div className="backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="palette" role="dialog" aria-label="Search">
+      {/* modal: the input is the only tab stop (options are picked with the arrows), so Tab stays inside */}
+      <div className="palette" role="dialog" aria-modal="true" aria-label="Search" onKeyDown={(e) => { if (e.key === 'Tab') { e.preventDefault(); inputRef.current?.focus(); } }}>
         <label className="p-in">
           <Icon name="search" size={18} />
           <input
             ref={inputRef}
-            type="search"
+            type="text"
+            role="combobox"
             value={q}
             placeholder="Search charts, tools and pages…"
-            aria-label="Search"
+            aria-label="Search charts, tools and pages"
+            aria-autocomplete="list"
+            aria-expanded={flat.length > 0}
             aria-controls="search-results"
+            aria-activedescendant={flat[sel] ? optId(sel) : undefined}
+            autoComplete="off"
+            spellCheck={false}
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'ArrowDown') { e.preventDefault(); setSel((s) => Math.min(flat.length - 1, s + 1)); }
               if (e.key === 'ArrowUp') { e.preventDefault(); setSel((s) => Math.max(0, s - 1)); }
+              if (e.key === 'Home' && flat.length) { e.preventDefault(); setSel(0); }
+              if (e.key === 'End' && flat.length) { e.preventDefault(); setSel(flat.length - 1); }
               if (e.key === 'Enter' && flat[sel]) go(flat[sel].href);
             }}
           />
-          <span className="kbd">Esc</span>
+          <button type="button" className="kbd" onClick={onClose} aria-label="Close search" tabIndex={-1} style={{ background: 'none', cursor: 'pointer' }}>Esc</button>
         </label>
-        <div className="p-body" id="search-results" role="listbox">
-          {!q && <p className="p-h">Popular</p>}
-          {groups.map((g) => (
-            <div key={g.k}>
-              {q && <p className="p-h">{g.k}s</p>}
+        <div className="p-body" id="search-results" role="listbox" aria-label={q ? 'Results' : 'Popular'}>
+          {shown.map((g) => (
+            <div key={g.k} role="group" aria-labelledby={`search-g-${g.k}`}>
+              <p className="p-h" id={`search-g-${g.k}`}>{g.k}</p>
               {g.items.map((it) => {
                 const idx = flat.indexOf(it);
                 return (
-                  <button type="button" role="option" aria-selected={idx === sel} key={it.href} className={`p-row${idx === sel ? ' sel' : ''}`} onMouseEnter={() => setSel(idx)} onClick={() => go(it.href)}>
+                  <div role="option" id={optId(idx)} aria-selected={idx === sel} key={it.href} className={`p-row${idx === sel ? ' sel' : ''}`} onMouseEnter={() => setSel(idx)} onClick={() => go(it.href)}>
                     <span className="ic"><Icon name={it.kind === 'Chart' ? 'chart' : it.kind === 'Tool' ? 'tool' : 'page'} size={14} /></span>
                     <span><b>{it.title}</b>{it.desc && <small>{it.desc}</small>}</span>
                     <span className={values[it.href] ? 'v val' : 'v'}>{values[it.href] ?? it.group}</span>
-                  </button>
+                  </div>
                 );
               })}
             </div>
           ))}
-          {q && !flat.length && <p className="p-empty">No matches for “{q}”. Try “shielded”, “price” or “fees”.</p>}
         </div>
-        <div className="p-keys"><span><span className="kbd">↑</span> <span className="kbd">↓</span> move</span><span><span className="kbd">Enter</span> open</span><span style={{ marginLeft: 'auto' }}>{flat.length} of {index.length}</span></div>
+        {q && !flat.length && <p className="p-empty">No matches for “{q}”. Try “shielded”, “price” or “fees”.</p>}
+        <p className="sr-only" aria-live="polite">{q ? `${flat.length} result${flat.length === 1 ? '' : 's'}` : ''}</p>
+        <div className="p-keys" aria-hidden="true"><span><span className="kbd">↑</span> <span className="kbd">↓</span> move</span><span><span className="kbd">Enter</span> open</span><span style={{ marginLeft: 'auto' }}>{flat.length} of {index.length}</span></div>
       </div>
     </div>
   );
