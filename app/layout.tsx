@@ -4,6 +4,7 @@ import { TopBar } from '@/components/chrome/TopBar';
 import { Footer } from '@/components/chrome/Footer';
 import { ContextBar } from '@/components/chrome/ContextBar';
 import { Marquee } from '@/components/ticker/Marquee';
+import { RouteFrame } from '@/components/skeleton/RouteFrame';
 import { getTicker } from '@/lib/data/ticker';
 import { getSearchIndex } from '@/lib/data/search-index';
 import { getNavData } from '@/lib/data/nav';
@@ -56,7 +57,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <Marquee items={ticker.items} />
         {/* navigation D: breadcrumb + the section's pages, on pages that have siblings */}
         <ContextBar nav={nav} />
-        <main id="main" className="shell page">{children}</main>
+        {/* RouteFrame: the destination's loading skeleton while a click is on its way (components/skeleton) */}
+        <main id="main" className="shell page"><RouteFrame>{children}</RouteFrame></main>
         <Footer />
       </body>
     </html>

@@ -1,7 +1,6 @@
 'use client';
 
-import { Fragment, useEffect, type CSSProperties, type ReactNode } from 'react';
-import { usePathname } from 'next/navigation';
+import { Fragment, type CSSProperties, type ReactNode } from 'react';
 import home from '@/app/page.module.css';
 import search from '@/components/home/HomeSearch.module.css';
 import chart from '@/components/chart-page/chart-page.module.css';
@@ -12,21 +11,17 @@ import act from '@/app/activity/page.module.css';
 import ui from '@/components/privacy-tools/ui.module.css';
 import mt from '@/components/tools/metrics.module.css';
 import k from './skeleton.module.css';
-import { shapeFor, type Shape } from './shape';
+import type { Shape } from './shape';
 
 /**
  * The route loading state (option E, "answer skeleton"): the destination page's own layout — its real classes, so it
- * changes at the same breakpoints — with each line of text painted as a shimmer bar. The URL is already the
- * destination while the fallback shows, so the pathname picks the shape. Layout chrome (top bar, tape, context bar)
- * stays; this only fills <main>. Text inside the bars is invisible filler sized like the real copy.
+ * changes at the same breakpoints — with each line of text painted as a shimmer bar. RouteFrame shows it inside <main>
+ * while a navigation is on its way (the shape comes from the destination path); layout chrome (top bar, tape, context
+ * bar) stays. Text inside the bars is invisible filler sized like the real copy.
  */
 
-export function RouteSkeleton({ shape }: { shape?: Shape }) {
-  const path = usePathname();
-  const Body = SHAPE[shape ?? shapeFor(path)];
-  // Next scrolls to the new page only when it lands; a click from far down a page would otherwise open the skeleton at
-  // the old scroll position, mid-shape. Start at the top, where the title and the answer are.
-  useEffect(() => { if (!shape) window.scrollTo(0, 0); }, [shape]);
+export function RouteSkeleton({ shape }: { shape: Shape }) {
+  const Body = SHAPE[shape];
   return (
     <div className={k.root}>
       <p role="status" className="sr-only">Loading</p>
@@ -73,7 +68,7 @@ function Seg({ items }: { items: string[] }) {
 /** The plot area of a TimeSeriesChart of the given height (shrinks like the real one on narrow cards: to 70% of its
  *  width; DayChart uses 72%, passed as `k`). */
 function Plot({ h, k: ratio }: { h: number; k?: number }) {
-  return <div className={k.plotBox}><div className={`${k.b} ${k.plot}`} style={{ '--h': `${h}px`, '--k': ratio } as CSSProperties} /></div>;
+  return <div className="chart-box"><div className={`${k.b} ${k.plot} chart-h`} style={{ '--h': `${h}px`, '--hk': ratio } as CSSProperties} /></div>;
 }
 function Kpis({ n = 4, six }: { n?: number; six?: boolean }) {
   const ks = ['ZEC/BTC', 'Market cap', 'Inflation', 'Supply issued', 'Hashrate', 'Monthly fees'];

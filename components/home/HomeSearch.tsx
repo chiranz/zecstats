@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useMemo, useRef, useState } from 'react';
 import type { SearchItem } from '@/lib/search';
 import { Icon } from '@/components/ui/Icon';
+import { startNavigation } from '@/components/skeleton/RouteFrame';
 import s from './HomeSearch.module.css';
 
 const TRY = ['price', 'shielded', 'fees', 'gold', 'calculator', 'hashrate'];
@@ -34,7 +35,7 @@ export function HomeSearch({ index }: { index: SearchItem[] }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const results = useMemo(() => match(index, q), [index, q]);
   const show = open && q.trim().length > 0;
-  const go = (href: string) => { setOpen(false); router.push(href); };
+  const go = (href: string) => { setOpen(false); startNavigation(href); router.push(href); };
 
   return (
     <div className={s.find} onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setOpen(false); }}>

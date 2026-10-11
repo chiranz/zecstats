@@ -8,6 +8,7 @@ import type { SearchItem } from '@/lib/search';
 import type { NavData } from '@/lib/data/nav';
 import { StatusPill } from './StatusPill';
 import { Icon } from '@/components/ui/Icon';
+import { startNavigation } from '@/components/skeleton/RouteFrame';
 
 export function TopBar({ searchIndex, nav }: { searchIndex: SearchItem[]; nav: NavData }) {
   const pathname = usePathname();
@@ -181,7 +182,7 @@ function SearchPalette({ index, values, onClose }: { index: SearchItem[]; values
   }, [q, index]);
 
   useEffect(() => setSel(0), [q]);
-  const go = (href: string) => { onClose(); router.push(href); };
+  const go = (href: string) => { onClose(); startNavigation(href); router.push(href); };
   const groups = (['Page', 'Chart', 'Tool'] as const).map((k) => ({ k, items: results.filter((r) => r.kind === k) })).filter((g) => g.items.length);
   const flat = groups.flatMap((g) => g.items);
 
