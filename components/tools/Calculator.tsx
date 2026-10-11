@@ -115,7 +115,7 @@ export function Calculator({ prices }: { prices: PriceArrays }) {
             <p className={s.resH}><b>{amt} {f.per}</b> since {dateLong(start)} →</p>
             <p className="figure">{usd(z.finalValue, 0)}</p>
             <p className={s.resSub}>
-              <span className={`delta${z.multiple < 1 ? ' dn' : ''}`}>{z.multiple >= 1 ? '▲' : '▼'} {num(z.multiple, 1)}×</span>
+              {(() => { const flat = num(z.multiple, 1) === '1.0'; return <span className={`delta${flat ? ' flat' : z.multiple < 1 ? ' dn' : ''}`}>{flat ? '' : z.multiple > 1 ? '▲ ' : '▼ '}{num(z.multiple, 1)}×</span>; })()}
               <span>on <b>{usd(z.invested, 0)}</b> invested over <b>{num(z.purchases)}</b> {f.noun} purchases</span>
             </p>
             <p className="note">That is a money-weighted return of <b className="mono">{pctTxt(z.xirr)}</b> a year.{withBtc && <> The same {amt} {f.per} in Bitcoin would be worth {usd(b.finalValue, 0)}.</>}</p>

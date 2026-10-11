@@ -67,7 +67,7 @@ const nearFlow: ChartDef = {
     return {
       panels: [
         panel({ title: 'Daily volume — into ZEC above zero, out of ZEC below', dates, format: 'usdCompact', zeroBaseline: true, height: 280, series: [
-          bars('in', 'Into ZEC', C.s2, inb), bars('out', 'Out of ZEC', C.s4, outb)] }),
+          bars('in', 'Into ZEC', C.s1, inb), bars('out', 'Out of ZEC', C.s4, outb)] }),
         panel({ title: 'Cumulative net flow into ZEC', dates, format: 'usdCompact', zeroBaseline: true, height: 220, series: [
           line('cum', 'All assets', C.zec, cum, { width: 2.2 }), line('btc', 'vs BTC', C.btc, cumBtc, { width: 1.6 }), line('eth', 'vs ETH', C.s3, cumEth, { width: 1.6 })] }),
       ],
@@ -109,7 +109,7 @@ const nearBridge: ChartDef = {
       panels: [
         panel({ title: 'Wrapped ZEC on NEAR', dates, format: 'zec', zeroBaseline: false, height: 260, series: [line('supply', 'Wrapped supply', C.zec, ws, { width: 2.2 })] }),
         panel({ title: 'Mints above zero, burns below', dates, format: 'zec', zeroBaseline: true, height: 200, series: [
-          bars('mint', 'Minted (in)', C.s2, rows.map((r) => r.daily_mint)), bars('burn', 'Burned (out)', C.s4, rows.map((r) => -r.daily_burn))] }),
+          bars('mint', 'Minted (in)', C.s1, rows.map((r) => r.daily_mint)), bars('burn', 'Burned (out)', C.s4, rows.map((r) => -r.daily_burn))] }),
       ],
       headline: { label: 'ZEC wrapped on NEAR', value: `${num(ws[i])} ZEC`, date: dates[i], change,
         sentence: `${num(ws[i])} ZEC sat wrapped on NEAR on ${dateLong(dates[i])}, ${changeWords(change)}.` },

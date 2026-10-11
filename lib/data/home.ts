@@ -51,8 +51,8 @@ export const getHome = cache(async () => {
     getNet7(), getIronwoodSources(), getTurnstileIndex(), api<{ items: NewsItem[] }>('news'),
   ]);
   const price = live.zec_usd;
-  const pools = poolsFromRow(all.at(-1)!);
-  const at = (d: number) => poolsFromRow(all[Math.max(0, all.length - 1 - d)]);
+  const pools = poolsFromRow(complete.at(-1)!);
+  const at = (d: number) => poolsFromRow(complete[Math.max(0, complete.length - 1 - d)]);
   const yearAgo = at(365);
   const fiveAgo = at(365 * 5 + 1);
   const last = complete.at(-1)!;
@@ -106,10 +106,10 @@ export const getHome = cache(async () => {
   }
 
   // 1-year shielded share sparkline (weekly).
-  const y1 = weekly(all.slice(-366)).map((r) => poolsFromRow(r).shieldedPct);
+  const y1 = weekly(complete.slice(-366)).map((r) => poolsFromRow(r).shieldedPct);
 
   // Shielded ZEC by pool, 5 years weekly (stacked area).
-  const fiveRows = weekly(all.slice(-(365 * 5 + 1))).map(poolsFromRow);
+  const fiveRows = weekly(complete.slice(-(365 * 5 + 1))).map(poolsFromRow);
 
   // the feed's copy says "GH/s"; Equihash counts solutions (same rename as lib/data/news.ts)
   const sol = (t: string) => t.replace(/\bGH\/s\b/g, 'GSol/s');

@@ -42,11 +42,11 @@ export function poolsFromRow(r: DailyStat): PoolSnapshot {
   return { date: r.date, supply, lockbox: zat(r.end_lockbox_zat), shielded, shieldedPct: (shielded / supply) * 100, ...p };
 }
 
-/** Latest pool balances (end of the most recent row, which tracks the chain tip). */
-export const getPools = async () => poolsFromRow((await getDailyStats()).at(-1)!);
+/** Pool balances at the end of the last complete day: the row the charts and "data through" use, so every page shows one balance. */
+export const getPools = async () => poolsFromRow((await getCompleteDailyStats()).at(-1)!);
 
-/** Pool snapshot N days before the latest row. */
-export const getPoolsDaysAgo = async (days: number) => { const s = await getDailyStats(); return poolsFromRow(s[Math.max(0, s.length - 1 - days)]); };
+/** Pool snapshot N days before the last complete day. */
+export const getPoolsDaysAgo = async (days: number) => { const s = await getCompleteDailyStats(); return poolsFromRow(s[Math.max(0, s.length - 1 - days)]); };
 
 export type Freshness = { height: number; dataThrough: string; capturedAt: string; synced: boolean };
 export const getFreshness = cache(async (): Promise<Freshness> => {

@@ -4,7 +4,7 @@ import { Callout, Card, Kpi, KpiBand, More, Section, Tiles } from '@/components/
 import { TimeSeriesChart } from '@/components/charts/TimeSeriesChart';
 import t from '@/components/tools/tools.module.css';
 import { getSignalsReplay, metricCount, SIGNAL_CALLS } from '@/lib/data/tools';
-import { dateLong, num, usd } from '@/lib/format';
+import { dateLong, delta, num, usd } from '@/lib/format';
 import { pageMetadata } from '@/lib/seo';
 import { SectionLd } from '@/components/seo/SectionLd';
 
@@ -12,8 +12,9 @@ export const metadata: Metadata = pageMetadata('/signals');
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const when = (iso: string) => { const d = new Date(iso); return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}, ${String(d.getUTCHours()).padStart(2, '0')}:00`; };
-const signed = (v: number | null, suffix = '%') => (v == null ? '—' : `${v > 0 ? '▲' : v < 0 ? '▼' : ''} ${num(Math.abs(v), 1)}${suffix}`);
-const dir = (v: number | null) => (v == null || v === 0 ? undefined : v > 0 ? 'up' : 'dn');
+// arrow, colour and the flat case all come from delta(), so ±0.04 reads as a muted flat 0.0%
+const signed = (v: number | null, suffix = '%') => (v == null ? '—' : delta(v, 1, suffix).text);
+const dir = (v: number | null) => (v == null ? 'muted' : delta(v, 1).cls);
 
 export default async function SignalsPage() {
   const [r, mc] = await Promise.all([getSignalsReplay(), metricCount()]);

@@ -61,8 +61,8 @@ const everyNth = <T,>(xs: T[], n: number) => xs.filter((_, i) => i % n === (xs.l
 export const getPrivacy = cache(async () => {
   const [all, complete, live, act, net7] = await Promise.all([getDailyStats(), getCompleteDailyStats(), getLive(), getActivity(), getNet7()]);
   const price = live.zec_usd;
-  const now = poolsFromRow(all.at(-1)!);
-  const at = (daysAgo: number) => poolsFromRow(all[Math.max(0, all.length - 1 - daysAgo)]);
+  const now = poolsFromRow(complete.at(-1)!);
+  const at = (daysAgo: number) => poolsFromRow(complete[Math.max(0, complete.length - 1 - daysAgo)]);
   const yearAgo = at(365);
   const fiveAgo = at(365 * 5 + 1);
   const last = complete.at(-1)!;
@@ -73,13 +73,13 @@ export const getPrivacy = cache(async () => {
   const share7 = (i: number) => { const xs = complete.slice(i - 6, i + 1).map(txShare).filter((v): v is number => v != null); return xs.reduce((a, v) => a + v, 0) / xs.length; };
 
   // 5-year shielded share (daily) for the hero chart.
-  const five = all.slice(-(365 * 5 + 1));
+  const five = complete.slice(-(365 * 5 + 1));
   const shareSeries = { dates: five.map((r) => r.date), values: five.map((r) => poolsFromRow(r).shieldedPct) };
 
   // Pool generations, last 5 years, weekly.
   const weekly = everyNth(five, 7).map(poolsFromRow);
   // Per-pool 1-year sparklines (weekly).
-  const year = everyNth(all.slice(-366), 7).map(poolsFromRow);
+  const year = everyNth(complete.slice(-366), 7).map(poolsFromRow);
 
   // 90 days of shield/deshield flows (complete days).
   const d90 = complete.slice(-97);

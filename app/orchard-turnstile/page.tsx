@@ -28,7 +28,7 @@ export default async function TurnstilePage() {
   const comp = (k: string) => ix.components.find((c) => c.key === k);
   const soft = ['masking', 'extraction', 'benford'].map(comp).filter((c): c is NonNullable<typeof c> => !!c);
   const breach = comp('turnstile_breach');
-  const cum = cumulativeFlows(d.series);
+  const cum = cumulativeFlows(d.series.filter((r) => r.date <= f.dataThrough)); // complete days only, as the footer says
   const totalOut = cum.cout.at(-1)!;
   const lags = mk.lag_profile.filter((p) => p.r != null);
   const peakIdx = lags.findIndex((p) => p.lag === mk.peak_lag);
@@ -162,7 +162,7 @@ export default async function TurnstilePage() {
               foot="Pearson r between daily shield and deshield totals, deshields offset by −7 to +7 days · same-day correlation is expected because both follow overall activity"
             >
               <ColumnChart
-                categories={lags.map((p) => (p.lag > 0 ? `+${p.lag}` : String(p.lag)))}
+                categories={lags.map((p) => (p.lag > 0 ? `+${p.lag}` : p.lag < 0 ? `−${-p.lag}` : '0'))}
                 series={[{ key: 'r', label: 'Correlation r', color: 'var(--other)', values: lags.map((p) => p.r) }]}
                 highlight={[{ index: peakIdx, color: 'var(--s1)' }]}
                 labels={[{ index: peakIdx, text: `r = ${r2(lags[peakIdx]?.r ?? null)}` }]}

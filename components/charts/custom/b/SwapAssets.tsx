@@ -6,7 +6,7 @@ import { scaleBand, scaleLinear } from 'd3-scale';
 import s from './SwapAssets.module.css';
 import { useWidth, r2 } from './shared';
 import { formatValue } from '@/components/charts/valueFormat';
-import { monthYear } from '@/lib/format';
+import { delta, monthYear } from '@/lib/format';
 
 // /chart/swap-assets: the live chart's three toggles — direction, window, grouping — with its URL keys
 // (swap-dir / swap-window / swap-grouping, and the short aliases dir / mode / gran it also reads).
@@ -29,7 +29,7 @@ const SPARE = ['var(--s2)', 'var(--s3)', 'var(--s5)', 'var(--s1)', 'var(--s4)'];
 const OTHER = 'var(--s6)';
 
 const usdC = (v: number) => formatValue(v, 'usdCompact');
-const arrow = (v: number) => <span className={v >= 0 ? 'up' : 'dn'}>{v >= 0 ? '▲' : '▼'} {usdC(Math.abs(v))}</span>;
+const arrow = (v: number) => { const d = delta(v, 0, ''); return <span className={d.cls}>{d.dir === 'flat' ? '' : d.dir === 'up' ? '▲ ' : '▼ '}{usdC(Math.abs(v))}</span>; };
 const monthLong = (m: string) => monthYear(m).replace(/'(\d\d)$/, '20$1');
 
 function readView(q: { get(k: string): string | null }): View {

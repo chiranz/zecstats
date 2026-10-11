@@ -130,7 +130,7 @@ export const getTicker = cache(async (): Promise<TickerData> => {
     state({ id: 'shielded-share', kind: 'shielded', tag: 'Shielded', importance: 70, label: 'Shielded share of supply', value: pct(h.pools.shieldedPct), delta: fromDelta(delta(shPts, 2, ' pts')), per: '30d', window: 'in 30 days', href: '/chart/pools' }),
     state({ id: 'net-shield-7d', kind: 'flows', tag: 'Net shield', qual: '7D', importance: 62, label: 'Net shielded, last 7 days', value: `${h.net7.net >= 0 ? '+' : '−'}${num(Math.abs(h.net7.net))} ZEC`, delta: Number.isFinite(netChg) ? fromDelta(delta(netChg, 0, ' ZEC')) : undefined, per: 'vs prior wk', window: 'vs the week before', href: '/privacy' }),
     state({ id: 'turnstile', kind: 'turnstile', tag: 'Turnstile', importance: 48, label: 'Orchard turnstile index', value: `${Math.round(h.turnstile.isi)}/100`, href: '/orchard-turnstile' }),
-    state({ id: 'mvrv', kind: 'price', tag: 'MVRV', importance: 34, label: 'MVRV: price ÷ realized price', value: `${h.mvrv.toFixed(2)}×`, href: '/chart/mvrv' }),
+    state({ id: 'mvrv', kind: 'price', tag: 'MVRV', qual: 'Live', importance: 34, label: 'MVRV: live price ÷ realized price', value: `${h.mvrv.toFixed(2)}×`, href: '/chart/mvrv' }),
     state({ id: 'near-bridge', kind: 'markets', tag: 'NEAR bridge', importance: 32, label: 'ZEC bridged to NEAR', value: zecCompact(h.near.bridge), href: '/chart/near-bridge' }),
   ];
 

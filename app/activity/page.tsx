@@ -22,7 +22,7 @@ export const metadata: Metadata = pageMetadata('/activity');
 const BUCKETS: { key: BucketKey; label: string; short: string; color: string; sub: string; good: Good }[] = [
   { key: 'transient_transparent', label: 'Transient transparent', short: 'Transient', color: 'var(--other)', sub: 'ordinary transparent movement — not parked anywhere', good: 'neutral' },
   { key: 'exchanges', label: 'In exchanges (sweep-shaped)', short: 'In exchanges', color: 'var(--s2)', sub: 'flowed through a sweep-shaped consolidation', good: 'neutral' },
-  { key: 'shielded_savings', label: 'Shielded savings', short: 'Shielded savings', color: 'var(--s1)', sub: 'dwelled 7+ days, then voluntarily shielded', good: 'up' },
+  { key: 'shielded_savings', label: 'Shielded savings', short: 'Shielded savings', color: 'var(--s5)', sub: 'dwelled 7+ days, then voluntarily shielded', good: 'up' },
 ];
 const POOL_ROWS = [['sprout', 'Sprout'], ['sapling', 'Sapling'], ['orchard', 'Orchard'], ['ironwood', 'Ironwood']] as const;
 const DAY = 86400000;
@@ -132,7 +132,7 @@ export default async function ActivityPage({ searchParams }: PageProps<'/activit
           <HBars
             stacked
             label="Unspent transparent ZEC by coin age"
-            items={cohorts.map((c) => ({ key: c.cohort, label: <>{COHORT_LABEL[c.cohort] ?? c.cohort} <span className="muted">· {compact(c.utxo_count, 1)} UTXOs</span></>, value: zat(c.total_zat), text: `${fz(zat(c.total_zat))} ZEC`, color: 'var(--s1)', strong: true }))}
+            items={cohorts.map((c) => ({ key: c.cohort, label: <>{COHORT_LABEL[c.cohort] ?? c.cohort} <span className="muted">· {compact(c.utxo_count, 1)} UTXOs</span></>, value: zat(c.total_zat), text: `${fz(zat(c.total_zat))} ZEC`, color: 'var(--other)', strong: true }))}
           />
         </Card>
         <Card

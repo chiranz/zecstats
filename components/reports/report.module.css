@@ -8,7 +8,7 @@
 .fbar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 24px; padding: 12px 16px; background: var(--card); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--shadow); }
 .grp { display: flex; flex-direction: column; gap: 6px; min-width: 0; max-width: 100%; }
 .grpRow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.glbl { font: 500 11.5px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.glbl { font: 500 12px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 .end { margin-left: auto; display: flex; align-items: center; gap: 10px; }
 .count { font: 500 12.5px var(--mono); color: var(--text-2); min-width: 0; }
 .count b { color: var(--value); font-weight: 600; white-space: nowrap; }
@@ -33,7 +33,7 @@
 .bad i { background: var(--down); }
 .bad { color: var(--text); }
 .unk i { background: none; box-shadow: inset 0 0 0 1.5px var(--unknown); }
-.netb { display: inline-block; padding: 1px 7px; border-radius: 5px; border: 1px solid var(--line-strong); font: 500 11.5px var(--mono); color: var(--text-2); }
+.netb { display: inline-block; padding: 1px 7px; border-radius: 5px; border: 1px solid var(--line-strong); font: 500 12px var(--mono); color: var(--text-2); }
 .dotc { display: inline-block; width: 8px; height: 8px; border-radius: 50%; vertical-align: middle; margin-right: 6px; }
 .mut { color: var(--muted); }
 
@@ -104,7 +104,7 @@
 /* compare (before/after) */
 .ba { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto minmax(0, 1fr); gap: 0 14px; align-items: center; }
 .ba > * { padding: 10px 0; border-bottom: 1px solid var(--line); }
-.ba .h { font: 500 11.5px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.ba .h { font: 500 12px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
 .ba .k { font-size: 14px; color: var(--text-2); }
 .ba .v { font: 600 15px var(--mono); color: var(--value); }
 .ba .arrow { color: var(--accent); font-family: var(--mono); }
@@ -112,7 +112,7 @@
 /* misc */
 .heroGrid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 20px 40px; align-items: start; }
 @media (max-width: 900px) { .heroGrid { grid-template-columns: minmax(0, 1fr); } }
-.panelLbl { font: 500 11.5px var(--mono); color: var(--muted); }
+.panelLbl { font: 500 12px var(--mono); color: var(--muted); }
 
 /* founders-reward schedule: the long "share per block" column wraps on desktop, scrolls on phones */
 @media (min-width: 900px) { .wrapCell { white-space: normal !important; } }

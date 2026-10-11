@@ -319,10 +319,11 @@ function RangeStats({ panel, range, span }: { panel: TimeSeriesPanel; range: str
   // counts carry the panel's unit ("5,707 transactions"); other formats name their own unit
   const u = panel.unit && (panel.format === 'count' || panel.format === 'countCompact') ? panel.unit : undefined;
   const f = (v: number) => formatValue(v, panel.format);
-  // Change: percentage points for % series, relative % otherwise (none when the start is 0 or the sign flips)
+  // Change: percentage points for % series, relative % otherwise (none when the start is 0, under 1% of the end — a
+  // series that started near zero, like supply in 2016 — or the sign flips)
   const diff = st.last.v - st.firstP.v;
   const pts = panel.format.startsWith('pct');
-  const rel = st.firstP.v > 0 && st.last.v >= 0 ? (diff / st.firstP.v) * 100 : null;
+  const rel = st.firstP.v > 0 && st.last.v >= 0 && st.firstP.v >= Math.abs(st.last.v) * 0.01 ? (diff / st.firstP.v) * 100 : null;
   const dv = pts ? diff : rel;
   const d = delta(dv, pts ? 2 : dv != null && Math.abs(dv) >= 100 ? 0 : 1, pts ? ' pts' : '%');
   return (

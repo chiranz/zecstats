@@ -115,7 +115,7 @@ export const getNavLabData = cache(async (): Promise<NavData> => {
       { href: '/activity', label: 'Transparent activity', value: 'report' },
     ] },
     { id: 'secure', title: 'Is it secure?', items: [
-      { href: '/chart/hashrate', label: 'Hashrate', value: `${num(home.hashrate / 1e9, 2)} GH/s` },
+      { href: '/chart/hashrate', label: 'Hashrate', value: `${num(home.hashrate / 1e9, 2)} GSol/s` },
       { href: '/network', label: 'Network nodes', value: values['/network'] },
       { href: '/node', label: 'Our node', value: values['/node'] },
       { href: '/chart/supply', label: 'Supply issued', value: `${num(home.issuedPct, 1)}%` },
