@@ -6,7 +6,7 @@
 .panel ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
 .toolsPanel{top:calc(100% + 1px);left:var(--pad);right:var(--pad);border-top:0;border-radius:0 0 var(--r-lg) var(--r-lg);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 24px}
 .grp{display:flex;flex-direction:column;gap:2px;min-width:0}
-.grpH{margin:0 0 4px;padding-inline:10px;font:500 11.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.grpH{margin:0 0 4px;padding-inline:10px;font:500 12px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 @container nl (max-width:1000px){.toolsPanel{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 /* section tabs */

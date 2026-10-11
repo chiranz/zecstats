@@ -38,6 +38,8 @@ export default async function NewsPage() {
   const ch = delta(now.change24h);
   const lastZ = items.find((i) => i.z);
   const lastAgo = Math.max(1, Math.round((refTs - (items[0]?.ts ?? refTs)) / 3600));
+  const { high } = now.hashDaily;
+  const athNote = high.date === now.hashDaily.date ? 'the all-time high' : `high: ${num(high.value, 2)} on ${dateShort(high.date)}`;
 
   const nowCard = (
     <section className={`card ${s.nowCard}`} aria-labelledby="now-h">
@@ -47,18 +49,19 @@ export default async function NewsPage() {
       </div>
       <div className={s.nowPrice}>
         <span className={s.big}>${num(now.price, 2)}</span>
-        <span className={`delta${ch.dir === 'dn' ? ' dn' : ''}`}>{ch.text} 24h</span>
+        <span className={`delta${ch.cls === 'dn' ? ' dn' : ch.cls === 'muted' ? ' flat' : ''}`}>{ch.text} 24h</span>
       </div>
-      <Sparkline values={now.spark} width={300} height={40} color="var(--zec)" label="ZEC price, last 30 days" />
+      <Sparkline values={now.spark} width={300} height={40} color="var(--zec)" label="ZEC price" window={`${now.spark.length}-day`} />
+      <p className="small">ZEC price, last {now.spark.length} days</p>
       <dl className={s.kv}>
         <div><dt>Shielded</dt><dd>{pct(now.shieldedPct)} <small>of supply</small></dd></div>
         <div><dt>Latest block</dt><dd>{num(now.height)}</dd></div>
       </dl>
       <p className={s.hrH}>Hashrate · three windows</p>
       <dl className={s.kv}>
-        <div><dt>Now<span>last 120 blocks, about 2.5 h</span></dt><dd>{now.hashNow != null ? num(now.hashNow, 2) : '—'} <small>GH/s</small></dd></div>
-        <div><dt>{dateShort(now.hashDaily.date)}, one day<span>daily estimate · the all-time high</span></dt><dd>{num(now.hashDaily.value, 2)} <small>GH/s</small></dd></div>
-        <div><dt>7-day average<span>through {dateShort(now.hash7d.date)}</span></dt><dd>{num(now.hash7d.value, 2)} <small>GH/s</small></dd></div>
+        <div><dt>Now<span>last 120 blocks, about 2.5 h</span></dt><dd>{now.hashNow != null ? num(now.hashNow, 2) : '—'} <small>GSol/s</small></dd></div>
+        <div><dt>{dateShort(now.hashDaily.date)}, one day<span>daily estimate · {athNote}</span></dt><dd>{num(now.hashDaily.value, 2)} <small>GSol/s</small></dd></div>
+        <div><dt>7-day average<span>through {dateShort(now.hash7d.date)}</span></dt><dd>{num(now.hash7d.value, 2)} <small>GSol/s</small></dd></div>
       </dl>
       <p className="small">Each figure averages over a different window, which is why they differ.</p>
       <Link href="/chart/price" className="mono" style={{ fontSize: 13 }}>Open price chart →</Link>
@@ -83,10 +86,10 @@ export default async function NewsPage() {
       <NewsFeed items={items} refTs={refTs} nextBefore={news.nextBefore} nowCard={nowCard} sigmaCard={sigmaCard} />
       <Tiles
         items={[
-          { href: '/chart/price', title: 'ZEC price', desc: 'Every price move in the feed, on one chart with moving averages.', value: <>${num(live.zec_usd, 2)} <span className={live.zec_usd_change_24h_pct >= 0 ? 'up' : 'dn'} style={{ fontSize: 13 }}>{delta(live.zec_usd_change_24h_pct).text}</span></> },
+          { href: '/chart/price', title: 'ZEC price', desc: 'Every price move in the feed, on one chart with moving averages.', value: <>${num(live.zec_usd, 2)} <span className={delta(live.zec_usd_change_24h_pct).cls} style={{ fontSize: 13 }}>{delta(live.zec_usd_change_24h_pct).text} 24h</span></> },
           { href: '/chart/pools', title: 'Shielded pools', desc: `How the ${pct(pools.shieldedPct)} shielded share splits across Sapling, Orchard and Ironwood.`, value: `${zecCompact(pools.shielded)} shielded` },
           { href: '/ironwood', title: 'Ironwood migration', desc: 'The Orchard to Ironwood moves showing up in the feed, tracked to completion.', value: `${zecCompact(pools.ironwood)} in Ironwood` },
-          { href: '/chart/hashrate', title: 'Hashrate', desc: "The full hashrate and difficulty history behind the feed's records.", value: `${now.hashNow != null ? num(now.hashNow, 2) : '—'} GH/s now` },
+          { href: '/chart/hashrate', title: 'Hashrate', desc: "The full hashrate and difficulty history behind the feed's records.", value: `${now.hashNow != null ? num(now.hashNow, 2) : '—'} GSol/s now` },
         ]}
       />
     </>

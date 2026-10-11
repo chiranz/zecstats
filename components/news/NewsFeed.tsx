@@ -48,12 +48,14 @@ function Moves({ text }: { text: string }) {
   return <>{parts.map((p, i) => (/^[▲▼]/.test(p) ? <span key={i} className={`mono ${p.startsWith('▲') ? 'up' : 'dn'}`} style={{ fontSize: '.95em' }}>{p}</span> : <Fragment key={i}>{p}</Fragment>))}</>;
 }
 
+/** Axis ticks stay bare (the unit is printed once above them); every other label carries its unit. */
+const UNIT: Record<NewsCtx['unit'], string> = { usd: 'USD', btc: 'BTC per ZEC', ghs: 'GSol/s', zec: 'ZEC', count: 'transactions' };
 const fmtCtx = (v: number, u: NewsCtx['unit'], axis = false) =>
-  u === 'usd' ? (axis ? `$${compact(v, 1)}` : `$${num(v, v >= 1000 ? 2 : 2)}`) : u === 'btc' ? num(v, 5) : u === 'ghs' ? `${num(v, axis ? 0 : 2)}${axis ? '' : ' GH/s'}` : u === 'zec' ? `${compact(v, 1)}${axis ? '' : ' ZEC'}` : compact(v, 1);
+  u === 'usd' ? (axis ? `$${compact(v, 1)}` : `$${num(v, 2)}`) : u === 'btc' ? `${num(v, 5)}${axis ? '' : ' BTC'}` : u === 'ghs' ? `${num(v, axis ? 1 : 2)}${axis ? '' : ' GSol/s'}` : u === 'zec' ? `${compact(v, 1)}${axis ? '' : ' ZEC'}` : `${compact(v, 1)}${axis ? '' : ' txs'}`;
 
 function MiniChart({ ctx, label }: { ctx: NewsCtx; label: string }) {
   const [ref, w] = useWidth<HTMLDivElement>(560);
-  const h = 150, m = { t: 12, r: w < 420 ? 64 : 92, b: 22, l: 48 };
+  const h = 160, m = { t: 22, r: w < 420 ? 96 : 120, b: 22, l: 48 };
   const iw = w - m.l - m.r, ih = h - m.t - m.b;
   const xs = ctx.values;
   const lo0 = Math.min(...xs, ctx.norm ? ctx.norm.mean - ctx.norm.sd : Infinity), hi0 = Math.max(...xs, ctx.norm ? ctx.norm.mean + ctx.norm.sd : -Infinity);
@@ -75,12 +77,13 @@ function MiniChart({ ctx, label }: { ctx: NewsCtx; label: string }) {
             <>
               <rect x={0} width={iw} y={y(ctx.norm.mean + ctx.norm.sd)} height={Math.max(1, y(ctx.norm.mean - ctx.norm.sd) - y(ctx.norm.mean + ctx.norm.sd))} fill="var(--accent-wash)" />
               <line x1={0} x2={iw} y1={y(ctx.norm.mean)} y2={y(ctx.norm.mean)} stroke="var(--text-2)" strokeDasharray="4 4" />
-              <text x={iw + 8} y={y(ctx.norm.mean) + 12}>norm {fmtCtx(ctx.norm.mean, ctx.unit, true)}</text>
+              <text x={iw + 8} y={y(ctx.norm.mean) + (Math.abs(y(ctx.norm.mean) - y(last)) < 16 ? 16 : 0)} dy="0.32em">norm {fmtCtx(ctx.norm.mean, ctx.unit, true)}</text>
             </>
           )}
           <path d={d} fill="none" stroke="var(--info)" strokeWidth={1.8} strokeLinejoin="round" />
           <circle cx={x(xs.length - 1)} cy={y(last)} r={3.5} fill="var(--info)" stroke="var(--card)" strokeWidth={1.5} />
-          <text x={iw + 8} y={y(last)} dy="0.32em" style={{ fill: 'var(--value)', fontWeight: 600 }}>{fmtCtx(last, ctx.unit, true)}</text>
+          <text x={iw + 8} y={y(last)} dy="0.32em" style={{ fill: 'var(--value)', fontWeight: 600 }}>{fmtCtx(last, ctx.unit)}</text>
+          {ctx.unit !== 'usd' && <text x={-m.l + 2} y={-10}>{UNIT[ctx.unit]}</text>}
           <line x1={0} x2={iw} y1={ih} y2={ih} stroke="var(--axis)" />
           <text x={0} y={ih + 16}>{dateShort(ctx.from)}</text>
           <text x={iw} y={ih + 16} textAnchor="end">{dateShort(ctx.to)}</text>
@@ -113,7 +116,7 @@ function Card({ it, refTs, open, onToggle, target }: { it: NewsItem; refTs: numb
         </span>
         <span className={s.evSide}>
           <time dateTime={new Date(it.ts * 1000).toISOString()}>{ago(refTs, it.ts)}</time>
-          {it.ctx && <Spark values={it.ctx.values.slice(-15)} width={44} height={18} base={false} />}
+          {it.ctx && <Spark values={it.ctx.values.slice(-15)} width={44} height={18} base={false} window="15-day" label={THEME_LABEL[it.theme]} />}
         </span>
         <span className={s.chev} aria-hidden="true"><Icon name="chevron-down" size={16} /></span>
       </button>
@@ -126,7 +129,7 @@ function Card({ it, refTs, open, onToggle, target }: { it: NewsItem; refTs: numb
             </div>
           )}
           <div className={s.evFoot}>
-            <span className="small">{it.ctx ? `${it.ctx.norm ? 'Shaded band: within ±1σ of the 30-day norm · ' : ''}daily values, ${dateShort(it.ctx.from)} – ${dateLong(it.ctx.to)}` : dateLong(it.date)}</span>
+            <span className="small">{it.ctx ? `${it.ctx.norm ? 'Shaded band: within ±1σ of the 30-day norm · ' : ''}daily values, the ${it.ctx.values.length} days ${dateShort(it.ctx.from)} – ${dateLong(it.ctx.to)} (the card’s sparkline is the last 15)` : dateLong(it.date)}</span>
             <Link href={it.chartHref}>Open {chartName} chart →</Link>
           </div>
         </div>
@@ -194,9 +197,10 @@ export function NewsFeed({ items: initial, refTs, nextBefore, nowCard, sigmaCard
   };
 
   const matches = (it: NewsItem, f: FilterKey) => f === 'all' || it.theme === f || (!!it.merged && (f === 'price' || f === 'ratio'));
-  const recent = items.filter((it) => refTs - it.ts < 30 * DAY);
-  const counts = Object.fromEntries(FILTERS.map((f) => [f.key, recent.filter((it) => matches(it, f.key)).length])) as Record<FilterKey, number>;
-  const majorCount = recent.filter((it) => matches(it, filter) && it.severity === 'major').length;
+  // counts cover the same events as the list: everything loaded so far
+  const counts = Object.fromEntries(FILTERS.map((f) => [f.key, items.filter((it) => matches(it, f.key)).length])) as Record<FilterKey, number>;
+  const majorCount = items.filter((it) => matches(it, filter) && it.severity === 'major').length;
+  const since = items.at(-1);
 
   const visible = items.filter((it) => matches(it, filter) && (!majorOnly || it.severity === 'major'));
   const page = visible.slice(0, shown);
@@ -216,7 +220,8 @@ export function NewsFeed({ items: initial, refTs, nextBefore, nowCard, sigmaCard
       const res = await fetch(`/api/news?before=${before}`);
       const body = (await res.json()) as RawNews;
       const oldest = items.at(-1)?.ts ?? Infinity;
-      const older = body.items.filter((i) => !i.live && i.ts < oldest).map((i, k) => ({ id: `${i.ts}-o${k}`, ts: i.ts, date: i.date, theme: i.theme as NewsTheme, severity: i.severity, z: i.z, headline: i.headline, body: i.body, chartHref: `/chart/${i.chart_id}` }));
+      const sol = (t: string) => t.replace(/\bGH\/s\b/g, 'GSol/s');
+      const older = body.items.filter((i) => !i.live && i.ts < oldest).map((i, k) => ({ id: `${i.ts}-o${k}`, ts: i.ts, date: i.date, theme: i.theme as NewsTheme, severity: i.severity, z: i.z, headline: sol(i.headline), body: sol(i.body), chartHref: `/chart/${i.chart_id}` }));
       if (older.length) { setItems((xs) => [...xs, ...older]); setShown((n) => n + 12); setBefore(body.next_before ?? null); }
       else setBefore(null);
     } catch { setBefore(null); } finally { setLoading(false); }
@@ -235,12 +240,12 @@ export function NewsFeed({ items: initial, refTs, nextBefore, nowCard, sigmaCard
           </Fragment>
         ))}
         {canMore && <button type="button" className={`btn ${s.moreBtn}`} onClick={loadMore} disabled={loading}>{loading ? 'Loading…' : 'Load older events'}</button>}
-        {oldestShown && <p className={s.end}>Showing events back to {dateLong(oldestShown.ts * 1000)}{canMore ? '' : ' · that is the start of the feed.'}</p>}
+        {oldestShown && <p className={s.end}>Showing events back to {dateLong(oldestShown.ts * 1000)}{canMore ? '' : ' · older events aren’t available.'}</p>}
       </div>
       <aside className={s.rail} aria-label="Context and filters">
         {nowCard}
         <section className={`card ${s.filters}`} aria-labelledby="flt-h">
-          <h2 className={s.railH} id="flt-h">Show · last 30 days</h2>
+          <h2 className={s.railH} id="flt-h">Show{since ? ` · since ${dateShort(since.ts * 1000)}` : ''}</h2>
           <ul className={s.flist}>
             {FILTERS.map((f) => (
               <li key={f.key}>

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Masthead } from '@/components/chrome/Masthead';
-import { Card, ChartActions, Kpi, KpiBand, More, Section, Tiles } from '@/components/ui/blocks';
+import { Card, ChartActions, Kpi, KpiBand, Legend, More, Section, Tiles } from '@/components/ui/blocks';
 import { BarList } from '@/components/reports/BarList';
 import { LinkSeg } from '@/components/reports/LinkSeg';
 import { WalletAppsChart } from '@/components/reports/WalletAppsChart';
@@ -16,12 +16,14 @@ export const metadata: Metadata = pageMetadata('/wallet-apps');
 
 // ≤5 hues: the live chart's 9 series folded into 5 groups (same apps, summed).
 const GROUPS = [
-  { key: 'zodl', label: 'Zodl (Zashi)', color: 'var(--s2)', apps: ['Zodl (Zashi)'] },
-  { key: 'nio', label: 'near-intents.org', color: 'var(--s3)', apps: ['near-intents.org'] },
-  { key: 'swapkit', label: 'SwapKit wallets', color: 'var(--s4)', apps: ['THORSwap (SwapKit)', 'Trust Wallet (SwapKit)', 'Ledger (SwapKit)'] },
-  { key: 'ref', label: 'Intents referral codes', color: 'var(--s5)', apps: ['near-intents.intents-referral.near', 'new.intents-referral.near', 'solswap.intents-referral.near'] },
-  { key: 'other', label: 'Other apps', color: 'var(--s6)', apps: ['Other'] },
+  { key: 'zodl', label: 'Zodl (Zashi)', color: 'var(--s1)', apps: ['Zodl (Zashi)'] },
+  { key: 'nio', label: 'near-intents.org', color: 'var(--s2)', apps: ['near-intents.org'] },
+  { key: 'swapkit', label: 'SwapKit wallets', color: 'var(--s3)', apps: ['THORSwap (SwapKit)', 'Trust Wallet (SwapKit)', 'Ledger (SwapKit)'] },
+  { key: 'ref', label: 'Intents referral codes', color: 'var(--s4)', apps: ['near-intents.intents-referral.near', 'new.intents-referral.near', 'solswap.intents-referral.near'] },
+  { key: 'other', label: 'Other apps', color: 'var(--other)', apps: ['Other'] },
 ];
+/** An app's bar takes its group's colour (the same key as the chart below); apps outside the named groups are Other. */
+const groupOf = (app: string) => GROUPS.find((g) => g.apps.includes(app)) ?? GROUPS.at(-1)!;
 
 /** The live table's style: $20M · $6.5M · $954.8K · $147 */
 const money = (v: number) => (v >= 1e6 ? usdCompact(v, 1) : v >= 1e3 ? `$${(v / 1e3).toFixed(1)}K` : usd(v, 0));
@@ -32,9 +34,9 @@ const P = ['day', 'week', 'month', 'quarter', 'all'] as const;
 type Win = (typeof P)[number];
 const WIN: Record<Win, { label: string; days: number; phrase: string; title: string }> = {
   day: { label: 'Today', days: 1, phrase: 'today so far', title: 'today' },
-  week: { label: '7 days', days: 7, phrase: 'the last 7 days', title: 'this week' },
-  month: { label: '30 days', days: 30, phrase: 'the last 30 days', title: 'in the last 30 days' },
-  quarter: { label: '90 days', days: 90, phrase: 'the last 90 days', title: 'in the last 90 days' },
+  week: { label: '7 days', days: 7, phrase: 'the last 7 days', title: 'in the last 7 days' },
+  month: { label: '30 days', days: 30, phrase: 'the last 30 full days', title: 'in the last 30 days' },
+  quarter: { label: '90 days', days: 90, phrase: 'the last 90 full days', title: 'in the last 90 days' },
   all: { label: 'All time', days: Infinity, phrase: 'all time', title: 'of all time' },
 };
 
@@ -45,9 +47,11 @@ export default async function WalletAppsPage({ searchParams }: PageProps<'/walle
   const wa = await getWalletApps();
   const full = p === 'week';
 
-  // the window's leaderboard: the full 7-day table, or the eight named apps summed over the window
-  const start = Number.isFinite(w.days) ? Math.max(0, wa.dates.length - w.days) : 0;
-  const sums = wa.apps.map((app, i) => ({ app, usd: wa.usd[i].slice(start).reduce((a, v) => a + v, 0) }));
+  // the window's leaderboard: the full 7-day table, or the eight named apps summed over the window. The last day is
+  // today, so far: 'day' is exactly that, the 30- and 90-day windows end on the last full day, all time takes everything.
+  const n = wa.dates.length;
+  const [start, end] = p === 'day' ? [n - 1, n] : p === 'all' ? [0, n] : [Math.max(0, n - 1 - w.days), n - 1];
+  const sums = wa.apps.map((app, i) => ({ app, usd: wa.usd[i].slice(start, end).reduce((a, v) => a + v, 0) }));
   const winTotal = full ? wa.summary.usd : sums.reduce((a, x) => a + x.usd, 0);
   const otherUsd = sums.find((x) => x.app === 'Other')?.usd ?? 0;
   type Row = { rank: number; app: string; usd: number; share_pct: number; swaps?: number; into_usd?: number; out_usd?: number; code?: string };
@@ -85,11 +89,12 @@ export default async function WalletAppsPage({ searchParams }: PageProps<'/walle
           title={`Who sent the most ZEC swaps ${w.title}?`}
           takeaway={<>The top three apps carried <b>{pct(top3, 1)}</b> of the volume; {leader.app} alone moved <b>{money(leader.usd)}</b>{leader.swaps != null ? ` in ${num(leader.swaps)} swaps` : ''}.</>}
           actions={<ChartActions name="wallet app leaderboard" />}
-          foot={`Volume is the dollar value sent in, into or out of ZEC · ${w.phrase}`}
+          legend={<Legend items={GROUPS.map((g) => ({ label: g.label, color: g.color }))} />}
+          foot={`Volume = the dollar value of each swap into or out of ZEC, measured on the side sent in · ${w.phrase}${p === 'month' || p === 'quarter' ? `, to ${dateLong(wa.dates[n - 2])}` : ''} · bar colour = the app’s group in the chart below`}
         >
           <BarList label={`Share of ZEC swap volume by app, ${w.phrase}`} max={leader.usd} items={board.slice(0, 10).map((b) => ({
             key: b.app, name: <>{b.rank}. {b.app}</>, value: money(b.usd), sub: b.swaps != null ? `${pct(b.share_pct, 1)} · ${num(b.swaps)} swaps` : pct(b.share_pct, 1), highlight: b.rank === 1, title: b.app,
-            parts: [{ key: 'v', value: b.usd, color: b.rank === 1 ? 'var(--s2)' : 'var(--p-transparent)' }],
+            parts: [{ key: 'v', value: b.usd, color: groupOf(b.app).color }],
           }))} />
         </Card>
       )}
@@ -98,14 +103,14 @@ export default async function WalletAppsPage({ searchParams }: PageProps<'/walle
         <Kpi k={p === 'all' ? 'All-time volume' : p === 'day' ? 'Volume today' : `${w.days}-day volume`} v={money(winTotal)} s={full ? `${num(wa.summary.swaps)} ZEC swaps` : w.phrase} />
         <Kpi k="Leader" v={leader ? pct(leader.share_pct, 1) : '—'} s={leader ? `${leader.app} · ${money(leader.usd)}` : 'no volume yet'} />
         {full
-          ? <Kpi k="Apps with volume" v={board.length} s="this week, by referral code or fee account" />
+          ? <Kpi k="Apps with volume" v={board.length} s="last 7 days, by referral code or fee account" />
           : <Kpi k="Other apps" v={money(otherUsd)} s={`${pct(winTotal ? (otherUsd / winTotal) * 100 : 0, 1)} · every app outside the eight largest`} />}
         {p === 'all'
           ? <Kpi k="7-day volume" v={money(wa.summary.usd)} s={`${num(wa.summary.swaps)} ZEC swaps`} />
           : <Kpi k="All-time volume" v={usdCompact(allTime, 2)} s={`since ${dateLong(wa.dates[0])}`} />}
       </KpiBand>
 
-      <Section title={full ? 'Every app this week' : `Every named app, ${w.phrase}`}>
+      <Section title={full ? 'Every app, last 7 days' : `Every named app, ${w.phrase}`}>
         <div className="tbl-wrap" style={{ maxHeight: 560, overflowY: 'auto' }}>
           <table className="t">
             <caption className="sr-only">{`ZEC swap volume by app, ${w.phrase}`}</caption>
@@ -116,7 +121,7 @@ export default async function WalletAppsPage({ searchParams }: PageProps<'/walle
                   <td>{b.rank}</td>
                   <td className="l" style={{ textAlign: 'left', maxWidth: 260, overflow: 'hidden', textOverflow: 'ellipsis' }} title={b.app}>{b.app}</td>
                   <td>{money(b.usd)}</td>
-                  <td><i className={r.minibar} style={{ width: Math.max(3, (b.share_pct / leader.share_pct) * 60), background: 'var(--s2)' }} />{pct(b.share_pct, 1)}</td>
+                  <td><i className={r.minibar} style={{ width: Math.max(3, (b.share_pct / leader.share_pct) * 60), background: groupOf(b.app).color }} />{pct(b.share_pct, 1)}</td>
                   {full && <>
                     <td>{num(b.swaps)}</td>
                     <td>{money(b.into_usd ?? 0)}</td>

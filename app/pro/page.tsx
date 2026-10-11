@@ -5,9 +5,10 @@ import { Callout, Tiles } from '@/components/ui/blocks';
 import { Icon } from '@/components/ui/Icon';
 import { ProGate } from '@/components/tools/ProGate';
 import t from '@/components/tools/tools.module.css';
-import { SIGNAL_CALLS } from '@/lib/data/tools';
+import { metricCount, SIGNAL_CALLS } from '@/lib/data/tools';
 import { dateLong } from '@/lib/format';
 import { pageMetadata } from '@/lib/seo';
+import { SectionLd } from '@/components/seo/SectionLd';
 
 export const metadata: Metadata = pageMetadata('/pro');
 
@@ -18,10 +19,12 @@ const UNLOCKS = [
   { icon: 'chart', title: 'The research page', body: 'The experimental “ZEC Trading Signals” research tool, kept behind a password.' },
 ];
 
-export default function ProPage() {
+export default async function ProPage() {
   const latest = SIGNAL_CALLS[0];
+  const mc = await metricCount();
   return (
     <>
+      <SectionLd path="/pro" />
       <Masthead
         title={<>ZEC Stats Pro<span className={t.beta}>BETA</span></>}
         lede="Everything else on ZEC Stats is free. Pro is the paid part of Signals: the live messages as they are sent, a daily summary, and the research page behind them."
@@ -51,7 +54,7 @@ export default function ProPage() {
           { href: '/signals', title: 'Signals record', desc: 'Every call so far and what acting on it would have done.', value: `${SIGNAL_CALLS.length} calls` },
           { href: '/tools', title: 'Methodology', desc: 'Where the data the model reads comes from.', value: 'Zebra full node' },
           { href: '/donate', title: 'Donate', desc: 'Support the free side of the site instead.', value: '$300 / month' },
-          { href: '/metrics', title: 'Metrics table', desc: 'The free headline numbers, with their 28-day and 12-month change.', value: '43 metrics' },
+          { href: '/metrics', title: 'Metrics table', desc: `The free headline numbers, with their 28-day and 12-month change: ${mc.tracked} rows, ${mc.defaults} shown first.`, value: `${mc.tracked} metrics` },
         ]}
       />
     </>

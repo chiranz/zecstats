@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Masthead } from '@/components/chrome/Masthead';
 import { Callout, Card, ChartActions, Kpi, KpiBand, More, Section, Tiles } from '@/components/ui/blocks';
-import { BarList, ShareBar } from '@/components/reports/BarList';
+import { ShareBar } from '@/components/reports/BarList';
 import { ExchangeTable, type CountryRow } from '@/components/crosschain/ExchangeTable';
 import { getExchangeCoverage } from '@/lib/data/crosschain';
 import { dateLong, num, pct } from '@/lib/format';
@@ -23,8 +23,8 @@ export default async function ExchangeSupportPage() {
   const venues = [...reach.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
   const local = venues.filter(([e]) => !ex.global_zec.includes(e));
   const bannedBig = rows.filter((x) => x.status === 'banned').slice(0, 3).map((x) => x.name);
-  const asOf = Date.parse('2026-10-11T00:00:00Z');
-  const ageDays = Math.round((asOf - Date.parse(`${ex.last_updated}T00:00:00Z`)) / 86400000);
+  const ageDays = ex.days_since_update;
+  const homeOf = (e: string) => C.filter((c) => c.exchanges.includes(e)).map((c) => c.name);
 
   return (
     <>
@@ -38,7 +38,7 @@ export default async function ExchangeSupportPage() {
       </Masthead>
 
       {ex.stale && (
-        <Callout title={`Last verified ${dateLong(ex.last_updated)} — ${ageDays} days ago`} tone="warn">
+        <Callout title={`Last verified ${dateLong(ex.last_updated)} — ${ageDays} day${ageDays === 1 ? '' : 's'} ago`} tone="warn">
           The country list is checked by hand about once a month, so a recent listing or ban may not be reflected yet.
         </Callout>
       )}
@@ -65,20 +65,28 @@ export default async function ExchangeSupportPage() {
       </KpiBand>
 
       <Section id="countries" title="Can I buy ZEC where I live?" aside={<a className="btn" href="/api/exchange-coverage" download="zec-exchange-coverage.json">Download data</a>}>
-        <ExchangeTable rows={rows} />
-        <p className="small">Status is shown as a word, not only a colour. Exchange counts include the {ex.global_zec.length} global venues wherever they accept residents; hover a count for the list.</p>
+        <ExchangeTable rows={rows} global={ex.global_zec} />
+        <p className="small">Status is shown as a word, not only a colour. Exchange counts include the {ex.global_zec.length} global venues wherever they accept residents; open a count to see the list.</p>
       </Section>
 
       <Card
         title="Which exchanges carry ZEC in the most countries?"
-        takeaway={<>{ex.global_zec.length} global venues — {ex.global_zec.slice(0, 4).join(', ')} and others — reach <b>{venues[0][1]}</b> countries each; {local.length} more serve a single home market{local.length ? ` (${local.map(([e]) => e).join(', ')})` : ''}.</>}
+        takeaway={<>The {ex.global_zec.length} global venues reach <b>{venues[0][1]}</b> countries each; the other {local.length} serve only their home market.</>}
         actions={<ChartActions api="exchange-coverage" name="exchanges by reach" />}
         foot={`Countries where each exchange is listed as serving residents with ZEC, of ${C.length} assessed. The dataset tracks ${ex.exchange_count} exchanges; ${ex.listing_zec} list ZEC, ${venues.length} of them attached to at least one country here.`}
       >
-        <BarList label="Countries served per exchange" max={venues[0][1]} items={[
-          ...(venues.filter(([e]) => ex.global_zec.includes(e)).length ? [{ key: 'global', name: <>Each of the {ex.global_zec.length} global venues <span className="muted">({ex.global_zec.join(', ')})</span></>, value: venues[0][1], sub: 'countries', title: ex.global_zec.join(', '), parts: [{ key: 'k', value: venues[0][1], color: 'var(--s2)' }] }] : []),
-          ...local.map(([e, k]) => ({ key: e, name: e, value: k, sub: k === 1 ? 'country' : 'countries', parts: [{ key: 'k', value: k, color: 'var(--s3)' }] })),
-        ]} />
+        <dl className="stack" style={{ gap: 14, margin: 0 }}>
+          <div className="stack" style={{ gap: 4 }}>
+            <dt className="h3">{ex.global_zec.length} global venues · <span className="mono">{venues[0][1]} countries each</span></dt>
+            <dd className="note" style={{ margin: 0 }}>{ex.global_zec.join(', ')}</dd>
+          </div>
+          {local.length > 0 && (
+            <div className="stack" style={{ gap: 4 }}>
+              <dt className="h3">{local.length} home-market venues · <span className="mono">{local.every(([, k]) => k === 1) ? '1 country each' : 'a few countries each'}</span></dt>
+              <dd className="note" style={{ margin: 0 }}>{local.map(([e, k]) => `${e} (${k === 1 ? homeOf(e)[0] : `${k} countries`})`).join(', ')}</dd>
+            </div>
+          )}
+        </dl>
       </Card>
 
       <More summary="How access is judged">

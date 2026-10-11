@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: 'Navigation lab', robots: { index: fa
 // Where the page's first heading and its answer (hero / chart) start, in px from the top of the window.
 // Measured with puppeteer on this branch (today's chrome: the live pages; A–E: the prototype frames, ticker slot off).
 const MEASURED: Record<string, { label: string; priv: [number, number]; chart: [number, number] }> = {
-  now: { label: 'Today', priv: [352, 465], chart: [237, 300] },
+  now: { label: 'Before', priv: [352, 465], chart: [237, 300] },
   a: { label: 'A', priv: [239, 264], chart: [213, 212] },
   b: { label: 'B', priv: [280, 355], chart: [254, 303] },
   c: { label: 'C', priv: [314, 332], chart: [198, 221] },
@@ -18,12 +18,12 @@ const MEASURED: Record<string, { label: string; priv: [number, number]; chart: [
 };
 
 const PROBLEMS: { t: string; d: string }[] = [
-  { t: 'The same freshness note on every page', d: 'All 32 page headers end in the same three mono lines: node status and block, “data through … · updates daily”, and the “Redesign concept” note. It is the same on every page, so people stop reading it, and it pushes the answer down.' },
-  { t: 'The location is said three times', d: 'On Privacy: the breadcrumb “ZEC Stats › Privacy”, the kicker “ZCASH PRIVACY”, then the H1. On chart pages: the breadcrumb, then the H1, then the same group again in the prev/next bar at the bottom.' },
-  { t: 'The menu doesn’t match the site', d: 'The site is 58 charts plus about 25 tools, but the bar gives five equal links and a 23-item Tools menu. Charts are reached only through /charts or search, and no menu shows a single live number.' },
-  { t: 'No sense of place inside a section', d: 'On /ironwood you can’t see Turnstile or Wall of Shame. On /chart/price, the other 10 charts in the group are listed only at the bottom of the page.' },
-  { t: 'Ironwood is buried', d: 'The biggest privacy story isn’t in the top bar. On the hub, the “Ironwood” jump link goes to a section of the hub, not to the Ironwood page, so the site has two “Ironwoods” that go to different places.' },
-  { t: 'On a phone, search disappears', d: 'At 560px and narrower the search button is hidden (.kbd-search is display:none), so search is only inside the burger sheet, which is a flat list of about 30 links.' },
+  { t: 'The same freshness note on every page', d: 'All 32 page headers ended in the same three mono lines: node status and block, “data through … · updates daily”, and the “Redesign concept” note. It was the same on every page, so people stopped reading it, and it pushed the answer down.' },
+  { t: 'The location was said three times', d: 'On Privacy: the breadcrumb “ZEC Stats › Privacy”, the kicker “ZCASH PRIVACY”, then the H1. On chart pages: the breadcrumb, then the H1, then the same group again in the prev/next bar at the bottom.' },
+  { t: 'The menu didn’t match the site', d: 'The site had 58 charts plus about 25 tools, but the bar gave five equal links and a 23-item Tools menu. Charts were reached only through /charts or search, and no menu showed a single live number.' },
+  { t: 'No sense of place inside a section', d: 'On /ironwood you couldn’t see Turnstile or Wall of Shame. On /chart/price, the other 10 charts in the group were listed only at the bottom of the page.' },
+  { t: 'Ironwood was buried', d: 'The biggest privacy story wasn’t in the top bar. On the hub, the “Ironwood” jump link went to a section of the hub, not to the Ironwood page, so the site had two “Ironwoods” that went to different places.' },
+  { t: 'On a phone, search disappeared', d: 'At 560px and narrower the search button was hidden, so search was only inside the burger sheet, a flat list of about 30 links.' },
 ];
 
 export default function Page() {
@@ -33,11 +33,11 @@ export default function Page() {
       <header className={s.head}>
         <span className="kicker">Design preview · not linked from the site</span>
         <h1 className="h1">Navigation lab</h1>
-        <p className="lede">Five ways to redesign the top bar and the page header under it. Each one is a working prototype: menus open, links go to the real pages, and search uses the site’s real index. Each is shown on the top of the Privacy hub and of a chart page, on desktop and at 390px.</p>
+        <p className="lede">The study behind the site’s navigation, kept as a record: D was adopted and is what the site uses now, so “before” below means the site as it was then. Five ways to redesign the top bar and the page header under it. Each one is a working prototype: menus open, links go to the real pages, and search uses the site’s real index. Each is shown on the top of the Privacy hub and of a chart page, on desktop and at 390px.</p>
       </header>
 
       <section className={s.sec} aria-labelledby="wrong">
-        <h2 id="wrong" className="h2">What’s wrong today</h2>
+        <h2 id="wrong" className="h2">What was wrong before</h2>
         <ol className={s.problems}>
           {PROBLEMS.map((p) => <li key={p.t}><b>{p.t}</b><span>{p.d}</span></li>)}
         </ol>
@@ -81,7 +81,7 @@ export default function Page() {
         </div>
         <div className="tbl-wrap">
           <table className={`t ${s.tbl}`}>
-            <caption className={s.cap}>Where the answer starts (px from the top of the window). Today’s figures include the site’s real 56px bar; A–E include their own bars, with the ticker slot off.</caption>
+            <caption className={s.cap}>Where the answer starts (px from the top of the window). “Before” includes the site’s real 56px bar of the time; A–E include their own bars, with the ticker slot off.</caption>
             <thead><tr><th scope="col">Page · width</th>{Object.values(MEASURED).map((m) => <th scope="col" key={m.label}>{m.label}</th>)}</tr></thead>
             <tbody>
               <tr><th scope="row">Privacy hub · desktop</th>{Object.entries(MEASURED).map(([k, m]) => <td key={k}>{m.priv[0]}</td>)}</tr>
@@ -107,7 +107,7 @@ export default function Page() {
             </ol>
           </div>
           <aside className={s.files} aria-labelledby="files-h">
-            <h3 id="files-h" className="h3">Shared files that would change</h3>
+            <h3 id="files-h" className="h3">Shared files that changed</h3>
             <ul>
               <li><code>components/chrome/TopBar.tsx</code>: status pill; inline search combobox; the mobile bar</li>
               <li><code>components/chrome/ContextBar.tsx</code> + <code>.module.css</code>: new (crumb + tabs, group switcher, prev/next, on this page)</li>

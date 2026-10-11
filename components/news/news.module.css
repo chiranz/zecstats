@@ -15,7 +15,7 @@
 .kv dt span{display:block;font-size:12px;color:var(--muted);line-height:1.3}
 .kv dd{margin:0;font:600 14px var(--mono);color:var(--value);white-space:nowrap}
 .kv dd small{font-weight:400;color:var(--muted);font-size:12px}
-.hrH{font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.hrH{font:500 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:4px}
 
 /* filters */
 .flist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
@@ -30,10 +30,10 @@
 
 /* sigma */
 .sigma p{font-size:13.5px;color:var(--text-2)}
-.sigscale text{font:400 10.5px var(--mono);fill:var(--muted)}
+.sigscale text{font:400 12px var(--mono);fill:var(--muted)}
 
 /* buckets */
-.bucket{display:flex;align-items:center;gap:12px;margin:14px 0 2px;font:600 11.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--text-2)}
+.bucket{display:flex;align-items:center;gap:12px;margin:14px 0 2px;font:600 12px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--text-2)}
 .bucket:first-child{margin-top:0}
 .bucket::after{content:"";flex:1;height:1px;background:var(--line)}
 .bucket .c{order:2;font-weight:400;letter-spacing:.02em;text-transform:none;color:var(--muted)}
@@ -49,11 +49,11 @@
 .evIc{display:grid;place-items:center;width:32px;height:32px;border-radius:8px;background:var(--inset);border:1px solid var(--line);align-self:start;color:var(--text-2)}
 .evMain{display:flex;flex-direction:column;gap:6px;min-width:0}
 .evMeta{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
-.tag{font:500 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--text-2)}
-.sev{display:inline-flex;align-items:center;height:20px;padding:0 7px;border-radius:999px;border:1px solid var(--line-strong);font:500 11px var(--mono);color:var(--text-2)}
+.tag{font:500 12px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--text-2)}
+.sev{display:inline-flex;align-items:center;height:20px;padding:0 7px;border-radius:999px;border:1px solid var(--line-strong);font:500 12px var(--mono);color:var(--text-2)}
 .major{border-color:var(--warn);color:var(--warn)}
-.sig{display:inline-flex;align-items:center;height:20px;padding:0 7px;border-radius:5px;background:var(--inset);border:1px solid var(--line);font:600 11px var(--mono);color:var(--value)}
-.merged{font:400 11.5px var(--mono);color:var(--muted)}
+.sig{display:inline-flex;align-items:center;height:20px;padding:0 7px;border-radius:5px;background:var(--inset);border:1px solid var(--line);font:600 12px var(--mono);color:var(--value)}
+.merged{font:400 12px var(--mono);color:var(--muted)}
 .evTitle{display:block;font:500 14.5px/1.45 var(--sans);color:var(--value);text-wrap:pretty}
 .evLines{display:flex;flex-direction:column;gap:3px;font:400 13.5px/1.45 var(--mono);color:var(--text)}
 .evSide{display:flex;flex-direction:column;align-items:flex-end;gap:6px;align-self:start}
@@ -73,7 +73,7 @@
 
 .mini{position:relative;width:100%}
 .mini svg{display:block;overflow:visible}
-.mini text{font-family:var(--mono);font-size:11px;fill:var(--muted)}
+.mini text{font-family:var(--mono);font-size:12px;fill:var(--muted)}
 
 @media (max-width:1020px){
   .news{display:flex;flex-direction:column;align-items:stretch;gap:14px}

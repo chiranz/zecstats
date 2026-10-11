@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Kpi, KpiBand, Legend } from '@/components/ui/blocks';
-import { dateLong, num, usd } from '@/lib/format';
+import { dateLong, delta, num, usd } from '@/lib/format';
 import type { PriceArrays } from '@/lib/data/tools';
 import { alignRun, atDay, BTC_CYCLE, isRun, peakAndTrough } from './runAlign';
 import { DayChart } from './DayChart';
@@ -73,8 +73,8 @@ export function BullRun({ prices, initialAnchor = 800 }: { prices: PriceArrays; 
         <div className="spread" style={{ alignItems: 'flex-start' }}>
           <div className="stack" style={{ gap: 10 }}>
             <span className="kicker">Day {today.d} of Zcash&apos;s run</span>
-            <p className="figure md">{usd(today.usd, 0)} <small>· {num(today.mult, 2)}× its {usd(zec.anchorUsd, 0)}</small></p>
-            <p className="lede">On its own day {today.d}, Bitcoin was at <b className="mono value">{btcSame ? usd(btcSame.usd, 0) : '—'}</b>{btcSame ? <> — {num(btcSame.mult, 2)}×</> : null}. {pace != null && <>Zcash is running <b className={`mono ${hotter >= 0 ? 'up' : 'dn'}`}>{hotter >= 0 ? '▲' : '▼'} {num(Math.abs(hotter), 0)}%</b> {hotter >= 0 ? 'hotter' : 'cooler'}.</>}</p>
+            <p className="figure md">{usd(today.usd, 0)} <small>· {num(today.mult, 2)}× its {usd(zec.anchorUsd, 0)} day-0 close</small></p>
+            <p className="lede">On its own day {today.d}, Bitcoin was at <b className="mono value">{btcSame ? usd(btcSame.usd, 0) : '—'}</b>{btcSame ? <> — {num(btcSame.mult, 2)}×</> : null}. {pace != null && <>Zcash is running <b className={`mono ${delta(hotter, 0).cls}`}>{delta(hotter, 0).text}</b> {delta(hotter, 0).dir === 'flat' ? 'level with it' : hotter > 0 ? 'hotter' : 'cooler'}.</>}</p>
           </div>
           <div className="stack" style={{ gap: 8, alignItems: 'flex-start' }}>
             {anchorSeg}
@@ -86,7 +86,7 @@ export function BullRun({ prices, initialAnchor = 800 }: { prices: PriceArrays; 
       <KpiBand label="The two runs in four numbers">
         <Kpi k="Days into the run" v={num(today.d)} s={`since ${dateLong(zec.anchorDate)} · Bitcoin's line runs ${num(btc.points.at(-1)!.d)} days`} />
         <Kpi k="Relative pace" v={pace != null ? `${num(pace, 2)}×` : '—'} s="Zcash multiple ÷ Bitcoin multiple, same day" />
-        <Kpi k="Bitcoin's peak" v={usd(peak.usd, 0)} s={`day ${peak.d}, ${dateLong(peak.date)} · ${num(peak.mult, 0)}× anchor`} />
+        <Kpi k="Bitcoin's peak" v={usd(peak.usd, 0)} s={`day ${peak.d}, ${dateLong(peak.date)} · ${num(peak.mult, 0)}× its day-0 close`} />
         <Kpi k="And then" v={usd(trough.usd, 0)} s={<>day {trough.d}, {dateLong(trough.date)} · <span className="dn">▼ {num(Math.abs(fall), 0)}%</span> from the peak</>} />
       </KpiBand>
 
@@ -133,22 +133,22 @@ export function BullRun({ prices, initialAnchor = 800 }: { prices: PriceArrays; 
           <p className="takeaway">On day {today.d}, Zcash&apos;s multiple is <b>{pace != null ? `${num(pace, 2)}×` : '—'}</b> Bitcoin&apos;s: {hotter >= 0 ? 'ahead of' : 'behind'} the 2017 pace. 1.0 is the same point on the same day.</p>
         </div>
         <DayChart
-          ariaLabel={`Zcash's multiple of its anchor divided by Bitcoin's, for each of the ${today.d} days of Zcash's run`}
+          ariaLabel={`Zcash's multiple of its day-0 close divided by Bitcoin's, for each of the ${today.d} days of Zcash's run`}
           series={[{ key: 'pace', label: 'Pace', color: 'var(--zec)', points: paceSeries }]}
           xMax={Math.max(10, today.d)} yFmt={(v) => `${num(v, 2)}×`} refY={1} refLabel="same pace" height={240} zero={false} endLabels={false}
         />
-        <p className="small">Multiples rather than prices, because the two anchors sit a few dollars apart. The x axis stops where Zcash&apos;s run does.</p>
+        <p className="small">Multiples of each day-0 close rather than prices, because the two day-0 closes sit a few dollars apart ({usd(zec.anchorUsd, 0)} and {usd(btc.anchorUsd, 0)}). The x axis stops where Zcash&apos;s run does.</p>
       </div>
 
       <div className="card">
         <div className="stack" style={{ gap: 6 }}>
           <h2 className="h3">Where was Bitcoin day by day?</h2>
-          <p className="takeaway">Bitcoin was at <b>{btcSame ? `${num(btcSame.mult, 2)}×` : '—'}</b> on the day Zcash has reached; it did not peak until <b>day {peak.d}</b>.</p>
+          <p className="takeaway">Bitcoin was at <b>{btcSame ? `${num(btcSame.mult, 2)}×` : '—'}</b> its day-0 close on the day Zcash has reached; it did not peak until <b>day {peak.d}</b>.</p>
         </div>
         <div className="tbl-wrap">
           <table className="t">
             <caption className="sr-only">Bitcoin 2017 and Zcash 2026 by day since the ${anchor} anchor</caption>
-            <thead><tr><th scope="col">Day</th><th scope="col">Bitcoin 2017</th><th scope="col">× anchor</th><th scope="col">Zcash 2026</th><th scope="col">× anchor</th></tr></thead>
+            <thead><tr><th scope="col">Day</th><th scope="col">Bitcoin 2017</th><th scope="col">× day 0</th><th scope="col">Zcash 2026</th><th scope="col">× day 0</th></tr></thead>
             <tbody>
               {rows.map((d) => {
                 const b = atDay(btc.points, d), z = d <= today.d ? atDay(zec.points, d) : undefined;

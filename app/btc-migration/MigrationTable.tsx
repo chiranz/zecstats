@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { delta } from '@/lib/format';
 import r from '@/components/reports/report.module.css';
 import { Pager, pageSlice } from '@/components/reports/Pager';
 import { useParamWriter } from './ParamSeg';
@@ -26,7 +27,7 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 const dShort = (d: string) => `${Number(d.slice(8, 10))} ${MONTHS[Number(d.slice(5, 7)) - 1]}`;
 const hhmm = (ts: number) => new Date(ts * 1000).toISOString().slice(11, 16);
 const short = (a: string) => (!a ? '—' : a.length <= 16 ? a : `${a.slice(0, 8)}…${a.slice(-6)}`);
-const ret = (v: number) => <span className={v >= 0 ? 'up' : 'dn'}>{v >= 0 ? '▲' : '▼'} {Math.abs(v).toFixed(1)}%</span>;
+const ret = (v: number) => { const d = delta(v); return <span className={d.cls}>{d.text}</span>; };
 const ext = { target: '_blank', rel: 'noopener noreferrer' } as const;
 
 /** One row per sending address, added up from the swaps that pass the filters (so both views always agree). */
@@ -86,6 +87,7 @@ export function MigrationTable({ rows, initialBy, initialRows, first, last }: { 
   const reset = (f: () => void) => { f(); setPage(1); };
   const clear = () => reset(() => { setFrom(''); setTo(''); setMinBtc(''); setMinUsd(''); setOutcome('all'); setQ(''); });
   const filtered = matched.length !== rows.length;
+  const dirty = !!(from || to || minBtc || minUsd || q) || outcome !== 'all';
   const inUsd = matched.reduce((a, x) => a + x.usd, 0), gain = matched.reduce((a, x) => a + x.valueNow - x.usd, 0);
 
   const th = (k: SwapKey | AddrKey, label: string, left = false) => (
@@ -137,7 +139,7 @@ export function MigrationTable({ rows, initialBy, initialRows, first, last }: { 
           <span className={r.glbl}>Search</span>
           <span className={r.inp}><input type="search" value={q} onChange={(e) => reset(() => setQ(e.target.value))} placeholder="Bitcoin address or txid" aria-label="Search swaps by Bitcoin address, txid or deposit address" /></span>
         </label>
-        <button type="button" className="btn" onClick={clear} disabled={!filtered && !q} style={{ height: 34 }}>Reset</button>
+        <button type="button" className="btn" onClick={clear} disabled={!dirty} style={{ height: 34 }}>Reset</button>
       </div>
 
       <div className="tbl-wrap">
@@ -166,7 +168,7 @@ export function MigrationTable({ rows, initialBy, initialRows, first, last }: { 
               ))
               : pageSlice(list as AddrRow[], page, per).map((x) => (
                 <tr key={x.sender}>
-                  <td style={{ textAlign: 'left' }}>{sender(x.sender)}{x.consolidated && <span className={r.mut} title="A pile assembled from many inputs first"> ◇</span>}</td>
+                  <td style={{ textAlign: 'left' }}>{sender(x.sender)}{x.consolidated && <span className={p.tag}>consolidated</span>}</td>
                   <td>{x.swaps}</td>
                   <td>{x.btc.toFixed(3)}</td>
                   <td>{usdF(x.usd)}</td>
@@ -183,7 +185,8 @@ export function MigrationTable({ rows, initialBy, initialRows, first, last }: { 
       <p className="small" aria-live="polite">
         {list.length.toLocaleString('en-US')} {by === 'address' ? `address${list.length === 1 ? '' : 'es'} across ${matched.length.toLocaleString('en-US')} swaps` : `swap${list.length === 1 ? '' : 's'}`}
         {filtered && ` (filtered from ${rows.length.toLocaleString('en-US')})`}
-        {matched.length > 0 && <> · {usdF(inUsd)} in, <span className={gain >= 0 ? 'up' : 'dn'}>{gain >= 0 ? '▲' : '▼'} {usdF(Math.abs(gain))}</span> since</>}
+        {matched.length > 0 && <> · {usdF(inUsd)} in, <span className={delta(gain, 0, '').cls}>{delta(gain, 0, '').dir === 'flat' ? '$0' : `${gain >= 0 ? '▲' : '▼'} ${usdF(Math.abs(gain))}`}</span> since</>}
+        {by === 'address' && list.some((x) => (x as AddrRow).consolidated) && <> · <span className={p.tag}>consolidated</span> = at least one swap spent a pile assembled from 15 or more inputs</>}
       </p>
       <Pager total={list.length} page={page} per={per} options={ROWS} onPage={setPage} onPer={(n) => { setPer(n); setPage(1); write('rows', String(n)); }} label="swap table" />
     </div>

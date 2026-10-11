@@ -1,16 +1,14 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { scaleLinear } from 'd3-scale';
 import { Masthead } from '@/components/chrome/Masthead';
 import { Card, ChartActions, Kpi, KpiBand, Legend, More, Section, Tiles } from '@/components/ui/blocks';
 import { TimeSeriesChart } from '@/components/charts/TimeSeriesChart';
 import { XYChart } from '@/components/reports/XYChart';
-import { formatValue } from '@/components/charts/valueFormat';
-import { dateTicks } from '@/components/reports/ticks';
+import { dateTicks, valueTicks } from '@/components/reports/ticks';
 import r from '@/components/reports/report.module.css';
 import { api, DATA_SOURCE } from '@/lib/data/core';
 import type { BtcMigration, BtcSwap } from '@/lib/data/crosschain';
-import { dateLong, dateShort, monthYear, num, pct, usd, usdCompact } from '@/lib/format';
+import { dateLong, dateShort, delta, monthYear, num, pct, usd, usdCompact } from '@/lib/format';
 import { MigrationTable, type By, type MigRow } from './MigrationTable';
 import { ParamSeg, type ParamOption } from './ParamSeg';
 import p from './page.module.css';
@@ -34,7 +32,14 @@ const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
 const pick = <T extends string>(v: string | undefined, opts: readonly (readonly [T, string])[], d: T): T => (opts.some(([o]) => o === v) ? (v as T) : d);
 const addDays = (d: string, n: number) => new Date(Date.parse(`${d}T00:00:00Z`) + n * 86400000).toISOString().slice(0, 10);
 const btcF = (v: number) => `${v.toFixed(v >= 100 ? 1 : 2)} BTC`;
-const dn = (v: number) => <span className={v >= 0 ? 'up' : 'dn'}>{v >= 0 ? '▲' : '▼'} {Math.abs(v).toFixed(1)}%</span>;
+const dn = (v: number) => { const d = delta(v); return <span className={d.cls}>{d.text}</span>; };
+/** Day-month ticks about every `step` days from `from` (inclusive) to `to`, for short windows; month ticks otherwise. */
+const dayTicks = (from: string, to: string, days: number) => {
+  if (days > 120) return dateTicks(from, to, days > 400 ? 'quarter' : 'month');
+  const step = days <= 10 ? 1 : days <= 35 ? 7 : 14, out: { v: number; label: string }[] = [];
+  for (let d = from; d <= to; d = addDays(d, step)) out.push({ v: Date.parse(`${d}T00:00:00Z`), label: dateShort(d) });
+  return out;
+};
 
 /** The page's totals, from whichever swaps are in view (matches the API's summary when nothing is filtered). */
 function summarise(sw: Swap[]) {
@@ -42,15 +47,18 @@ function summarise(sw: Swap[]) {
   const traced = sw.filter((s) => s.age_days != null);
   const held = traced.filter((s) => (s.held_years ?? 0) > 0);
   const btc = add((s) => s.btc), usdIn = add((s) => s.usd), valueNow = add((s) => s.value_now), btcNow = add((s) => s.btc_value_now);
-  const btcTraced = add((s) => s.btc, traced), then = add((s) => s.btc_value_then, traced);
-  const years = held.length ? add((s) => s.btc * s.held_years!, held) / add((s) => s.btc, held) : 0;
+  const btcTraced = add((s) => s.btc, traced);
+  // BTC's own growth while the coins sat still: dollars at the swap ÷ dollars when they came to rest, traced swaps only
+  const rested = held.filter((s) => (s.btc_value_then ?? 0) > 0);
+  const then = add((s) => s.btc_value_then, rested), atSwap = add((s) => s.usd, rested);
+  const years = rested.length ? add((s) => s.btc * s.held_years!, rested) / add((s) => s.btc, rested) : 0;
   return {
     btc, usd: usdIn, zec: add((s) => s.zec), value_now: valueNow, btc_value_now: btcNow, swaps: sw.length, traced: traced.length, pending: sw.length - traced.length,
     btc_over_1y: add((s) => (s.age_days! >= 365 ? s.btc : 0), traced), btc_over_5y: add((s) => (s.age_days! >= 365 * 5 ? s.btc : 0), traced),
     btc_consolidated: add((s) => ((s.consolidation_inputs ?? 0) >= 15 ? s.btc : 0)),
     weighted_age_days: btcTraced ? add((s) => s.btc * s.age_days!, traced) / btcTraced : 0,
     return_pct: usdIn ? (valueNow / usdIn - 1) * 100 : 0, vs_btc_pct: btcNow ? (valueNow / btcNow - 1) * 100 : 0,
-    cagr_pct: then > 0 && years >= 0.25 ? ((valueNow / then) ** (1 / years) - 1) * 100 : null,
+    cagr_pct: then > 0 && years >= 0.25 ? ((atSwap / then) ** (1 / years) - 1) * 100 : null,
   };
 }
 
@@ -108,8 +116,9 @@ export default async function BtcMigrationPage({ searchParams }: PageProps<'/btc
   const bLabel = (d: string) => (gran === 'day' ? dateLong(d) : gran === 'week' ? `week of ${dateLong(d)}` : monthYear(d).replace(/'(\d\d)$/, '20$1'));
   const vF = (v: number) => (unit === 'usd' ? usdCompact(v, 1) : btcF(v));
   const yMax = Math.max(...vol, unit === 'usd' ? 1000 : 1);
-  const yTicks = scaleLinear().domain([0, yMax]).nice(4).ticks(4).map((t) => ({ v: t, label: unit === 'usd' ? formatValue(t, 'usdCompact', true) : `${t}` }));
-  const volTicks = keys.map((d, i) => ({ v: i, label: gran === 'month' ? monthYear(d) : dateShort(d) }));
+  const yTicks = valueTicks(0, yMax, unit === 'usd' ? 'usdCompact' : 'btc', 4);
+  const tickEvery = Math.max(1, Math.ceil(keys.length / 8));
+  const volTicks = keys.map((d, i) => ({ v: i, label: i % tickEvery ? '' : gran === 'month' ? monthYear(d) : dateShort(d) })).filter((t) => t.label);
 
   // scatter: every traced swap, x = time, y = how long the coins had sat still (log), size = BTC
   const traced = swaps.filter((s): s is Swap & { age_days: number } => s.age_days != null && s.age_days > 0).sort((a, b) => a.ts - b.ts);
@@ -170,7 +179,7 @@ export default async function BtcMigrationPage({ searchParams }: PageProps<'/btc
         <Kpi k="ZEC bought" v={num(S.zec)} unit="ZEC" s={S.zec ? `at ${usd(S.usd / S.zec, 0)} per ZEC on average` : 'no swaps in this view'} />
         <Kpi k="Held over 1 year" v={btcF(S.btc_over_1y)} s={`${pct(S.btc ? (S.btc_over_1y / S.btc) * 100 : 0, 0)} of the BTC swapped`} />
         <Kpi k="Held over 5 years" v={btcF(S.btc_over_5y)} s={`${pct(S.btc ? (S.btc_over_5y / S.btc) * 100 : 0, 0)} of the BTC swapped`} />
-        <Kpi k="Weighted age" v={ageY.toFixed(1)} unit="years" s={S.cagr_pct != null ? `implied BTC growth ${S.cagr_pct >= 0 ? '+' : ''}${S.cagr_pct.toFixed(1)}%/yr while held` : 'held too briefly to annualise'} />
+        <Kpi k="Weighted age" v={ageY.toFixed(1)} unit="years" s={S.cagr_pct != null ? <>BTC itself grew <span className={delta(S.cagr_pct).cls}>{delta(S.cagr_pct).text}</span> a year while it sat still</> : 'held too briefly to annualise'} />
         <Kpi k="Worth now" v={usdCompact(S.value_now, 1)} s={<>paid {usdCompact(S.usd, 1)} · {dn(S.return_pct)}</>} />
         <Kpi k="Vs keeping the BTC" v={dn(S.vs_btc_pct)} s={`the BTC would be worth ${usdCompact(S.btc_value_now, 1)}`} />
         <Kpi k="From a consolidation" v={btcF(S.btc_consolidated)} s="assembled from many small inputs" />
@@ -179,13 +188,13 @@ export default async function BtcMigrationPage({ searchParams }: PageProps<'/btc
       <Card
         title="What did the money turn into?"
         takeaway={has ? <>Swappers paid <b>{usdCompact(S.usd, 1)}</b> for ZEC now worth <b>{usdCompact(S.value_now, 1)}</b> — {dn(S.return_pct)} at {usd(bm.prices.zec_usd)} per ZEC.</> : <>No swaps {sizeWords} in this window.</>}
-        actions={<ChartActions api="btc-migration" name="paid and worth" csv={{ file: 'btc-migration-paid-and-worth', panels: [{ dates: series.map((x) => x.date), series: [{ label: 'Paid in (USD)', values: series.map((x) => x.invested) }, { label: 'Worth now (USD)', values: series.map((x) => x.value) }] }] }} />}
-        foot={`Running totals over the window · ZEC priced at ${usd(bm.prices.zec_usd)} and BTC at ${usd(bm.prices.btc_usd, 0)} (${dateLong(bm.prices.close_date)})`}
+        actions={<ChartActions api="btc-migration" name="paid and worth" csv={{ file: 'btc-migration-paid-and-worth', panels: [{ dates: series.map((x) => x.date), series: [{ label: 'Paid in (USD)', values: series.map((x) => x.invested) }, { label: 'Value at the time (USD)', values: series.map((x) => x.value) }] }] }} />}
+        foot={`Running totals over the window. “Value at the time” = the ZEC bought so far × that day’s ZEC close (marked to market), so its last point is today’s worth: ZEC at ${usd(bm.prices.zec_usd)}, BTC at ${usd(bm.prices.btc_usd, 0)} (${dateLong(bm.prices.close_date)}).`}
       >
         <TimeSeriesChart
           dates={series.map((x) => x.date)} format="usdCompact" ranges={false} height={280} zeroBaseline
-          series={[{ key: 'paid', label: 'Paid in', color: 'var(--btc)', values: series.map((x) => x.invested) }, { key: 'worth', label: 'Worth now', color: 'var(--zec)', values: series.map((x) => x.value), width: 2.2 }]}
-          ariaLabel={`Cumulative dollars paid for ZEC with BTC versus what that ZEC is worth now, ${window}.`}
+          series={[{ key: 'paid', label: 'Paid in', color: 'var(--btc)', values: series.map((x) => x.invested) }, { key: 'worth', label: 'Value at the time', color: 'var(--zec)', values: series.map((x) => x.value), width: 2.2 }]}
+          ariaLabel={`Cumulative dollars paid for ZEC with BTC versus what the ZEC bought so far was worth at each day's close, ${window}.`}
         />
       </Card>
 
@@ -194,15 +203,16 @@ export default async function BtcMigrationPage({ searchParams }: PageProps<'/btc
           title="How long had the swapped Bitcoin sat still?"
           takeaway={oldest ? <><b>{overYear}</b> of {traced.length} traced swaps spent coins that had not moved for over a year; the oldest had rested <b>{(oldest.age_days / 365).toFixed(1)} years</b>.</> : <>No traced swaps in this view yet.</>}
           actions={<ChartActions api="btc-migration" name="every swap" />}
-          legend={<Legend items={[{ label: 'One swap (size = BTC)', color: 'var(--btc)' }]} />}
+          legend={<Legend items={[{ label: 'One traced swap', color: 'var(--btc)' }]} />}
           foot="Log scale. Age = time since the coins last moved, traced back through recent shuffling hops — “last moved”, not “acquired”."
         >
           {traced.length > 0 && (
             <XYChart
-              x={traced.map((s) => s.ts * 1000)} xTicks={dateTicks(first, last, 'month').concat([{ v: Date.parse(`${first}T00:00:00Z`), label: dateLong(first).slice(0, 6) }]).sort((a, b) => a.v - b.v)}
-              series={[{ key: 'age', label: 'Sat still', color: 'var(--btc)', type: 'dot', values: traced.map((s) => s.age_days), r: traced.map((s) => 2.5 + Math.sqrt(s.btc / maxBtc) * 11), format: 'days' }]}
+              x={traced.map((s) => s.ts * 1000)} xTicks={dayTicks(first, last, D)}
+              series={[{ key: 'age', label: 'Sat still', color: 'var(--btc)', type: 'dot', values: traced.map((s) => s.age_days), size: traced.map((s) => s.btc), format: 'days' }]}
+              sizeKey={{ label: 'Size = BTC', values: [0.1, 1, 10].filter((v) => v <= maxBtc * 1.5) }}
               yFormat="days" yLog yDomain={[1 / 48, 8000]} yTicks={[{ v: 1 / 24, label: '1 hour' }, { v: 1, label: '1 day' }, { v: 30, label: '1 month' }, { v: 365, label: '1 year' }, { v: 3652, label: '10 years' }]}
-              hLines={[{ y: 365, label: 'held more than a year ↑' }]}
+              hLines={[{ y: 365, label: '↑ 1 yr+', labelPos: 'margin' }]}
               tipTitles={traced.map((s) => `${dateLong(s.date)} · ${s.btc.toFixed(3)} BTC`)} tipExtra={traced.map((s) => `${usdCompact(s.usd, 1)} in · ${num(s.zec, 1)} ZEC out`)}
               height={300} ariaLabel={`Each traced swap by date and how long its coins had sat still, log scale; ${overYear} of ${traced.length} over a year.`}
             />
@@ -229,7 +239,7 @@ export default async function BtcMigrationPage({ searchParams }: PageProps<'/btc
           <XYChart
             x={keys.map((_, i) => i)} xScale="band" xTicks={volTicks}
             series={[{ key: 'v', label: unit === 'usd' ? 'USD swapped' : 'BTC swapped', color: 'var(--btc)', type: 'bar', values: vol, format: unit === 'usd' ? 'usdCompact' : 'btc' }]}
-            yFormat={unit === 'usd' ? 'usdCompact' : 'btc'} yTicks={yTicks} yDomain={[0, yTicks.at(-1)!.v]}
+            yFormat={unit === 'usd' ? 'usdCompact' : 'btc'} yTicks={yTicks} yDomain={[0, yTicks.at(-1)!.v]} yUnit={unit === 'usd' ? undefined : 'BTC'}
             tipTitles={keys.map((d) => bLabel(d).replace(/^w/, 'W'))} height={300}
             ariaLabel={`${unit === 'usd' ? 'Dollars' : 'BTC'} swapped into ZEC per ${per}, ${window}${complete.length ? `; biggest ${per} ${bLabel(keys[big])}` : ''}.`}
           />

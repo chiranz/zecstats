@@ -4,7 +4,7 @@ import { Masthead } from '@/components/chrome/Masthead';
 import { Kpi, KpiBand, More, Section, Tiles } from '@/components/ui/blocks';
 import s from './page.module.css';
 import { toolGroups } from '@/lib/site';
-import { getChartCatalogue } from '@/lib/data/tools';
+import { getChartCatalogue, metricCount } from '@/lib/data/tools';
 import { getFreshness } from '@/lib/data/snapshot';
 import { manifest } from '@/lib/data/core';
 import { dateLong, num } from '@/lib/format';
@@ -22,7 +22,7 @@ const PRINCIPLES = [
 ];
 
 export default async function ToolsPage() {
-  const [charts, f, man] = await Promise.all([getChartCatalogue(), getFreshness(), manifest()]);
+  const [charts, f, man, mc] = await Promise.all([getChartCatalogue(), getFreshness(), manifest(), metricCount()]);
   const toolCount = toolGroups.reduce((a, g) => a + g.links.length, 0);
   const endpoints = Object.keys(man.endpoints).length;
   return (
@@ -80,7 +80,7 @@ export default async function ToolsPage() {
         items={[
           { href: '/charts', title: 'All charts', desc: 'The full index of every chart on the site.', value: `${charts.length} charts` },
           { href: '/node', title: 'Node status', desc: 'Our Zebra node and how fresh its data is.', value: f.synced ? 'Synced' : 'Catching up' },
-          { href: '/metrics', title: 'Metrics table', desc: 'Every headline number and its change, in one table.', value: '43 metrics' },
+          { href: '/metrics', title: 'Metrics table', desc: `Every headline number and its change, in one table: ${mc.defaults} shown first, ${mc.tracked} in all.`, value: `${mc.tracked} metrics` },
           { href: '/donate', title: 'Donate', desc: 'What it costs to keep the node running.', value: '$300 / month' },
         ]}
       />

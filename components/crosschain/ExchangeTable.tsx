@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import r from '@/components/reports/report.module.css';
 
 export type CountryRow = { name: string; status: 'open' | 'partial' | 'banned' | 'unknown'; count: number; exchanges: string[]; pop: number; note: string };
@@ -8,7 +8,9 @@ export type CountryRow = { name: string; status: 'open' | 'partial' | 'banned' |
 const LABEL = { open: 'Open', partial: 'Partial', banned: 'Banned', unknown: 'Not assessed' } as const;
 const TONE = { open: r.ok, partial: r.lag, banned: r.bad, unknown: r.unk } as const;
 
-export function ExchangeTable({ rows }: { rows: CountryRow[] }) {
+/** `global`: venues that serve most countries; an opened row names them as a group and lists the local ones. */
+export function ExchangeTable({ rows, global = [] }: { rows: CountryRow[]; global?: string[] }) {
+  const [open, setOpen] = useState<string | null>(null);
   const [q, setQ] = useState('');
   const [status, setStatus] = useState<'all' | CountryRow['status']>('all');
   const [all, setAll] = useState(false);
@@ -37,15 +39,29 @@ export function ExchangeTable({ rows }: { rows: CountryRow[] }) {
           <caption className="sr-only">ZEC exchange access by country</caption>
           <thead><tr><th scope="col">Country</th><th scope="col" style={{ textAlign: 'left' }}>ZEC access</th><th scope="col">Exchanges</th><th scope="col">Population</th><th scope="col" style={{ textAlign: 'left' }}>Note</th></tr></thead>
           <tbody>
-            {shown.map((x) => (
-              <tr key={x.name}>
-                <td className="l">{x.name}</td>
-                <td style={{ textAlign: 'left' }}><span className={`${r.pill} ${TONE[x.status]}`}><i aria-hidden="true" />{LABEL[x.status]}</span></td>
-                <td title={x.exchanges.join(', ')}>{x.count}</td>
-                <td>{x.pop < 1 ? '<1M' : `${x.pop.toLocaleString('en-US', { maximumFractionDigits: 0 })}M`}</td>
-                <td className={r.wrap}>{x.note}</td>
-              </tr>
-            ))}
+            {shown.map((x) => {
+              const isOpen = open === x.name, id = `ex-${x.name.replace(/\W+/g, '-')}`;
+              const g = x.exchanges.filter((e) => global.includes(e)), loc = x.exchanges.filter((e) => !global.includes(e));
+              return (
+                <Fragment key={x.name}>
+                  <tr>
+                    <td className="l">{x.name}</td>
+                    <td style={{ textAlign: 'left' }}><span className={`${r.pill} ${TONE[x.status]}`}><i aria-hidden="true" />{LABEL[x.status]}</span></td>
+                    <td>{x.count ? <button type="button" className="linkish mono" aria-expanded={isOpen} aria-controls={id} aria-label={`${x.count} exchanges in ${x.name}: ${isOpen ? 'hide' : 'show'} the list`} onClick={() => setOpen(isOpen ? null : x.name)}>{x.count} {isOpen ? '▴' : '▾'}</button> : 0}</td>
+                    <td>{x.pop < 1 ? '<1M' : `${x.pop.toLocaleString('en-US', { maximumFractionDigits: 0 })}M`}</td>
+                    <td className={r.wrap}>{x.note}</td>
+                  </tr>
+                  {isOpen && (
+                    <tr id={id}>
+                      <td colSpan={5} className={r.wrap} style={{ textAlign: 'left', background: 'var(--inset)' }}>
+                        {g.length > 0 && <>{g.length === global.length ? `All ${g.length} global venues` : `${g.length} global venues`} ({g.join(', ')}){loc.length ? '; ' : ''}</>}
+                        {loc.length > 0 && <>local: <b>{loc.join(', ')}</b></>}
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
+              );
+            })}
             {!shown.length && <tr><td colSpan={5} className="l">No country matches.</td></tr>}
           </tbody>
         </table>

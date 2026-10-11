@@ -21,6 +21,10 @@ type Live = { rounded_to: number; yours?: { count: number; matched: boolean } | 
 type Result = { kind: 'live'; amount: number; dir: Dir; d: Live } | { kind: 'snap'; amount: number; dir: Dir } | { kind: 'err'; msg: string };
 
 const EXAMPLES = ['0.1', '2.5', '10', '546.3379'];
+// one colour per direction, whichever is selected, and always in this order
+const SHIELD = 'var(--s1)', DESHIELD = 'var(--s2)';
+/** "+2.5%" / "−40%" / "same" for an amount's distance from yours. */
+const vs = (d: number) => (Math.abs(d) < 0.01 ? 'same' : `${d > 0 ? '+' : '−'}${Math.abs(d) >= 100 ? num(Math.abs(d), 0) : Math.abs(d).toFixed(1)}%`);
 const verb = (d: Dir) => (d === 'shield' ? 'shielded' : 'deshielded');
 const noun = (d: Dir, n = 2) => (d === 'shield' ? (n === 1 ? 'shield' : 'shields') : n === 1 ? 'deshield' : 'deshields');
 
@@ -56,6 +60,7 @@ export function AmountLookup({ initialAmount, initialDir, buckets, rounds }: { i
   const curAmt = res && res.kind !== 'err' ? res.amount : null;
   const hitIdx = curAmt == null ? -1 : buckets.findIndex((b) => curAmt >= b.lo && (b.hi == null || curAmt < b.hi));
   const hit = hitIdx >= 0 ? buckets[hitIdx] : null;
+  const top = buckets.reduce((b, x) => (x[curDir] > b[curDir] ? x : b), buckets[0]);
 
   // nearest ranked round amounts (by ratio distance)
   const near = curAmt == null ? [] : (rounds.find((r) => r.dir === curDir)?.items ?? [])
@@ -113,7 +118,7 @@ export function AmountLookup({ initialAmount, initialDir, buckets, rounds }: { i
                   <tbody>
                     {opts.map((o) => (
                       <tr key={o.amount} style={Math.abs(o.amount - res.d.rounded_to) < 1e-9 ? { background: 'var(--accent-wash)' } : undefined}>
-                        <td>{ramt(o.amount)} ZEC</td><td>{num(o.count)}</td><td style={{ textAlign: 'left' }}><MatchBadge m={o.matched} /></td><td>{o.delta_pct > 0 ? '+' : ''}{o.delta_pct}%</td>
+                        <td>{ramt(o.amount)} ZEC</td><td>{num(o.count)}</td><td style={{ textAlign: 'left' }}><MatchBadge m={o.matched} /></td><td>{vs(o.delta_pct)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -125,15 +130,20 @@ export function AmountLookup({ initialAmount, initialDir, buckets, rounds }: { i
           {res?.kind === 'snap' && (
             <div className={ui.heroSplit}>
               <div className="stack" style={{ gap: 10 }}>
-                <span className={ui.heroK}>{ramt(res.amount)} ZEC · {res.dir === 'shield' ? 'shielding' : 'deshielding'} · bucket {hit?.bucket ?? '—'} ZEC</span>
-                <div className="figure md">{hit ? num(hit[res.dir]) : '—'}<small>{noun(res.dir)}</small></div>
+                {isRound ? <>
+                  <span className={ui.heroK}>{ramt(res.amount)} ZEC · {res.dir === 'shield' ? 'shielding' : 'deshielding'} · a ranked round amount</span>
+                  <div className="figure md">{num(near[0].count)}<small> {noun(res.dir)} nearest it</small></div>
+                </> : <>
+                  <span className={ui.heroK}>{ramt(res.amount)} ZEC · {res.dir === 'shield' ? 'shielding' : 'deshielding'} · band {hit?.bucket ?? '—'} ZEC</span>
+                  <div className="figure md">{hit ? num(hit[res.dir]) : '—'}<small> {noun(res.dir)} in that band</small></div>
+                </>}
                 <p className="note" style={{ fontSize: 15 }}>
-                  {hit ? <>moved between <b className="value">{ramt(hit.lo)}</b> and <b className="value">{hit.hi == null ? 'any size' : `${ramt(hit.hi)} ZEC`}</b> — the band your amount falls in. </> : null}
                   {isRound
-                    ? <>{ramt(near[0].amount)} ZEC is itself one of the most-used round amounts: <b className="value">{num(near[0].count)}</b> {noun(res.dir)} sit nearest it.</>
-                    : best ? <>The biggest nearby crowd is <b className="value">{ramt(best.amount)} ZEC</b> ({num(best.count)} {noun(res.dir)}, {best.delta > 0 ? '+' : ''}{best.delta.toFixed(1)}% from yours).</> : null}
+                    ? <>{ramt(near[0].amount)} ZEC is one of the ranked round amounts: <b className="value">{num(near[0].count)}</b> past {noun(res.dir)} sit nearest it{best && best.amount !== near[0].amount ? <>. The biggest crowd nearby is <b className="value">{ramt(best.amount)} ZEC</b> ({num(best.count)}, {vs(best.delta)} from yours)</> : <>, the biggest crowd nearby</>}.</>
+                    : best ? <>The biggest nearby crowd is <b className="value">{ramt(best.amount)} ZEC</b> ({num(best.count)} {noun(res.dir)}, {vs(best.delta)} from yours).</> : null}
+                  {hit ? <> Your amount’s band, <b className="value">{ramt(hit.lo)}</b> to <b className="value">{hit.hi == null ? 'any size' : `${ramt(hit.hi)} ZEC`}</b>, holds {num(hit[res.dir])} {noun(res.dir)}.</> : null}
                 </p>
-                <p className="small"><Icon name="info" size={13} /> The figure above counts every {noun(res.dir, 1)} in the amount band that {ramt(res.amount)} ZEC falls in.</p>
+                <p className="small"><Icon name="info" size={13} /> {isRound ? `The figure counts the past ${noun(res.dir)} that sit nearest ${ramt(res.amount)} ZEC among the ranked round amounts.` : `The figure counts every ${noun(res.dir, 1)} in the amount band ${ramt(res.amount)} ZEC falls in; bands are of unequal width.`}</p>
               </div>
               <div className="tbl-wrap">
                 <table className="t">
@@ -144,7 +154,7 @@ export function AmountLookup({ initialAmount, initialDir, buckets, rounds }: { i
                       <tr key={o.amount} style={best && o.amount === best.amount ? { background: 'var(--accent-wash)' } : undefined}>
                         <td>{ramt(o.amount)} ZEC{best && o.amount === best.amount ? <span className="muted" style={{ marginLeft: 8 }}>biggest crowd</span> : null}</td>
                         <td>{num(o.count)}</td>
-                        <td>{Math.abs(o.delta) < 0.01 ? 'same' : `${o.delta > 0 ? '+' : '−'}${Math.abs(o.delta) >= 100 ? num(Math.abs(o.delta), 0) : Math.abs(o.delta).toFixed(1)}%`}</td>
+                        <td>{vs(o.delta)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -159,24 +169,22 @@ export function AmountLookup({ initialAmount, initialDir, buckets, rounds }: { i
         title={`Where does your amount sit among all ${noun(curDir)}?`}
         takeaway={hit
           ? <>Your amount falls in the <b>{hit.bucket} ZEC</b> band, which holds <b>{num(hit[curDir])}</b> {noun(curDir)} — {((hit[curDir] / buckets.reduce((a, b) => a + b[curDir], 0)) * 100).toFixed(1)}% of all.</>
-          : <>Most shields and deshields move between <b>2 and 25 ZEC</b>; amounts above 1,000 ZEC are rare and easy to spot.</>}
-        foot="All-time transactions per amount band, Sprout + Sapling + Orchard + Ironwood · from /api/shielding-histogram"
+          : <>The busiest band for {noun(curDir)} is <b>{top.bucket} ZEC</b>, with {num(top[curDir])} — {((top[curDir] / buckets.reduce((a, b) => a + b[curDir], 0)) * 100).toFixed(1)}% of all; the bands above 1,000 ZEC are the thinnest.</>}
+        foot="All-time transactions per amount band, Sprout + Sapling + Orchard + Ironwood · from /api/shielding-histogram. The bands are of unequal width (each ends 2 to 10 times higher than it starts), so compare the columns as counts per band, not per ZEC."
       >
         <ColumnChart
           categories={buckets.map((b) => b.bucket)}
-          series={curDir === 'shield'
-            ? [{ key: 's', label: 'Shields', color: 'var(--s2)', values: buckets.map((b) => b.shield) }, { key: 'd', label: 'Deshields', color: 'var(--p-transparent)', values: buckets.map((b) => b.deshield) }]
-            : [{ key: 'd', label: 'Deshields', color: 'var(--s2)', values: buckets.map((b) => b.deshield) }, { key: 's', label: 'Shields', color: 'var(--p-transparent)', values: buckets.map((b) => b.shield) }]}
-          highlight={hitIdx >= 0 ? [{ index: hitIdx, color: 'var(--accent)' }] : []}
+          series={[{ key: 's', label: 'Shields', color: SHIELD, values: buckets.map((b) => b.shield) }, { key: 'd', label: 'Deshields', color: DESHIELD, values: buckets.map((b) => b.deshield) }]}
+          labels={hitIdx >= 0 ? [{ index: hitIdx, series: buckets[hitIdx].shield >= buckets[hitIdx].deshield ? 0 : 1, text: 'yours' }] : []}
           format="countCompact"
           height={260}
           tipTitle={{ suffix: ' ZEC' }}
           ariaLabel="Columns: cumulative count of shielding and deshielding transactions by amount band, from under 0.01 ZEC to over 10,000 ZEC, all pools combined."
         />
         <div className="legend" aria-hidden="true">
-          <span><i className="sw" style={{ background: 'var(--s2)' }} />{curDir === 'shield' ? 'Shields' : 'Deshields'}</span>
-          <span><i className="sw" style={{ background: 'var(--p-transparent)' }} />{curDir === 'shield' ? 'Deshields' : 'Shields'}</span>
-          {hitIdx >= 0 && <span><i className="sw" style={{ background: 'var(--accent)' }} />Your band</span>}
+          <span><i className="sw" style={{ background: SHIELD }} />Shields (t→z)</span>
+          <span><i className="sw" style={{ background: DESHIELD }} />Deshields (z→t)</span>
+          {hitIdx >= 0 && <span>“yours” = the band your amount falls in</span>}
         </div>
       </Card>
     </div>

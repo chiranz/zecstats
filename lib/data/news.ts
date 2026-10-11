@@ -21,14 +21,16 @@ export type NewsItem = {
 };
 export type NewsNow = {
   ts: number; price: number; change24h: number; spark: number[]; shieldedPct: number; height: number;
-  hashNow: number | null; hashDaily: { value: number; date: string }; hash7d: { value: number; date: string };
+  hashNow: number | null; hashDaily: { value: number; date: string; high: { value: number; date: string } }; hash7d: { value: number; date: string };
 };
 export type NewsData = { now: NewsNow; items: NewsItem[]; nextBefore: number; refTs: number };
 
 const getRawNews = () => api<RawNews>('news');
 
 const THEMES: NewsTheme[] = ['price', 'ratio', 'hashrate', 'shielded', 'flows', 'tx', 'network'];
-const ghs = (r: DailyStat) => (r.avg_difficulty * 8192) / 75 / 1e9; // live site: difficulty · 2¹³ / 75 s target spacing
+const ghs = (r: DailyStat) => (r.avg_difficulty * 8192) / 75 / 1e9; // GSol/s; live site: difficulty · 2¹³ / 75 s target spacing
+// The feed's copy says "GH/s"; Equihash counts solutions, so the same figure is GSol/s (as on the tape and charts).
+const sol = (t: string) => t.replace(/\bGH\/s\b/g, 'GSol/s');
 
 function ctxFor(item: RawNewsItem, prices: { date: string; zec_usd: number; btc_usd: number }[], stats: DailyStat[]): NewsCtx | undefined {
   const theme = item.theme as NewsTheme;
@@ -96,7 +98,7 @@ export const getNews = cache(async (): Promise<NewsData> => {
     .filter((i) => !i.live)
     .map((i, k) => ({
       id: `${i.ts}-${k}`, ts: i.ts, date: i.date, theme: (THEMES.includes(i.theme as NewsTheme) ? i.theme : 'network') as NewsTheme,
-      severity: i.severity, z: i.z, headline: i.headline, body: i.body, chartHref: `/chart/${i.chart_id}`, ctx: ctxFor(i, prices, stats),
+      severity: i.severity, z: i.z, headline: sol(i.headline), body: sol(i.body), chartHref: `/chart/${i.chart_id}`, ctx: ctxFor(i, prices, stats),
     }));
   const hashSeries = ms.metrics.find((m) => m.name === 'Network Hashrate')!.series;
   const lastStat = stats.at(-1)!;
@@ -106,7 +108,7 @@ export const getNews = cache(async (): Promise<NewsData> => {
     price: live.zec_usd, change24h: live.zec_usd_change_24h_pct, spark: liveItem?.spark ?? prices.slice(-30).map((p) => p.zec_usd),
     shieldedPct: pools.shieldedPct, height: lb.height,
     hashNow: Number.isFinite(hashNow) ? hashNow : null,
-    hashDaily: { value: ghs(lastStat), date: lastStat.date },
+    hashDaily: { value: ghs(lastStat), date: lastStat.date, high: stats.reduce((b, r) => (ghs(r) > b.value ? { value: ghs(r), date: r.date } : b), { value: -Infinity, date: '' }) },
     hash7d: { value: (hashSeries.at(-1) ?? 0) / 1e9, date: ms.dates.at(-1)! },
   };
   return { now, items: mergeSameDay(feed), nextBefore: raw.next_before, refTs: Math.floor(Date.parse(man.capturedAt) / 1000) };

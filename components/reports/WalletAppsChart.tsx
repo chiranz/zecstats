@@ -7,7 +7,8 @@ import { dateLong, pct, usdCompact } from '@/lib/format';
 
 // /wallet-apps "How has each app's volume moved?" with the live page's Daily / Weekly / Monthly / Quarterly rollup,
 // and the leader table that follows it. Daily covers the last 90 days (as live); the other rollups all history.
-// Each bar is dated by the first day of its period (weeks start Monday, UTC); the newest is the period so far.
+// Each bar is dated by the first day of its period (weeks start Monday, UTC). The last date is today, so far: it is left
+// out, and so is a period that is not over yet, so the newest bar is always a complete one.
 
 type Roll = 'day' | 'week' | 'month' | 'quarter';
 export type AppGroup = { key: string; label: string; color: string; apps: string[] };
@@ -40,22 +41,24 @@ export function WalletAppsChart({ dates, apps, usd, groups }: { dates: string[];
   const r = ROLLS.find((x) => x.key === roll)!;
 
   const { keys, sums } = useMemo(() => {
-    const start = roll === 'day' ? Math.max(0, dates.length - 90) : 0;
+    const last = dates.length - 1; // today, so far
+    const start = roll === 'day' ? Math.max(0, last - 90) : 0;
     const ks: string[] = [], idx = new Map<string, number>(), ss: number[][] = apps.map(() => []);
-    for (let i = start; i < dates.length; i++) {
+    for (let i = start; i < last; i++) {
       const b = bucketOf(dates[i], roll);
       let k = idx.get(b);
       if (k == null) { k = ks.length; idx.set(b, k); ks.push(b); ss.forEach((s) => s.push(0)); }
       apps.forEach((_, a) => (ss[a][k!] += usd[a][i] ?? 0));
     }
-    // start where the volume does (the first days of history are empty)
+    // start where the volume does (the first days of history are empty); end on the last period that is over
     const from = roll === 'day' ? 0 : Math.max(0, ks.findIndex((_, k) => ss.reduce((t, s) => t + s[k], 0) > 1000));
-    return { keys: ks.slice(from), sums: ss.map((s) => s.slice(from)) };
+    const to = roll !== 'day' && ks.length && bucketOf(dates[last], roll) === ks.at(-1) ? ks.length - 1 : ks.length;
+    return { keys: ks.slice(from, to), sums: ss.map((s) => s.slice(from, to)) };
   }, [dates, apps, usd, roll]);
 
   const series = groups.map((g) => ({ key: g.key, label: g.label, color: g.color, type: 'bar' as const, values: keys.map((_, k) => g.apps.reduce((t, app) => t + (sums[apps.indexOf(app)]?.[k] ?? 0), 0)) }));
   const named = apps.map((a, i) => ({ a, i })).filter(({ a }) => a !== 'Other');
-  const leaders = keys.slice(0, -1).slice(-12).reverse().map((b) => {
+  const leaders = keys.slice(-12).reverse().map((b) => {
     const k = keys.indexOf(b);
     const total = apps.reduce((t, _, ai) => t + sums[ai][k], 0);
     const ranked = named.map(({ a, i }) => ({ a, v: sums[i][k] })).sort((x, y) => y.v - x.v);
@@ -71,7 +74,7 @@ export function WalletAppsChart({ dates, apps, usd, groups }: { dates: string[];
         title="How has each app’s volume moved?"
         takeaway={<>{top ? <>{top.a} led <b>{top.n} of the last {leaders.length}</b> full {r.noun}s; </> : null}all apps together have moved <b>{usdCompact(allTime, 2)}</b> of ZEC swaps since {dateLong(dates[0])}.</>}
         actions={<ChartActions name={`${r.label.toLowerCase()} volume by app`} />}
-        foot={`${r.label} totals${roll === 'day' ? ', last 90 days' : ''}${roll === 'week' ? ', weeks starting Monday (UTC)' : ''}; each column is dated by the first day of its ${r.noun} and the newest is the ${r.noun} so far. Nine apps are folded into five groups: SwapKit wallets = THORSwap, Trust Wallet and Ledger; referral codes = three near-intents referral accounts.`}
+        foot={`${r.label} totals${roll === 'day' ? ', last 90 full days' : ''}${roll === 'week' ? ', weeks starting Monday (UTC)' : ''}; each column is dated by the first day of its ${r.noun}, and the ${r.noun} in progress is left out · data through ${dateLong(dates[dates.length - 2])}. Nine apps are folded into five groups: SwapKit wallets = THORSwap, Trust Wallet and Ledger; referral codes = three near-intents referral accounts.`}
       >
         <div className="toolbar">
           <span className="lbl" id="wa-roll">Rollup</span>

@@ -27,6 +27,14 @@ export type UsageClock = { blocks: number; txs: number; from: number; to: number
 export type UsageWeek = { date: string; peak_hour: number; peak_txs: number; mean_hour: number; total_txs: number };
 export const getUsageClock = () => api<UsageClock>('usage-clock');
 export const getUsageWeekly = async () => (await api<{ weeks: UsageWeek[] }>('usage-weekly')).weeks;
+/** Full Monday–Sunday weeks only: drops the stub before the first Monday, the pieces a year boundary cuts a week into,
+ *  and the week still in progress (today, from the latest block, is not over). */
+export const getCompleteUsageWeeks = cache(async () => {
+  const [weeks, lb] = await Promise.all([getUsageWeekly(), getLatestBlock()]);
+  const today = new Date(lb.time * 1000).toISOString().slice(0, 10);
+  const plus7 = (d: string) => new Date(Date.parse(`${d}T00:00:00Z`) + 7 * 86400000).toISOString().slice(0, 10);
+  return weeks.filter((w, i) => new Date(`${w.date}T00:00:00Z`).getUTCDay() === 1 && (i + 1 < weeks.length ? weeks[i + 1].date === plus7(w.date) : plus7(w.date) <= today));
+});
 
 // ─── Founders' Reward ──────────────────────────────────────────────────────────
 export type FoundersReward = {

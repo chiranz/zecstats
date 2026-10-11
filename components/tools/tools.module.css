@@ -1,5 +1,5 @@
 /* Shared bits for the Tools pages. */
-.beta{display:inline-flex;align-items:center;height:22px;padding:0 8px;border:1px solid var(--warn);border-radius:6px;font:600 11px var(--mono);letter-spacing:.08em;color:var(--warn);vertical-align:middle;margin-left:10px}
+.beta{display:inline-flex;align-items:center;height:22px;padding:0 8px;border:1px solid var(--warn);border-radius:6px;font:600 12px var(--mono);letter-spacing:.08em;color:var(--warn);vertical-align:middle;margin-left:10px}
 .twoCol{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 40px}
 .twoCol p{font-size:14px;color:var(--text-2)}
 .twoCol b{color:var(--text)}

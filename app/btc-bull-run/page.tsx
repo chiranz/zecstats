@@ -25,7 +25,7 @@ export default async function BullRunPage({ searchParams }: PageProps<'/btc-bull
     const today = zec.points.at(-1)!, b = atDay(btc.points, today.d);
     const { peak, trough } = peakAndTrough(btc.points);
     fall = Math.abs((trough.usd / peak.usd - 1) * 100);
-    if (b) lede = `On day ${today.d} of its run Zcash is at ${num(today.mult, 2)}× its $${num(at)} anchor; Bitcoin was at ${num(b.mult, 2)}× on its own day ${today.d}, and went on to peak at ${num(peak.mult, 0)}× on day ${peak.d} before falling ${num(fall, 0)}%.`;
+    if (b) lede = `On day ${today.d} of its run Zcash is at ${num(today.mult, 2)}× its day-0 close of $${num(zec.anchorUsd, 0)} (the first close after it last sat under $${num(at)}); Bitcoin was at ${num(b.mult, 2)}× its own day-0 close on day ${today.d}, and went on to peak at ${num(peak.mult, 0)}× on day ${peak.d} before falling ${num(fall, 0)}%.`;
   }
   return (
     <>
@@ -36,7 +36,7 @@ export default async function BullRunPage({ searchParams }: PageProps<'/btc-bull
       </Callout>
       <BullRun prices={prices} initialAnchor={at} />
       <More summary="Read this before you read the chart · method">
-        <p><b>One run against one run.</b> A sample of two is a shape, not a base rate — and the 2017 curve is famous precisely because it was unusual.</p>
+        <p><b>One run against one run.</b> A sample of one is a shape, not a base rate — and the 2017 curve is famous precisely because it was unusual.</p>
         <p><b>The anchor is a round number, not a level.</b> Move it. A conclusion that survives $500 and $1,000 might be about the assets; one that only works at $800 is about the anchor.</p>
         <p><b>The assets are not comparable where it matters.</b> Different issuance, float and liquidity, and a market structure — regulated venues, deep derivatives, spot ETFs — that did not exist in 2017.</p>
         <p><b>The drawdown is part of the analogy.</b> Bitcoin peaked at day {isRun(btc) ? peakAndTrough(btc.points).peak.d : '—'} and gave back {num(fall, 0)}% of it. Using this chart for the upside means using it for that too, which is why the peak and the bottom sit on the same line as the run.</p>
@@ -45,7 +45,7 @@ export default async function BullRunPage({ searchParams }: PageProps<'/btc-bull
       </More>
       <Tiles
         items={[
-          { href: '/chart/price', title: 'ZEC price', desc: 'The whole price history, with log scale and moving averages.', value: <>${num(live.zec_usd, 2)} <span className={live.zec_usd_change_24h_pct >= 0 ? 'up' : 'dn'} style={{ fontSize: 13 }}>{delta(live.zec_usd_change_24h_pct).text}</span></> },
+          { href: '/chart/price', title: 'ZEC price', desc: 'The whole price history, with log scale and moving averages.', value: <>${num(live.zec_usd, 2)} <span className={delta(live.zec_usd_change_24h_pct).cls} style={{ fontSize: 13 }}>{delta(live.zec_usd_change_24h_pct).text} 24h</span></> },
           { href: '/chart/zec-btc-ratio', title: 'ZEC/BTC ratio', desc: 'Zcash priced in Bitcoin: the cleaner way to compare the two.', value: num(live.zec_btc, 5) },
           { href: '/chart/mktcap-issuance', title: 'Market cap by coins issued', desc: 'Zcash and Bitcoin aligned by issuance instead of by calendar.', value: 'ZEC vs BTC' },
           { href: '/savings', title: 'Investment calculator', desc: 'What buying every month would have returned, against Bitcoin.', value: usd(100, 0) + ' a month' },

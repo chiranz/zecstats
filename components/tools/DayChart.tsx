@@ -8,6 +8,7 @@ import { useWidth } from './useWidth';
 // Line chart over a numeric x axis (day N of a run), for comparisons that are not aligned by calendar date.
 // Same visual language as TimeSeriesChart: faint gridlines, mono tick labels, one tooltip style (.tip).
 export type DaySeries = { key: string; label: string; color: string; points: { x: number; y: number; date?: string }[]; dashed?: boolean };
+const HALO: CSSProperties = { paintOrder: 'stroke', stroke: 'var(--card)', strokeWidth: 4, strokeLinejoin: 'round' };
 export type DayMarker = { x: number; y: number; label: string; color: string; anchor?: 'start' | 'end' };
 
 export function DayChart({ series, xMax, log = false, yFmt, xFmt = (x) => `day ${x}`, tipFmt, refY, refLabel, markers = [], height = 360, ariaLabel, endLabels = true, zero = true }: {
@@ -74,13 +75,19 @@ export function DayChart({ series, xMax, log = false, yFmt, xFmt = (x) => `day $
           {markers.filter((k) => k.x <= xMax).map((k) => (
             <g key={k.label}>
               <circle cx={x(k.x)} cy={y(k.y)} r={4} fill={k.color} stroke="var(--card)" strokeWidth={1.5} />
-              <text x={x(k.x) + (k.anchor === 'end' ? -8 : 8)} y={y(k.y) - 8} textAnchor={k.anchor ?? 'start'} style={{ fill: 'var(--text-2)' }}>{k.label}</text>
+              <text x={x(k.x) + (k.anchor === 'end' ? -8 : 8)} y={y(k.y) - 8} textAnchor={k.anchor ?? 'start'} style={{ ...HALO, fill: 'var(--text-2)' }}>{k.label}</text>
             </g>
           ))}
           {endLabels && vis.map((s) => {
             const p = s.points.at(-1);
             if (!p) return null;
-            return <text key={s.key} x={x(p.x) + 8} y={y(p.y)} dy="0.32em" style={{ fill: s.color, fontWeight: 600 }}>{s.label} {yFmt(p.y)}</text>;
+            // a line that ends inside the plot gets its label above or below the end, away from the other lines there
+            const inside = x(p.x) < iw - 40;
+            const others = vis.filter((o) => o !== s).map((o) => near(o, p.x)).filter((o): o is NonNullable<typeof o> => !!o).map((o) => y(o.y));
+            const below = others.some((oy) => oy < y(p.y) && y(p.y) - oy < 40) || y(p.y) < 18;
+            return inside
+              ? <text key={s.key} x={x(p.x)} y={y(p.y) + (below ? 20 : -12)} textAnchor="middle" style={{ ...HALO, fill: s.color, fontWeight: 600 }}>{s.label} {yFmt(p.y)}</text>
+              : <text key={s.key} x={x(p.x) + 8} y={y(p.y)} dy="0.32em" style={{ ...HALO, fill: s.color, fontWeight: 600 }}>{s.label} {yFmt(p.y)}</text>;
           })}
           {hover != null && (
             <g>

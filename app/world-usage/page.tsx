@@ -7,7 +7,7 @@ import { dateTicks, dayMs } from '@/components/reports/ticks';
 import { LinkSeg, ParamNote } from '@/components/reports/LinkSeg';
 import { hrefWith, one, pick } from '@/components/reports/params';
 import r from '@/components/reports/report.module.css';
-import { getUsageClock, getUsageWeekly, type UsageClock } from '@/lib/data/reports';
+import { getCompleteUsageWeeks, getUsageClock, type UsageClock } from '@/lib/data/reports';
 import { api, DATA_SOURCE } from '@/lib/data/core';
 import { getExchangeCoverage } from '@/lib/data/crosschain';
 import { compact, dateLong, num, pct } from '@/lib/format';
@@ -22,6 +22,8 @@ const REGIONS = [
   { n: 'India', lon: 78 }, { n: 'East Asia', lon: 114 }, { n: 'Southeast Asia', lon: 106 }, { n: 'Japan', lon: 138 }, { n: 'Australia', lon: 135 },
 ];
 const hh = (h: number) => `${String(((h % 24) + 24) % 24).padStart(2, '0')}:00`;
+/** 14.49 → "14:29" (a fractional hour as a clock time). */
+const hm = (h: number) => { const m = Math.round(h * 60); return `${String(Math.floor(m / 60) % 24).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`; };
 const localSolar = (utcHour: number, lon: number) => (((utcHour + 0.5 + lon / 15) % 24) + 24) % 24;
 const isDay = (utcHour: number, lon: number) => { const l = localSolar(utcHour, lon); return l >= 7 && l < 19; };
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -35,7 +37,7 @@ export default async function WorldUsagePage({ searchParams }: PageProps<'/world
   const sp = await searchParams;
   const live = DATA_SOURCE === 'live';
   const want = pick(one(sp.days)?.trim(), PERIODS.map((x) => x[0]), '' as (typeof PERIODS)[number][0]) || null;
-  const [clock, weeks, ex] = await Promise.all([live && want ? api<UsageClock>('usage-clock', { days: want }) : getUsageClock(), getUsageWeekly(), getExchangeCoverage()]);
+  const [clock, weeks, ex] = await Promise.all([live && want ? api<UsageClock>('usage-clock', { days: want }) : getUsageClock(), getCompleteUsageWeeks(), getExchangeCoverage()]);
   const got = String(clock.days);
   const unmet = want != null && want !== got;
   const phrase = PERIOD_PHRASE[got] ?? `the last ${got} days`;
@@ -50,10 +52,12 @@ export default async function WorldUsagePage({ searchParams }: PageProps<'/world
   const heat = DOW_ORDER.map((dow) => Array.from({ length: 24 }, (_, hr) => clock.by_dow_hour.find((x) => x.dow === dow && x.hour === hr)?.txs ?? 0));
   const dayTotals = heat.map((row) => row.reduce((a, v) => a + v, 0));
   const busiestDay = dayTotals.indexOf(Math.max(...dayTotals)), quietestDay = dayTotals.indexOf(Math.min(...dayTotals));
+  const dayPeaks = heat.map((row) => row.indexOf(Math.max(...row)));
+  const pLo = Math.min(...dayPeaks), pHi = Math.max(...dayPeaks);
 
   const litPeak = REGIONS.filter((x) => isDay(peak.hour, x.lon)).map((x) => x.n);
   const litTrough = REGIONS.filter((x) => isDay(trough.hour, x.lon)).map((x) => x.n);
-  const wk = weeks.slice(0, -1); // last week is partial
+  const wk = weeks; // full Monday–Sunday weeks only
   const meanPeak = wk.reduce((a, w) => a + w.peak_hour, 0) / wk.length;
   const meanMean = wk.reduce((a, w) => a + w.mean_hour, 0) / wk.length;
 
@@ -83,12 +87,12 @@ export default async function WorldUsagePage({ searchParams }: PageProps<'/world
         title="At what hour is Zcash busiest?"
         takeaway={<><b>{hh(peak.hour)} UTC</b> carries {pct(share(peak), 2)} of all transactions and <b>{hh(trough.hour)} UTC</b> only {pct(share(trough), 2)}: activity climbs through the European morning and peaks as the Americas wake up.</>}
         actions={<ChartActions api="usage-clock" name="activity by hour" />}
-        legend={<Legend items={[{ label: 'Transactions in that UTC hour', color: 'var(--s2)' }, { label: 'Busiest hour', color: 'var(--zec)' }]} />}
+        legend={<Legend items={[{ label: 'Transactions in that UTC hour', color: 'var(--other)' }, { label: 'Busiest hour', color: 'var(--s1)' }]} />}
         foot={`Every block ${got === '0' ? 'since' : 'from'} ${dateLong(from)}${got === '0' ? '' : ` to ${dateLong(to)}`}, bucketed by its UTC timestamp · ${num(clock.txs)} transactions`}
       >
         <XYChart
           x={byHour.map((h) => h.hour)} xScale="band" xTicks={[0, 3, 6, 9, 12, 15, 18, 21].map((v) => ({ v, label: hh(v) }))}
-          series={[{ key: 'tx', label: 'Transactions', color: 'var(--s2)', type: 'bar', values: byHour.map((h) => h.txs), colors: byHour.map((h) => (h.hour === peak.hour ? 'var(--zec)' : null)), format: 'count' }]}
+          series={[{ key: 'tx', label: 'Transactions', color: 'var(--other)', type: 'bar', values: byHour.map((h) => h.txs), colors: byHour.map((h) => (h.hour === peak.hour ? 'var(--s1)' : null)), format: 'count' }]}
           yFormat="count" tipTitles={byHour.map((h) => `${hh(h.hour)}–${hh(h.hour + 1)} UTC`)} tipExtra={byHour.map((h) => `${pct(share(h), 2)} of the day · daylight in ${REGIONS.filter((x) => isDay(h.hour, x.lon)).length} of ${REGIONS.length} regions`)}
           height={300} ariaLabel={`Transactions by UTC hour. Peak ${hh(peak.hour)} with ${num(peak.txs)}, trough ${hh(trough.hour)} with ${num(trough.txs)}.`}
         />
@@ -104,11 +108,11 @@ export default async function WorldUsagePage({ searchParams }: PageProps<'/world
       <div className="grid2">
         <Card
           title="Does the weekend look different?"
-          takeaway={<><b>{DAYS[busiestDay]}</b> is the busiest day and <b>{DAYS[quietestDay]}</b> the quietest, but the daily rhythm barely changes: every day peaks in the same afternoon hours.</>}
+          takeaway={<><b>{DAYS[busiestDay]}</b> is the busiest day and <b>{DAYS[quietestDay]}</b> the quietest{pLo === pHi ? <>, and every day peaks in the same hour, <b>{hh(pLo)} UTC</b>.</> : <>; each day’s busiest hour falls between <b>{hh(pLo)}</b> and <b>{hh(pHi)} UTC</b>.</>}</>}
           actions={<ChartActions api="usage-clock" name="day and hour heatmap" />}
-          foot={`Monday to Sunday, UTC. Stronger colour = more transactions in that hour of that weekday, ${phrase}.`}
+          foot={`Monday to Sunday, UTC. Stronger colour = more transactions in that hour of that weekday, ${phrase}. Tab into the grid and use the arrow keys to read each cell.`}
         >
-          <Heatmap rows={DAYS} cols={Array.from({ length: 24 }, (_, i) => hh(i).slice(0, 2))} colTicks={[0, 6, 12, 18]} values={heat} unit="txs" ariaLabel={`Transactions by weekday and UTC hour. Busiest day ${DAYS[busiestDay]}, quietest ${DAYS[quietestDay]}.`} />
+          <Heatmap rows={DAYS} cols={Array.from({ length: 24 }, (_, i) => hh(i).slice(0, 2))} colNames={Array.from({ length: 24 }, (_, i) => `${hh(i)}–${hh(i + 1)} UTC`)} colTicks={[0, 6, 12, 18]} values={heat} unit="transactions" ariaLabel={`Transactions by weekday and UTC hour. Busiest day ${DAYS[busiestDay]}, quietest ${DAYS[quietestDay]}.`} />
         </Card>
         <Card
           title="Where is it daytime at the busiest and quietest hours?"
@@ -116,15 +120,14 @@ export default async function WorldUsagePage({ searchParams }: PageProps<'/world
           foot="Local solar time at each region’s centre longitude; “day” = 07:00–19:00. A proxy for who is awake, not a measurement of users."
         >
           <div className="tbl-wrap">
-            <table className="t">
+            <table className={`t ${r.compact}`}>
               <caption className="sr-only">Local time by region at the peak and trough hours</caption>
-              <thead><tr><th scope="col">Region</th><th scope="col">At {hh(peak.hour)} UTC</th><th scope="col">At {hh(trough.hour)} UTC</th></tr></thead>
+              <thead><tr><th scope="col">Region</th><th scope="col">Peak<br />{hh(peak.hour)} UTC</th><th scope="col">Low<br />{hh(trough.hour)} UTC</th></tr></thead>
               <tbody>
                 {REGIONS.map((x) => (
                   <tr key={x.n}>
-                    <td className="l">{x.n}</td>
-                    <td>{hh(Math.floor(localSolar(peak.hour, x.lon)))} <span className={isDay(peak.hour, x.lon) ? 'up' : 'muted'}>{isDay(peak.hour, x.lon) ? 'day' : 'night'}</span></td>
-                    <td>{hh(Math.floor(localSolar(trough.hour, x.lon)))} <span className={isDay(trough.hour, x.lon) ? 'up' : 'muted'}>{isDay(trough.hour, x.lon) ? 'day' : 'night'}</span></td>
+                    <td className="l" style={{ whiteSpace: 'normal' }}>{x.n}</td>
+                    {[peak.hour, trough.hour].map((h) => <td key={h}>{hh(Math.floor(localSolar(h, x.lon)))} <span className={isDay(h, x.lon) ? undefined : 'muted'}>{isDay(h, x.lon) ? 'day' : 'night'}</span></td>)}
                   </tr>
                 ))}
               </tbody>
@@ -135,19 +138,19 @@ export default async function WorldUsagePage({ searchParams }: PageProps<'/world
 
       <Card
         title="Does the busiest hour drift over the year?"
-        takeaway={<>Week by week the busiest hour moves around, averaging <b>{hh(Math.round(meanPeak))} UTC</b>; the transaction-weighted average hour holds steady near <b>{num(meanMean, 1)}h</b>.</>}
+        takeaway={<>Week by week the busiest hour moves around, averaging <b>{hh(Math.round(meanPeak))} UTC</b>; the transaction-weighted average hour holds steady near <b>{hm(meanMean)} UTC</b>.</>}
         actions={<ChartActions api="usage-weekly" name="weekly peak hour" />}
-        legend={<Legend items={[{ label: 'Busiest hour that week', color: 'var(--s2)' }, { label: 'Transaction-weighted average hour', color: 'var(--zec)', line: true }]} />}
-        foot={`Trailing year, one point per week (weeks starting Sunday); the current, partial week is left out · last full week ${dateLong(wk.at(-1)!.date)}`}
+        legend={<Legend items={[{ label: 'Busiest hour that week', color: 'var(--s1)' }, { label: 'Transaction-weighted average hour', color: 'var(--s4)', line: true }]} />}
+        foot={`Trailing year, one point per full week (Monday to Sunday, UTC); partial weeks — at the start, either side of New Year and the current one — are left out · last full week ${dateLong(wk.at(-1)!.date)}`}
       >
         <XYChart
           x={wk.map((w) => dayMs(w.date))} xTicks={dateTicks(wk[0].date, wk.at(-1)!.date, 'quarter')}
           series={[
-            { key: 'peak', label: 'Busiest hour', color: 'var(--s2)', type: 'dot', values: wk.map((w) => w.peak_hour), r: wk.map(() => 4), format: 'count' },
-            { key: 'mean', label: 'Average hour', color: 'var(--zec)', values: wk.map((w) => Math.round(w.mean_hour * 10) / 10), width: 2, format: 'ratio' },
+            { key: 'peak', label: 'Busiest hour', color: 'var(--s1)', type: 'dot', values: wk.map((w) => w.peak_hour), r: wk.map(() => 4), noTip: true },
+            { key: 'mean', label: 'Average hour', color: 'var(--s4)', values: wk.map((w) => Math.round(w.mean_hour * 10) / 10), width: 2, noTip: true },
           ]}
-          yFormat="count" yDomain={[0, 24]} yTicks={[0, 6, 12, 18, 24].map((v) => ({ v, label: `${String(v).padStart(2, '0')}h` }))}
-          tipTitles={wk.map((w) => `Week of ${dateLong(w.date)}`)} tipExtra={wk.map((w) => `${num(w.total_txs)} transactions that week`)}
+          yFormat="count" yDomain={[0, 24]} yTicks={[0, 6, 12, 18, 24].map((v) => ({ v, label: `${String(v).padStart(2, '0')}:00` }))} yUnit="UTC"
+          tipTitles={wk.map((w) => `Week of ${dateLong(w.date)}`)} tipExtra={wk.map((w) => `Busiest hour ${hh(w.peak_hour)} UTC · average ${hm(w.mean_hour)} UTC · ${num(w.total_txs)} transactions`)}
           height={280} ariaLabel={`Weekly busiest UTC hour and the transaction-weighted average hour over the trailing year; average peak ${hh(Math.round(meanPeak))}.`}
         />
       </Card>

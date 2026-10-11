@@ -33,7 +33,7 @@
 .deeper ul{flex-direction:row!important;flex-wrap:wrap;gap:4px 16px!important}
 .deeper a{font:500 13px var(--mono);color:var(--text-2)!important}
 .deeper a.all{color:var(--accent)!important}
-.dk{font:500 11.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.dk{font:500 12px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 
 /* masthead: eyebrow names the question; one-line freshness on the right */
 .flow{display:flex;flex-direction:column;gap:18px;padding-top:22px}
