@@ -156,11 +156,12 @@ export function TimeSeriesChart(props: TimeSeriesChartProps) {
   const barW = Math.max(1, (iw / Math.max(1, view.ds.length)) * 0.72);
   const spanDays = (Date.parse(view.ds[view.ds.length - 1]) - Date.parse(view.ds[0])) / 86400000;
   const tickFmt = (d: Date) => (spanDays > 900 ? year(d) : spanDays > 120 ? monthYear(d) : dateShort(d));
-  const xTicks = x.ticks(narrow ? 4 : 6).filter((t, i, arr) => {
-    // keep ticks at least ~64px apart so labels never collide
+  // keep ticks at least ~64px from the last kept one so labels never collide
+  const xTicks = x.ticks(narrow ? 4 : 6).reduce<Date[]>((kept, t) => {
     const px = x(t);
-    return arr.slice(0, i).every((p) => Math.abs(x(p) - px) >= (narrow ? 70 : 64)) && px <= iw - 18;
-  });
+    if (px <= iw - 18 && (!kept.length || px - x(kept[kept.length - 1]) >= (narrow ? 70 : 64))) kept.push(t);
+    return kept;
+  }, []);
   const yTicks = useLog ? (y as ReturnType<typeof scaleLog>).ticks(5).filter((_, i, a) => a.length <= 6 || i % Math.ceil(a.length / 6) === 0) : (y as ReturnType<typeof scaleLinear>).ticks(5);
   const fmtY = (v: number) => formatValue(v, share ? 'pct0' : format, true);
 
