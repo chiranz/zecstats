@@ -4,6 +4,7 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { scaleLinear, scaleLog, scaleUtc } from 'd3-scale';
 import { area as d3area, line as d3line, curveLinear, curveStepAfter } from 'd3-shape';
 import { formatValue, type ValueFormat } from './valueFormat';
+import { presetFrom, type RangeKey } from './range';
 import { dateLong, dateShort, monthYear, year } from '@/lib/format';
 
 export type Series = {
@@ -18,8 +19,7 @@ export type Series = {
   agg?: 'sum' | 'mean'; // how bars combine when days are bucketed (default sum; mean for daily rates next to an average line)
 };
 
-export type RangeKey = '1M' | '3M' | '6M' | '1Y' | '2Y' | '5Y' | 'ALL';
-const RANGE_DAYS: Record<RangeKey, number> = { '1M': 31, '3M': 92, '6M': 183, '1Y': 366, '2Y': 731, '5Y': 1827, ALL: Infinity };
+export type { RangeKey } from './range';
 
 export type ChartEvent = { date: string; label: string };
 
@@ -41,12 +41,14 @@ export type TimeSeriesChartProps = {
   ariaLabel: string;
   showLegend?: boolean;
   compactControls?: boolean;
+  /** Called with the hidden series keys after a legend chip is toggled (pages that keep legend state in the URL). */
+  onHiddenChange?: (hiddenKeys: string[]) => void;
 };
 
 const M = { top: 14, right: 16, bottom: 28, left: 58 };
 
 export function TimeSeriesChart(props: TimeSeriesChartProps) {
-  const { dates, series, format, stacked = false, ranges = ['1M', '3M', '6M', '1Y', '5Y', 'ALL'], defaultRange = '1Y', logToggle = false, defaultLog = false, shareToggle = false, height = 360, yDomain, zeroBaseline, events = [], step = false, ariaLabel, showLegend = true } = props;
+  const { dates, series, format, stacked = false, ranges = ['1M', '3M', '6M', '1Y', '5Y', 'ALL'], defaultRange = '1Y', logToggle = false, defaultLog = false, shareToggle = false, height = 360, yDomain, zeroBaseline, events = [], step = false, ariaLabel, showLegend = true, onHiddenChange } = props;
   const uid = useId().replace(/:/g, '');
   const wrapRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(900);
@@ -72,13 +74,10 @@ export function TimeSeriesChart(props: TimeSeriesChartProps) {
 
   // ---- range slice ----
   const start = useMemo(() => {
-    const days = RANGE_DAYS[range];
-    if (!Number.isFinite(days) || !dates.length) return 0;
-    const last = Date.parse(dates[dates.length - 1]);
-    const cutoff = last - days * 86400000;
-    let i = 0;
-    while (i < dates.length && Date.parse(dates[i]) < cutoff) i++;
-    return i;
+    if (range === 'ALL' || !dates.length) return 0;
+    const from = presetFrom(range, dates[0], dates[dates.length - 1]);
+    const i = dates.findIndex((d) => d >= from);
+    return i < 0 ? 0 : i;
   }, [dates, range]);
 
   const visible = series.filter((s) => !hidden.has(s.key));
@@ -176,7 +175,12 @@ export function TimeSeriesChart(props: TimeSeriesChartProps) {
     setHover(best);
   };
 
-  const toggle = (k: string) => setHidden((s) => { const n = new Set(s); if (n.has(k)) n.delete(k); else if (series.length - n.size > 1) n.add(k); return n; });
+  const toggle = (k: string) => {
+    const n = new Set(hidden);
+    if (n.has(k)) n.delete(k); else if (series.length - n.size > 1) n.add(k);
+    setHidden(n);
+    onHiddenChange?.([...n]);
+  };
 
   const tipLeft = hi != null ? Math.min(Math.max(0, xs[hi] + m.left + 14), width - 210) : 0;
   const flip = hi != null && xs[hi] + m.left + 230 > width;

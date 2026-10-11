@@ -1,26 +1,24 @@
 'use client';
 
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useId, useMemo, useState } from 'react';
+import { compareHref, presetFrom, type CompareState, type DateWindow, type RangeKey } from '@/components/charts/range';
+import { AnnToggle, CustomRange, RangeSeg, useCustomRange } from '@/components/charts/RangeControl';
 import { Icon } from '@/components/ui/Icon';
 import { CopyButton } from './CopyButton';
 
 export type PickItem = { slug: string; title: string; group: string };
-const RANGES = ['1M', '3M', '6M', '1Y', '2Y', '5Y', 'ALL'] as const;
+// the live compare page's presets (9M, YTD) plus our 2Y
+const RANGES: RangeKey[] = ['1M', '3M', '6M', '9M', '1Y', '2Y', '5Y', 'YTD', 'ALL'];
 const MAX = 6;
 
-const href = (charts: string[], range: string) => {
-  const q = new URLSearchParams();
-  if (charts.length) q.set('charts', charts.join(','));
-  if (range !== '1Y') q.set('range', range);
-  const qs = q.toString();
-  return `/compare${qs ? `?${qs}` : ''}`;
-};
-
-/** Search-to-add, reorder/remove chips and the one shared range. State lives in the URL (?charts=a,b&range=3M). */
-export function ComparePicker({ items, charts, range }: { items: PickItem[]; charts: string[]; range: string }) {
+/**
+ * Search-to-add, reorder/remove chips, the one shared range (preset or custom ?from=&to=) and the annotations toggle.
+ * State lives in the URL (?charts=a,b&range=3M or &from=2024-01-01&to=2024-12-31, &ann=1).
+ */
+export function ComparePicker({ items, charts, state, bounds, hasEvents }: { items: PickItem[]; charts: string[]; state: CompareState; bounds: DateWindow | null; hasEvents: boolean }) {
   const router = useRouter();
+  const custom = useCustomRange();
   const [q, setQ] = useState('');
   const [open, setOpen] = useState(false);
   const [sel, setSel] = useState(0);
@@ -30,7 +28,9 @@ export function ComparePicker({ items, charts, range }: { items: PickItem[]; cha
     const words = q.toLowerCase().split(/\s+/).filter(Boolean);
     return items.filter((i) => !charts.includes(i.slug) && words.every((w) => `${i.title} ${i.group} ${i.slug}`.toLowerCase().includes(w))).slice(0, 8);
   }, [q, items, charts]);
-  const go = (next: string[], r = range) => router.push(href(next, r), { scroll: false });
+  const go = (next: string[]) => router.push(compareHref(next, state), { scroll: false });
+  // view controls replace the history entry instead of adding one
+  const view = (st: Partial<CompareState>) => router.replace(compareHref(charts, { ...state, ...st }), { scroll: false });
   const add = (slug: string) => { if (charts.length < MAX) go([...charts, slug]); setQ(''); setOpen(false); };
   const move = (i: number, d: -1 | 1) => { const n = [...charts]; [n[i], n[i + d]] = [n[i + d], n[i]]; go(n); };
 
@@ -64,11 +64,15 @@ export function ComparePicker({ items, charts, range }: { items: PickItem[]; cha
             </ul>
           )}
         </div>
-        <div className="seg" role="group" aria-label="Shared range">
-          {RANGES.map((r) => <Link key={r} href={href(charts, r)} scroll={false} aria-current={r === range ? 'true' : undefined}>{r}</Link>)}
-        </div>
+        <RangeSeg label="Shared range" ranges={RANGES} active={state.win ? null : state.range} onPreset={(r) => { custom.setOpen(false); view({ range: r, win: null }); }}
+          custom={bounds ? { ...custom, window: state.win } : undefined} />
+        {hasEvents && <AnnToggle on={state.ann} onChange={(ann) => view({ ann })} />}
         <CopyButton />
       </div>
+      {bounds && custom.open && (
+        <CustomRange id={custom.id} bounds={bounds} value={state.win ?? { from: presetFrom(state.range, bounds.from, bounds.to), to: bounds.to }}
+          onApply={(w) => { custom.close(); view({ win: w }); }} onClose={custom.close} />
+      )}
       {charts.length > 0 && (
         <ol className="row" style={{ listStyle: 'none', margin: 0, padding: 0, gap: 6 }} aria-label="Charts on this page, in order">
           {charts.map((c, i) => (

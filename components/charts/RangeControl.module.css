@@ -1,0 +1,14 @@
+/* Custom date-range panel under the range control (/chart/<slug>, /compare). Colours via tokens only. */
+.panel { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 14px; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--r); background: var(--inset); min-width: 0; }
+.f { display: flex; flex-direction: column; gap: 4px; flex: 1 1 150px; min-width: 0; max-width: 220px; }
+.f span { font: 500 12px var(--mono); letter-spacing: .04em; color: var(--muted); }
+.f input { height: 36px; min-width: 0; width: 100%; padding: 0 10px; border: 1px solid var(--line-strong); border-radius: var(--r-sm); background: var(--card); color: var(--value); font: 400 13px var(--mono); }
+.acts { display: flex; gap: 8px; }
+.hint { flex: 1 0 100%; margin: 0; font: 400 12px var(--mono); color: var(--muted); }
+.err { flex: 1 0 100%; margin: 0; font: 500 12px var(--mono); color: var(--down); }
+
+@media (max-width: 560px) {
+  .f { flex-basis: calc(50% - 7px); max-width: none; }
+  .acts { flex: 1 0 100%; }
+  .acts :global(.btn) { flex: 1; }
+}

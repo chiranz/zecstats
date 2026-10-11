@@ -1,18 +1,33 @@
 'use client';
 
-// The interactive half of /chart/[slug]: one range control shared by every time-series panel, the Linear/Log switch,
-// the share/download actions, the panels themselves and the "selected range" KPI band (which follows the range).
+// The interactive half of /chart/[slug]: one range control shared by every time-series panel (presets, or a custom
+// window kept in the link as ?from=&to= like the live site), the Linear/Log switch, the annotations toggle, the
+// share/download actions, the panels themselves and the "selected range" KPI band (which follows the range).
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { TimeSeriesChart, type ChartEvent, type RangeKey } from '@/components/charts/TimeSeriesChart';
+import { TimeSeriesChart, type ChartEvent } from '@/components/charts/TimeSeriesChart';
 import { CustomPanelView } from '@/components/charts/custom';
 import { formatValue } from '@/components/charts/valueFormat';
+import { customWindow, isRangeKey, presetFrom, windowIndex, withLivePresets, type DateWindow, type RangeKey } from '@/components/charts/range';
+import { AnnToggle, CustomRange, RangeSeg, useCustomRange } from '@/components/charts/RangeControl';
+import { customPanelCsv, findChartSvg, saveBlob, saveCsv, svgToPng, timeSeriesCsv } from '@/components/charts/exportChart';
 import { Icon } from '@/components/ui/Icon';
 import { dateLong } from '@/lib/format';
 import type { ChartPanel, TimeSeriesPanel } from '@/lib/charts/types';
 import s from './chart-page.module.css';
 
-const RANGE_DAYS: Record<RangeKey, number> = { '1M': 31, '3M': 92, '6M': 183, '1Y': 366, '2Y': 731, '5Y': 1827, ALL: Infinity };
 const DEFAULT_RANGES: RangeKey[] = ['1M', '3M', '6M', '1Y', '5Y', 'ALL'];
+
+/** The live site's legend-hide URL keys (?phide=Sprout,Sapling…), so its links keep their hidden series here. */
+const HIDE_KEYS: Record<string, string> = {
+  'tx-types': 'thide', fees: 'feehide', 'new-addresses': 'nahide', pools: 'phide', 'pool-usd': 'usdhide', volatility: 'volhide',
+  'flow-compare': 'fchide', 'shielding-rate': 'srhide', 'hl-funding': 'hlfhide', 'hl-volume': 'hlvhide', 'hl-oi': 'hlohide',
+  'near-vol-mcap': 'nvmhide', 'dev-fund': 'dfhide', 'implied-mcap': 'nimhide', 'utxo-age': 'cahide', 'age-pct': 'aphide',
+  'utxo-depth': 'dphide', dormant: 'dhide', utxo: 'uhide', 'orchard-internal': 'oihide', 'cost-basis': 'cbhide',
+  'near-flow': 'nfhide', 'near-bridge': 'nhide', velocity: 'vhide', 'pool-residency': 'cahide',
+};
+const norm = (x: string) => x.trim().toLowerCase();
+/** How a series is named in the hide list: its label, or its key when the label itself contains a comma. */
+const hideName = (x: { key: string; label: string }) => (x.label.includes(',') ? x.key : x.label);
 
 export type ChartBodyProps = {
   slug: string;
@@ -28,69 +43,136 @@ export type ChartBodyProps = {
   notes?: string[];
 };
 
-function startIndex(dates: string[], range: RangeKey) {
-  const days = RANGE_DAYS[range];
-  if (!Number.isFinite(days) || !dates.length) return 0;
-  const cutoff = Date.parse(dates[dates.length - 1]) - days * 86400000;
-  let i = 0;
-  while (i < dates.length && Date.parse(dates[i]) < cutoff) i++;
-  return Math.min(i, Math.max(0, dates.length - 2));
+/** Cut a panel to a preset (relative to its own last date) or to the custom window shared by every panel. */
+function slicePanel(p: TimeSeriesPanel, range: RangeKey, win: DateWindow | null): TimeSeriesPanel {
+  if (!p.dates.length || (!win && range === 'ALL')) return p;
+  const last = p.dates[p.dates.length - 1];
+  const [a, b] = windowIndex(p.dates, win ?? { from: presetFrom(range, p.dates[0], last), to: last });
+  if (a === 0 && b === p.dates.length) return p;
+  return { ...p, dates: p.dates.slice(a, b), series: p.series.map((x) => ({ ...x, values: x.values.slice(a, b) })) };
 }
 
-function slicePanel(p: TimeSeriesPanel, range: RangeKey): TimeSeriesPanel {
-  const i = startIndex(p.dates, range);
-  if (i === 0) return p;
-  return { ...p, dates: p.dates.slice(i), series: p.series.map((x) => ({ ...x, values: x.values.slice(i) })) };
+/**
+ * Apply a hide list (names or keys, any case). A listed series is hidden; "+name" shows a series that is hidden by
+ * default; unlisted series keep their default. A list that would hide every series leaves the panel as it is.
+ */
+function applyHide(p: TimeSeriesPanel, hide: string[] | null): TimeSeriesPanel {
+  if (!hide) return p;
+  const set = new Set(hide.map(norm));
+  const has = (x: { key: string; label: string }, pre = '') => set.has(pre + norm(x.label)) || set.has(pre + norm(x.key));
+  const series = p.series.map((x) => ({ ...x, hidden: has(x) ? true : has(x, '+') ? false : !!x.hidden }));
+  return series.every((x) => x.hidden) ? p : { ...p, series };
 }
 
 const isTs = (p: ChartPanel): p is TimeSeriesPanel => p.kind === 'timeseries';
 
+/** Keep a control's state in the link without adding history entries. */
+const setQuery = (edit: (q: URLSearchParams) => void) => {
+  const q = new URLSearchParams(window.location.search);
+  edit(q);
+  const qs = q.toString().replace(/%2C/gi, ','); // hide lists stay readable: ?phide=Sprout,Sapling
+  window.history.replaceState(null, '', `${window.location.pathname}${qs ? `?${qs}` : ''}`);
+};
+
 export function ChartBody(props: ChartBodyProps) {
   const { slug, title, question, panels, events, dataThrough, sourceNote, api, notes } = props;
-  const tsPanels = panels.filter(isTs);
+  const tsPanels = useMemo(() => panels.filter(isTs), [panels]);
   const hasTs = tsPanels.length > 0;
+  // the data's first and last dates across the dated panels (the custom range is clamped to them)
+  const bounds: DateWindow = useMemo(() => {
+    const firsts = tsPanels.filter((p) => p.dates.length).map((p) => p.dates[0]).sort();
+    const lasts = tsPanels.filter((p) => p.dates.length).map((p) => p.dates[p.dates.length - 1]).sort();
+    return { from: firsts[0] ?? '', to: lasts[lasts.length - 1] ?? '' };
+  }, [tsPanels]);
   // A chart whose first panel isn't dated (x = amount, coins issued…) has no range control.
-  const ranges = props.ranges === false || !hasTs ? false : props.ranges ?? DEFAULT_RANGES;
-  const [range, setRange] = useState<RangeKey>(ranges ? (props.defaultRange && ranges.includes(props.defaultRange) ? props.defaultRange : ranges.includes('1Y') ? '1Y' : ranges[ranges.length - 1]) : 'ALL');
+  const declared = props.ranges === false || !hasTs || !bounds.to ? false : props.ranges ?? DEFAULT_RANGES;
+  const ranges = declared ? withLivePresets(declared, bounds.from, bounds.to) : false;
+  const defaultRange: RangeKey = ranges ? (props.defaultRange && ranges.includes(props.defaultRange) ? props.defaultRange : ranges.includes('1Y') ? '1Y' : ranges[ranges.length - 1]) : 'ALL';
+  const [range, setRange] = useState<RangeKey>(defaultRange);
+  const [win, setWin] = useState<DateWindow | null>(null); // a custom window replaces the preset
   const canLog = tsPanels.some((p) => p.logToggle);
-  const [log, setLog] = useState(() => tsPanels.some((p) => p.logToggle && p.defaultLog));
+  const defaultLog = tsPanels.some((p) => p.logToggle && p.defaultLog);
+  const [log, setLog] = useState(defaultLog);
+  const hasEvents = hasTs && !!events?.length;
+  const [ann, setAnn] = useState(true);
+  const hideKey = HIDE_KEYS[slug];
+  const [hide, setHide] = useState<string[] | null>(null); // null = each series' default
+  const [fromUrl, setFromUrl] = useState(0); // bumped when the link sets hidden series, so the charts remount with them
   const [msg, setMsg] = useState('');
   const cardRef = useRef<HTMLElement>(null);
+  const custom = useCustomRange();
 
-  // Permalink state (?range=5Y&scale=log) is read after hydration so the page itself stays static.
+  // Permalink state is read after hydration so the page itself stays static. Live names and meanings:
+  // ?from=&to= (custom window, wins over ?range=), ?range=5Y, ?scale=log|linear, ?ann=1|0, ?<chart>hide=a,b.
   useEffect(() => {
     const q = new URLSearchParams(window.location.search);
-    const r = q.get('range')?.toUpperCase() as RangeKey | undefined;
-    if (ranges && r && ranges.includes(r)) setRange(r);
+    const cw = ranges ? customWindow(q.get('from'), q.get('to'), bounds.from, bounds.to) : null;
+    const r = q.get('range')?.toUpperCase();
+    if (cw) setWin(cw);
+    else if (ranges && isRangeKey(r) && ranges.includes(r)) setRange(r);
     if (canLog && q.get('scale') === 'log') setLog(true);
+    if (canLog && q.get('scale') === 'linear') setLog(false);
+    if (hasEvents && q.get('ann') === '0') setAnn(false);
+    if (hideKey && q.has(hideKey)) { setHide((q.get(hideKey) ?? '').split(',').map((x) => x.trim()).filter(Boolean)); setFromUrl(1); }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const sliced = useMemo(() => panels.map((p) => (isTs(p) ? slicePanel(p, range) : p)), [panels, range]);
+  const sliced = useMemo(() => panels.map((p) => (isTs(p) ? applyHide(slicePanel(p, range, win), hide) : p)), [panels, range, win, hide]);
   const first = sliced.find(isTs);
   const span = first && first.dates.length ? `${dateLong(first.dates[0])} – ${dateLong(first.dates[first.dates.length - 1])}` : null;
+  const rangeName = win ? 'Custom' : range;
+  // non-dated charts: CSV from the first custom panel whose data is a table
+  const customCsv = useMemo(() => {
+    if (hasTs) return null;
+    for (const p of panels) if (p.kind === 'custom') { const c = customPanelCsv(p.props); if (c) return c; }
+    return null;
+  }, [panels, hasTs]);
+
+  const pickPreset = (r: RangeKey) => {
+    setWin(null); setRange(r); custom.setOpen(false);
+    setQuery((q) => { q.delete('from'); q.delete('to'); if (r === defaultRange) q.delete('range'); else q.set('range', r); });
+  };
+  const applyCustom = (w: DateWindow) => {
+    setWin(w); custom.close();
+    setQuery((q) => { q.delete('range'); q.set('from', w.from); q.set('to', w.to); });
+  };
+  const pickLog = (v: boolean) => {
+    setLog(v);
+    setQuery((q) => { if (v === defaultLog) q.delete('scale'); else q.set('scale', v ? 'log' : 'linear'); });
+  };
+  const pickAnn = (v: boolean) => { setAnn(v); setQuery((q) => { if (v) q.delete('ann'); else q.set('ann', '0'); }); };
+  // the link lists only differences from the defaults: "Sprout" = hidden, "+Transparent" = shown though hidden by default
+  const onHidden = (pi: number, keys: string[]) => {
+    const names = [...new Set(sliced.flatMap((p, i) => {
+      const orig = panels[i];
+      if (!isTs(p) || !isTs(orig)) return [];
+      return p.series.flatMap((x, j) => {
+        const h = i === pi ? keys.includes(x.key) : !!x.hidden, d = !!orig.series[j]?.hidden;
+        return h === d ? [] : [`${h ? '' : '+'}${hideName(x)}`];
+      });
+    }))];
+    setHide(names.length ? names : null);
+    if (hideKey) setQuery((q) => { if (names.length) q.set(hideKey, names.join(',')); else q.delete(hideKey); });
+  };
 
   const copyLink = async () => {
     try {
-      const u = new URL(window.location.href);
-      if (ranges) u.searchParams.set('range', range); else u.searchParams.delete('range');
-      if (canLog) { if (log) u.searchParams.set('scale', 'log'); else u.searchParams.delete('scale'); }
-      await navigator.clipboard.writeText(u.toString());
+      await navigator.clipboard.writeText(window.location.href);
       setMsg('Link copied');
     } catch { setMsg('Could not copy the link'); }
     window.setTimeout(() => setMsg(''), 2200);
   };
 
   const downloadCsv = () => {
-    const rows = csvRows(sliced.filter(isTs));
-    if (!rows) return;
-    save(new Blob([rows], { type: 'text/csv;charset=utf-8' }), `zecstats-${slug}-${range.toLowerCase()}.csv`);
+    const rows = hasTs ? timeSeriesCsv(sliced.filter(isTs)) : customCsv;
+    if (!rows) { setMsg('Nothing to export yet'); return; }
+    saveCsv(rows, `zecstats-${slug}${hasTs ? `-${win ? `${win.from}_${win.to}` : range.toLowerCase()}` : ''}.csv`);
   };
 
   const downloadPng = async () => {
-    const svg = cardRef.current?.querySelector<SVGSVGElement>('.chart svg, svg[data-export]');
+    const svg = findChartSvg(cardRef.current);
     if (!svg) { setMsg('Nothing to export yet'); return; }
-    try { save(await svgToPng(svg, title, `${span ?? ''} · zecstats.com/chart/${slug}`), `zecstats-${slug}.png`); }
+    try { saveBlob(await svgToPng(svg, title, `${span ?? ''} · zecstats.com/chart/${slug}`), `zecstats-${slug}.png`); }
     catch { setMsg('PNG export failed'); }
   };
 
@@ -102,7 +184,7 @@ export function ChartBody(props: ChartBodyProps) {
           <div className={s.btnGroup} role="group" aria-label={`Share and download: ${title}`}>
             <button className="btn" type="button" onClick={copyLink} aria-label="Copy permalink to this view" title="Copy link"><Icon name="link" size={16} /></button>
             <button className="btn" type="button" onClick={downloadPng} aria-label="Download chart as PNG" title="Download PNG"><Icon name="image" size={16} /></button>
-            {hasTs ? (
+            {hasTs || customCsv ? (
               <button className="btn" type="button" onClick={downloadCsv} aria-label="Download data as CSV" title="Download CSV"><Icon name="download" size={16} /></button>
             ) : api ? (
               <a className="btn" href={`/api/${api}`} aria-label="Download data (JSON)" title="Download data"><Icon name="download" size={16} /></a>
@@ -113,21 +195,22 @@ export function ChartBody(props: ChartBodyProps) {
           {msg && <span className={s.toast} aria-hidden="true">{msg}</span>}
         </div>
 
-        {(ranges || canLog) && (
+        {(ranges || canLog || hasEvents) && (
           <div className={s.ctl}>
-            {ranges && (
-              <div className="seg" role="group" aria-label="Range">
-                {ranges.map((r) => <button key={r} type="button" aria-pressed={range === r} onClick={() => setRange(r)}>{r}</button>)}
-              </div>
-            )}
+            {ranges && <RangeSeg ranges={ranges} active={win ? null : range} onPreset={pickPreset} custom={{ ...custom, window: win }} />}
             {ranges && canLog && <span className={s.vsep} aria-hidden="true" />}
             {canLog && (
               <div className="seg" role="group" aria-label="Scale">
-                <button type="button" aria-pressed={!log} onClick={() => setLog(false)}>Linear</button>
-                <button type="button" aria-pressed={log} onClick={() => setLog(true)}>Log</button>
+                <button type="button" aria-pressed={!log} onClick={() => pickLog(false)}>Linear</button>
+                <button type="button" aria-pressed={log} onClick={() => pickLog(true)}>Log</button>
               </div>
             )}
+            {hasEvents && (ranges || canLog) && <span className={s.vsep} aria-hidden="true" />}
+            {hasEvents && <AnnToggle on={ann} onChange={pickAnn} />}
           </div>
+        )}
+        {ranges && custom.open && (
+          <CustomRange id={custom.id} bounds={bounds} value={win ?? { from: presetFrom(range, bounds.from, bounds.to), to: bounds.to }} onApply={applyCustom} onClose={custom.close} />
         )}
 
         {sliced.map((p, i) => {
@@ -147,7 +230,7 @@ export function ChartBody(props: ChartBodyProps) {
             <div key={i} className={s.panel}>
               {p.title && <h3 className={s.pt}>{p.title}</h3>}
               <TimeSeriesChart
-                key={`${range}-${useLog}`}
+                key={`${win ? `${win.from}_${win.to}` : range}-${useLog}-${fromUrl}`}
                 dates={p.dates}
                 series={p.series}
                 format={p.format}
@@ -160,8 +243,9 @@ export function ChartBody(props: ChartBodyProps) {
                 logToggle={false}
                 defaultLog={useLog}
                 height={p.height ?? (tsIndex === 0 ? 360 : 220)}
-                events={tsIndex === 0 ? events : []}
+                events={tsIndex === 0 && ann ? events : []}
                 ariaLabel={ariaFor(title, p)}
+                onHiddenChange={(keys) => onHidden(i, keys)}
               />
             </div>
           );
@@ -175,7 +259,7 @@ export function ChartBody(props: ChartBodyProps) {
           {span && <span>{span}{canLog ? ` · ${log ? 'log' : 'linear'}` : ''}</span>}
         </div>
       </section>
-      {first && <RangeStats panel={first} range={ranges ? range : 'ALL'} span={span} />}
+      {first && <RangeStats panel={first} range={ranges ? rangeName : 'ALL'} span={span} />}
     </>
   );
 }
@@ -194,7 +278,7 @@ function cadence(dates: string[]) {
   return g <= 1.5 ? 'day' : g <= 8 ? 'week' : g <= 32 ? 'month' : 'period';
 }
 
-function RangeStats({ panel, range, span }: { panel: TimeSeriesPanel; range: RangeKey; span: string | null }) {
+function RangeStats({ panel, range, span }: { panel: TimeSeriesPanel; range: string; span: string | null }) {
   const st = useMemo(() => {
     const shown = panel.series.filter((x) => !x.hidden);
     const primary = panel.stacked ? null : shown[0] ?? panel.series[0];
@@ -241,64 +325,4 @@ function RangeStats({ panel, range, span }: { panel: TimeSeriesPanel; range: Ran
 
 function Tile({ k, v, s: sub, cls = '' }: { k: string; v: string; s: string; cls?: string }) {
   return <div className="kpi" role="listitem"><span className="k">{k}</span><span className={`v ${cls}`}>{v}</span><span className="s">{sub}</span></div>;
-}
-
-/* ---------- export helpers ---------- */
-function save(blob: Blob, name: string) {
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = name;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  window.setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-}
-
-function csvRows(ps: TimeSeriesPanel[]): string | null {
-  if (!ps.length) return null;
-  const dates = Array.from(new Set(ps.flatMap((p) => p.dates))).sort();
-  const cols = ps.flatMap((p) => {
-    const idx = new Map(p.dates.map((d, i) => [d, i]));
-    return p.series.map((x) => ({ name: (p.title ? `${p.title} · ${x.label}` : x.label).replace(/"/g, "'"), get: (d: string) => { const i = idx.get(d); return i == null ? null : x.values[i]; } }));
-  });
-  const head = ['date', ...cols.map((c) => `"${c.name}"`)].join(',');
-  const body = dates.map((d) => [d, ...cols.map((c) => { const v = c.get(d); return v == null ? '' : String(v); })].join(','));
-  return [head, ...body].join('\n');
-}
-
-const STYLE_PROPS = ['fill', 'stroke', 'stroke-width', 'stroke-dasharray', 'opacity', 'font-family', 'font-size', 'font-weight'];
-function inline(src: Element, dst: Element) {
-  const cs = getComputedStyle(src);
-  for (const p of STYLE_PROPS) (dst as SVGElement).style.setProperty(p, cs.getPropertyValue(p));
-  for (let i = 0; i < src.children.length; i++) if (dst.children[i]) inline(src.children[i], dst.children[i]);
-}
-
-async function svgToPng(svg: SVGSVGElement, title: string, caption: string): Promise<Blob> {
-  const box = svg.getBoundingClientRect();
-  const w = Math.round(box.width), h = Math.round(box.height);
-  const clone = svg.cloneNode(true) as SVGSVGElement;
-  inline(svg, clone);
-  clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-  clone.setAttribute('width', String(w));
-  clone.setAttribute('height', String(h));
-  const url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(clone)], { type: 'image/svg+xml' }));
-  const img = new Image();
-  await new Promise<void>((res, rej) => { img.onload = () => res(); img.onerror = () => rej(new Error('svg')); img.src = url; });
-  const scale = 2, pad = 24, top = 52, bottom = 34;
-  const c = document.createElement('canvas');
-  c.width = (w + pad * 2) * scale; c.height = (h + top + bottom) * scale;
-  const g = c.getContext('2d')!;
-  g.scale(scale, scale);
-  const root = getComputedStyle(document.documentElement);
-  g.fillStyle = root.getPropertyValue('--card').trim() || '#0b140e';
-  g.fillRect(0, 0, w + pad * 2, h + top + bottom);
-  g.fillStyle = root.getPropertyValue('--value').trim() || '#ecf8ef';
-  g.font = '600 16px ui-monospace, monospace';
-  g.fillText(title, pad, 32);
-  g.drawImage(img, pad, top, w, h);
-  g.fillStyle = root.getPropertyValue('--muted').trim() || '#7f9c89';
-  g.font = '400 11px ui-monospace, monospace';
-  g.fillText(caption, pad, top + h + 22);
-  URL.revokeObjectURL(url);
-  return await new Promise<Blob>((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error('png'))), 'image/png'));
 }

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { CSSProperties, ReactNode } from 'react';
 import { Icon } from './Icon';
+import { ChartActionsClient, type ChartActionsCsv } from '@/components/charts/ChartActionsClient';
 
 /* ---------- section header with the terminal "//" prefix ---------- */
 export function Section({ id, title, aside, children, className }: { id?: string; title: ReactNode; aside?: ReactNode; children: ReactNode; className?: string }) {
@@ -58,15 +59,9 @@ export function Card({ title, takeaway, actions, legend, children, foot, classNa
   );
 }
 
-/** Link · PNG · CSV icon group for a chart card (CSV links to the mock API endpoint). */
-export function ChartActions({ api, name }: { api?: string; name: string }) {
-  return (
-    <div className="row" style={{ gap: 4 }} role="group" aria-label={`Share and download: ${name}`}>
-      <button className="btn icon ghost" type="button" aria-label={`Copy link to ${name}`}><Icon name="link" size={15} /></button>
-      <button className="btn icon ghost" type="button" aria-label={`Download ${name} as PNG`}><Icon name="image" size={15} /></button>
-      {api ? <a className="btn icon ghost" href={`/api/${api}`} aria-label={`Download ${name} data`}><Icon name="download" size={15} /></a> : null}
-    </div>
-  );
+/** Link · PNG · CSV icon group for a chart card: CSV from `csv` (the panel data) when given, else the API JSON link. */
+export function ChartActions(props: { api?: string; name: string; csv?: ChartActionsCsv }) {
+  return <ChartActionsClient {...props} />;
 }
 
 /* ---------- callout ---------- */
