@@ -203,7 +203,7 @@ export default async function TxSizesPage({ searchParams }: PageProps<'/tx-sizes
             x={hist.map((_, i) => i)} xScale="band" xTicks={histTicks}
             series={[{ key: 'n', label: 'Share of transactions', color: 'var(--s2)', type: 'bar', values: hist.map((h) => (h.count / hN) * 100), format: 'pct' }]}
             yFormat="pct0" tipTitles={hist.map(bandLabel)} tipExtra={hist.map((h) => `${num(h.count)} transactions · ${fmt(h.usd)}`)}
-            markers={[{ x: medianBand, label: `median ${fmt(P.p50)}` }]} height={200}
+            markers={[{ x: medianBand, label: `median ${fmt(P.p50)}`, labelPos: 'top' }]} height={200}
             ariaLabel={`Histogram of transaction counts by size band; the busiest band is ${bandLabel(hist[txPeak])}.`}
           />
           <span className={r.panelLbl}>Share of dollars moved</span>
@@ -211,7 +211,7 @@ export default async function TxSizesPage({ searchParams }: PageProps<'/tx-sizes
             x={hist.map((_, i) => i)} xScale="band" xTicks={histTicks}
             series={[{ key: 'u', label: 'Share of dollars', color: 'var(--s4)', type: 'bar', values: hist.map((h) => (h.usd / hU) * 100), format: 'pct' }]}
             yFormat="pct0" tipTitles={hist.map(bandLabel)} tipExtra={hist.map((h) => `${num(h.count)} transactions · ${fmt(h.usd)}`)}
-            markers={[{ x: halfBand, label: `half the dollars are above ${fmt(halfDollars)}` }]} height={200}
+            markers={[{ x: halfBand, label: `half the dollars are above ${fmt(halfDollars)}`, labelPos: 'top' }]} height={200}
             ariaLabel={`Histogram of dollars moved by size band; the band carrying the most dollars is ${bandLabel(hist[usdPeak])}.`}
           />
         </Card>

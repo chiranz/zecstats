@@ -175,7 +175,7 @@ export function XYChart(props: XYChartProps) {
       const px = xf.val(mk.x);
       if (px < 0 || px > iw) return [];
       const w = mk.label.length * CW;
-      let right = px > iw - Math.min(160, w + 12);
+      let right = px + 6 + w > iw; // flip to the line's left whenever the label won't fit on its right
       let l0 = right ? px - 6 - w : px + 6;
       if (right && l0 < 4) { right = false; l0 = 4; } // too long for either side: start at the plot's left edge
       const base = (mk.labelPos === 'top' ? -6 : 11) + (mk.dy ?? 0);
