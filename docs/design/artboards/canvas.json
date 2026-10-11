@@ -353,6 +353,14 @@
    "h": 1098,
    "title": "Event tape: symbol, value, change (built)",
    "expand": "fill"
+  },
+  "OG-cards.dc.html": {
+   "x": 3510,
+   "y": 67065,
+   "w": 1440,
+   "h": 2490,
+   "title": "Link-preview cards (1200×630): default, chart, Privacy, Ironwood (built)",
+   "expand": "fill"
   }
  },
  "order": [
@@ -398,7 +406,8 @@
   "Nav-E-thumb-mobile.dc.html",
   "Nav-D-states.dc.html",
   "Nav-D-states-mobile.dc.html",
-  "Ticker-compact.dc.html"
+  "Ticker-compact.dc.html",
+  "OG-cards.dc.html"
  ],
  "notes": {
   "t_system": {
@@ -467,9 +476,9 @@
   "t_iter3_nav": {
    "x": 0,
    "y": 66765,
-   "text": "Iteration 3 — navigation D, every state + event-tape hover card",
+   "text": "Iteration 3 — navigation D, event tape, link-preview cards",
    "kind": "title1",
-   "maxW": 3430
+   "maxW": 4950
   }
  },
  "designSystems": []
