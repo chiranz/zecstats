@@ -1,4 +1,4 @@
-# Handover: end of iteration 3, deployed (11 Oct 2026)
+# Handover: iteration 3 + route loading state, deployed (11 Oct 2026)
 
 ## State
 - Next.js 16 app at the repo root, on `main`, small per-area commits. Private repo https://github.com/chiranz/zecstats;
@@ -10,9 +10,9 @@
     shield-hops, swaps, tx-sizes, wallet-apps, world-usage).
   - `pnpm typecheck` clean · `pnpm check:api` → 75 typed reads in 26 modules match.
   - `scripts/shot.mjs` → 31 pages dark + light and 58 charts dark, all 200 at 1440 and 390, no overflow, no console errors.
-- Design canvas: https://claude.ai/artifact/14NxTBtnDk6j4hyhMxHzqd, **version 16**; `docs/design/artboards/` mirrors it.
+- Design canvas: https://claude.ai/artifact/14NxTBtnDk6j4hyhMxHzqd, **version 18**; `docs/design/artboards/` mirrors it.
   Iteration 3 row: `Nav-D-states*.dc.html` (navigation D, every state + tape hover card), `Ticker-compact.dc.html`,
-  `OG-cards.dc.html` (link-preview cards).
+  `OG-cards.dc.html` (link-preview cards), `Loading-skeleton.dc.html` (route loading state).
 - Also built: search/sharing metadata (`lib/seo.ts`: titles, canonical, OG/Twitter, sitemap, robots, manifest, share
   cards via next/og, JSON-LD); README (owner-facing "Use your backend"); `docs/api/endpoints.md` (every live API route).
 - Iteration 3 built: navigation D site-wide (status pill, context bar, answer-first headers, 7-group Tools menu with
@@ -43,32 +43,30 @@
   - Design first: append new designs to the canvas as "Iteration 3" rows, never overwrite existing artboards, then build.
   - Show the snapshot's numbers, not BRIEF §7's. Transaction counts leave out coinbase.
 
+## Route loading state (built, 11 Oct 2026)
+- Option E "answer skeleton": `app/loading.tsx` → `components/skeleton/RouteSkeleton.tsx` (+ `skeleton.module.css`).
+  The shape comes from `usePathname()` (`shapeFor`): dashboard `/` · chart `/chart/*` · news · charts index · report
+  (tx-sizes, swaps, wallet-apps, world-usage, btc-migration, shield-hops) · activity · metrics · btc-bull-run · compare ·
+  default (every static page without its own shape: header + answer hero + KPI band + first chart section).
+- Page → shape: `components/skeleton/shape.ts` (one place; the compare script asks `/design/loading?path=`).
+- Built from the pages' own classes and CSS modules; each text line is a `T` bar (real font and wrap, invisible filler of
+  the real length, masked to letter height); plots follow TimeSeriesChart's narrow rule via a container query. Titles drop
+  two characters for the signal mark (1.2em = two mono characters). No real `h1`–`h3` in the skeleton (no filler
+  headings in streamed HTML). One shimmer for the whole page (fixed background), a 2 px progress line on the window's top edge (grows from the
+  left to 85% over ~10 s, ease-out; user's pick on 11 Oct over "no line", "border glint" and "nav underline"),
+  one polite "Loading" status, everything else `aria-hidden`; reduced motion stops all movement.
+- Preview a shape alone: `/design/loading?shape=chart` or `?path=/chart/pools` (noindex). Compare with the real page, same chrome:
+  `node scripts/skeleton-compare.mjs <base> <outDir> [/route …] [--light] [--widths=…]` (real device windows:
+  390×844, 768×1024, 1024×768, 1280×800, 1440×900, 1920×1080). 
+- When copy or layout of a page changes, re-run the compare for that route; filler strings live in RouteSkeleton.tsx.
+- Canvas v18: board `Loading-skeleton.dc.html` (anatomy running live + page vs skeleton at laptop, tablet, phone).
+- References: `docs/design/refs/skeleton/*.png` (first screen, 390/768/1024/1280/1440/1920, dark) are local only, not in
+  git (gitignored). Regenerate: `node scripts/shot.mjs <base> docs/design/refs/skeleton / /chart/pools /news /charts
+  /privacy /tx-sizes /tools --widths=390,768,1024,1280,1440,1920` (add `--full` for whole pages).
+
 ## Pending, in suggested order
-1. **Route loading state: option E "answer skeleton" (user's choice, 11 Oct 2026).** Not built yet.
-   - Why: clicks to the 9 dynamic pages (and slow networks) show nothing until the server answers.
-   - Options page the user chose from: https://claude.ai/artifact/K4wXs6Aqt16xnrpLaqcYR5 (A signal acquire, B meter,
-     C terminal scan, D heartbeat, **E answer skeleton**).
-   - E = the page's own shape in shimmering blocks + the small signal-bars logo (A's rising-bars loop, 150 ms stagger,
-     1.2 s) beside the title + a 2 px green progress line on top. Reduced motion: no shimmer, bars static at full signal.
-     `role="status"` with "Loading". Show immediately (it matches the layout, so no flash).
-   - **User rule: the skeleton must look identical to the real page.** Build it from the pages' own layout classes
-     (`.page`, `.mast`/`.h1`/`.lede`, `.card`/`.hero`, `.kpis`, the chart card classes in
-     `components/chart-page/chart-page.module.css`, `app/page.module.css` for the dashboard), with shimmer bars in place of
-     text, so spacing can't drift. Reference screenshots of the real pages (1440 + 390):
-     `docs/design/refs/skeleton/*.png` (dashboard, chart page, privacy hub, report page, news, charts index, tools).
-   - Plan: one `app/loading.tsx` rendering a client `RouteSkeleton` that picks a shape from `usePathname()` (the URL is
-     already the destination while the fallback shows): `/` dashboard · `/chart/*` chart page (header + key figure, chart
-     card with actions, range seg, legend chips, plot, caption) · `/news` feed + right rail · `/charts` filter band + rail +
-     rows · default: header + hero + KPI band. Layout chrome (top bar, tape, context bar) stays; only `<main>` swaps.
-   - **Every screen size (user rule):** design and check each shape at phone 390, tablet 768 and 1024 (portrait and
-     landscape tablets), laptop 1280 and 1440, and large desktop 1920. The layout changes at the CSS breakpoints 560, 640,
-     760, 900, 1020 and 1180 px (KPI bands go 4→2 columns, key figure hides ≤640, nav folds ≤1020, mega menu 4→3
-     columns ≤1180, chart height shrinks on narrow screens), so the skeleton must change at exactly the same points:
-     reuse the real classes rather than copying sizes. The saved references cover 1440 and 390 only, so take the
-     missing widths first. `scripts/shot.mjs` shoots 1440 + 390; add a `--widths=390,768,1024,1280,1440,1920` option.
-   - Design first: add an Iteration 3 canvas board for it (skeleton next to the real page for each shape, at phone,
-     tablet and laptop widths), then build, then compare screenshots of skeleton vs page at all six widths in dark and
-     light, then deploy (push to `main`).
+1. ~~Route loading state~~ built (above). Possible follow-ups: per-page shapes for static pages (they rarely show a
+   loader: prefetched), or real title text instead of a bar where the title is known (Next's docs suggest it).
 2. **Backend integration kit** for the site owner (env vars, strict live mode, upstream auth headers, route map,
    `check:api --live`, per-endpoint source badge, docs). See the iteration-3 report; not started.
 3. **Remaining parity:** gap 3 (calculator's 16 assets — needs `dca?assets=` variants), gap 4 rest (`?v=` views, any
@@ -78,6 +76,8 @@
    swaps windows/groupings, world-usage periods, activity daily/monthly, btc-migration 90D/ALL and <0.1 BTC). The
    controls exist and are disabled with a status line until then; in live mode they already query upstream.
 5. **Chart permalinks paint the default range first** (chart route is static); consider reading searchParams server-side.
+   Related: every page is server-rendered, but TimeSeriesChart draws at a 900 px width on the server and redraws at the
+   card's width after load (a small redraw on phones). User asked about server rendering on 11 Oct; not changed yet.
 6. **Fresh-agent code review** of iteration 3 (user rule: a different agent; read the test diff first). No tests yet.
 7. **Housekeeping:** `components/privacy-tools/HopsReport.tsx` is now unused (user asked before deleting); re-export
    canvas renders; brand-mark glow; nav lab artboards show the old Privacy hub; some Metrics-board sparklines are drawn.
