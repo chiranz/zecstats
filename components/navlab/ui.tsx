@@ -315,7 +315,6 @@ export function StatusPill({ data, cadence, variant = 'pill' }: { data: NavData;
             <div><dt>Data through</dt><dd>{f.through} · complete UTC days</dd></div>
             <div><dt>This page</dt><dd>{cadence}</dd></div>
           </dl>
-          <p className={s.concept}>Redesign concept · figures from a zecstats.com snapshot, {f.captured}</p>
           <Link href="/node" className={s.popLink}>Node status <Icon name="arrow-right" size={12} /></Link>
         </div>
       )}
