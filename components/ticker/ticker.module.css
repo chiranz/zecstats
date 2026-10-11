@@ -2,6 +2,8 @@
 
 .tag{display:inline-flex;align-items:center;height:20px;padding:0 6px;border:1px solid var(--line-strong);border-radius:5px;font:500 12px/1 var(--mono);letter-spacing:.04em;text-transform:uppercase;color:var(--text-2);white-space:nowrap;flex:none}
 .tag.hot{border-color:var(--accent-line);background:var(--accent-wash);color:var(--accent)}
+.qual{margin-left:6px;padding-left:6px;border-left:1px solid var(--line-strong);color:var(--value)}
+.window{font-weight:400;color:var(--muted)}
 
 .delta{font:500 12.5px var(--mono);white-space:nowrap;color:var(--muted)}
 .up{color:var(--up)}

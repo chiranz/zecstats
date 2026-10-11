@@ -69,7 +69,7 @@ export function useItemTips() {
 
 function TipCard({ tip, onEnter, onLeave, onNavigate }: { tip: Tip; onEnter: () => void; onLeave: () => void; onNavigate: () => void }) {
   const { it, rect } = tip;
-  const W = 288;
+  const W = 300;
   const vw = document.documentElement.clientWidth;
   const cx = rect.left + rect.width / 2;
   const left = Math.max(12, Math.min(vw - W - 12, cx - W / 2));
@@ -84,14 +84,14 @@ function TipCard({ tip, onEnter, onLeave, onNavigate }: { tip: Tip; onEnter: () 
     >
       <div className={t.head}>
         <Tag item={it} />
-        <time className={t.when} dateTime={it.date}>{it.when === 'Now' ? 'Now' : `${dateLong(it.date)} · ${it.when}`}</time>
+        <time className={t.when} dateTime={it.date}>{it.when === 'Now' ? 'Now' : `${dateLong(it.date).replace(/ \d{4}$/, '')} · ${it.when}`}</time>
       </div>
       <p className={t.title}>{it.label}</p>
       {(it.value || it.delta) && (
         <dl className={t.rows}>
           {it.value && <div><dt>{it.progress != null ? 'Crossed' : 'Value'}</dt><dd className={t.v}>{it.value}</dd></div>}
           {it.progress != null && <div className={t.bar}><Mini value={it.progress} wide /></div>}
-          {it.delta && <div><dt>Change</dt><dd><DeltaText d={it.delta} /></dd></div>}
+          {it.delta && <div><dt>Change</dt><dd><DeltaText d={it.delta} window={it.window} /></dd></div>}
         </dl>
       )}
       <Link href={it.href} className={t.go} onClick={() => { onNavigate(); nudgeHash(it.href); }} tabIndex={-1}>{destination(it.href)} <span aria-hidden="true">→</span></Link>

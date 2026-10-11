@@ -10,14 +10,23 @@ import s from './ticker.module.css';
 /** Client-side navigation to a hash on the page you are already on fires no hashchange; send one so /news opens the card. */
 export const nudgeHash = (href: string) => { if (href.includes('#')) window.setTimeout(() => window.dispatchEvent(new HashChangeEvent('hashchange')), 60); };
 
-export function Tag({ item }: { item: Pick<TickerItem, 'tag' | 'hot'> }) {
-  return <span className={`${s.tag} ${item.hot ? s.hot : ''}`}>{item.tag}</span>;
+/** The symbol chip; a qualifier ("ATH", "7D") sits inside it after a divider. */
+export function Tag({ item }: { item: Pick<TickerItem, 'tag' | 'qual' | 'hot'> }) {
+  return <span className={`${s.tag} ${item.hot ? s.hot : ''}`}>{item.tag}{item.qual && <span className={s.qual}>{item.qual}</span>}</span>;
 }
 
-export function DeltaText({ d, className }: { d?: TickerDelta; className?: string }) {
+/** The change, arrow always included; `window` ("in 24 h") is added in the card and the list, never on the tape. */
+export function DeltaText({ d, window, className }: { d?: TickerDelta; window?: string; className?: string }) {
   if (!d) return null;
-  return <span className={`${s.delta} ${d.dir === 'up' ? s.up : d.dir === 'dn' ? s.dn : ''} ${className ?? ''}`}>{d.text}</span>;
+  return (
+    <span className={`${s.delta} ${d.dir === 'up' ? s.up : d.dir === 'dn' ? s.dn : ''} ${className ?? ''}`}>
+      {d.text}{window && <span className={s.window}> {window}</span>}
+    </span>
+  );
 }
+
+/** Tape age: "15 h ago" → "15h"; dates stay as they are. */
+const shortWhen = (when: string) => when.replace(/^(\d+) h ago$/, '$1h');
 
 /** Visible Pause/Play (WCAG 2.2.2). Hidden when the visitor prefers reduced motion: nothing moves by itself then. */
 export function PauseButton({ paused, onToggle, held, reduced, compact = false }: { paused: boolean; onToggle: () => void; held?: boolean; reduced: boolean; compact?: boolean }) {
@@ -72,7 +81,7 @@ export function EventList({ items, label = 'All events' }: { items: TickerItem[]
                   <Tag item={it} />
                   <span className={s.listLabel}>{it.label}</span>
                   {it.value && <b className={s.value}>{it.value}</b>}
-                  <DeltaText d={it.delta} />
+                  <DeltaText d={it.delta} window={it.window} />
                   <time className={s.when} dateTime={it.date}>{it.when}</time>
                 </Link>
               </li>
@@ -90,11 +99,11 @@ export function InlineItem({ it, tabIndex, tip }: { it: TickerItem; tabIndex?: n
   return (
     <Link href={it.href} className={s.inline} tabIndex={tabIndex} {...tip} onClick={(e) => { tip?.onClick?.(e); nudgeHash(it.href); }}>
       <Tag item={it} />
-      <span className={s.label}>{it.label}</span>
-      {it.value && <b className={s.value}>{it.value}</b>}
+      {it.value ? <b className={s.value}>{it.value}</b> : <span className={s.label}>{it.label}</span>}
       {it.progress != null && <Mini value={it.progress} />}
       <DeltaText d={it.delta} />
-      {it.when !== 'Now' && <time className={s.when} dateTime={it.date}>{it.when}</time>}
+      {it.when !== 'Now' && <time className={s.when} dateTime={it.date}>{shortWhen(it.when)}</time>}
+      {it.value && <span className="sr-only">{it.label}{it.window ? `, ${it.window}` : ''}</span>}
     </Link>
   );
 }
