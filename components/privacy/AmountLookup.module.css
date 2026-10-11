@@ -1,0 +1,9 @@
+.lookup{display:flex;flex-direction:column;gap:8px;padding:16px;border-radius:var(--r);background:var(--inset);border:1px solid var(--line)}
+.lookup>label{font:600 13px var(--mono);color:var(--value)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.field{flex:1 1 180px;height:40px!important;background:var(--card)!important}
+.field span{font:500 12.5px var(--mono);color:var(--muted)}
+.row :global(.btn.primary){height:40px;padding:0 18px}
+.mini{display:flex;gap:8px}
+.mini :global(.field){height:36px;flex:1;min-width:0;padding:0 10px;font-size:13px}
+.mini :global(.btn){height:36px}

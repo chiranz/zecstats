@@ -1,0 +1,11 @@
+.gate{display:flex;flex-direction:column;gap:8px;min-width:0}
+.pin{position:relative;height:22px}
+.pin span{position:absolute;bottom:0;transform:translateX(-100%);font:600 13px var(--mono);color:var(--accent);white-space:nowrap;padding-right:6px;border-right:2px solid var(--accent);line-height:22px}
+.track{position:relative;height:30px;border-radius:8px;background:var(--inset);box-shadow:inset 0 0 0 1px var(--line);overflow:hidden}
+.track.sm{height:24px;border-radius:7px}
+.track span{position:absolute;inset:0 auto 0 0;background:var(--p-ironwood);border-radius:8px 3px 3px 8px}
+.track b{position:absolute;top:0;bottom:0;width:1px;background:var(--line-strong)}
+.scale{position:relative;height:16px;font:400 12px var(--mono);color:var(--muted)}
+.scale span{position:absolute;transform:translateX(-50%)}
+.scale span:first-child{transform:none}
+.scale span:last-child{transform:translateX(-100%)}
