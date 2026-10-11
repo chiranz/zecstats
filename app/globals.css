@@ -85,11 +85,15 @@ html[data-theme="light"] .topbar{background:rgba(242,246,242,.88)}
 @media (max-width:640px){.fresh{align-items:flex-start;text-align:left}}
 /* desktop: H1 spans the row, the lede and the freshness note share the line below (artboard "QA fixes") */
 @media (min-width:900px){
-  .mast{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:40px;row-gap:8px;align-items:end}
+  .mast{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:40px;row-gap:8px;align-items:start;grid-auto-flow:row dense}
   .mast>div:first-child{display:contents!important}
-  .mast>div:first-child>*{grid-column:1/-1}
-  .mast>div:first-child>.lede{grid-column:1}
-  .mast>.fresh{grid-column:2;max-width:380px}
+  .mast>div:first-child>*{grid-column:1}
+  .mast>div:first-child>:is(.crumbs,.kicker,.h1){grid-column:1/-1}
+  /* dense flow drops the note into the first free right-hand cell (beside the lede); with extra lines under the
+     lede it spans them, so the lede row doesn't grow to the note's height */
+  .mast>.fresh{grid-column:2}
+  .mast:has(>div:first-child>.lede~*)>.fresh{grid-row:span 3}
+  .mast>.fresh>span{white-space:nowrap}
 }
 
 /* ---------- surfaces ---------- */
