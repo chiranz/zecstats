@@ -146,11 +146,11 @@ export default async function WorldUsagePage({ searchParams }: PageProps<'/world
         <XYChart
           x={wk.map((w) => dayMs(w.date))} xTicks={dateTicks(wk[0].date, wk.at(-1)!.date, 'quarter')}
           series={[
-            { key: 'peak', label: 'Busiest hour', color: 'var(--s1)', type: 'dot', values: wk.map((w) => w.peak_hour), r: wk.map(() => 4), noTip: true },
-            { key: 'mean', label: 'Average hour', color: 'var(--s4)', values: wk.map((w) => Math.round(w.mean_hour * 10) / 10), width: 2, noTip: true },
+            { key: 'peak', label: 'Busiest hour', color: 'var(--s1)', type: 'dot', values: wk.map((w) => w.peak_hour), r: wk.map(() => 4) },
+            { key: 'mean', label: 'Average hour', color: 'var(--s4)', values: wk.map((w) => w.mean_hour), width: 2 },
           ]}
-          yFormat="count" yDomain={[0, 24]} yTicks={[0, 6, 12, 18, 24].map((v) => ({ v, label: `${String(v).padStart(2, '0')}:00` }))} yUnit="UTC"
-          tipTitles={wk.map((w) => `Week of ${dateLong(w.date)}`)} tipExtra={wk.map((w) => `Busiest hour ${hh(w.peak_hour)} UTC · average ${hm(w.mean_hour)} UTC · ${num(w.total_txs)} transactions`)}
+          yFormat="hour" yDomain={[0, 24]} yTicks={[0, 6, 12, 18, 24].map((v) => ({ v, label: `${String(v).padStart(2, '0')}:00` }))} yUnit="UTC"
+          tipTitles={wk.map((w) => `Week of ${dateLong(w.date)}`)} tipExtra={wk.map((w) => `${num(w.total_txs)} transactions`)}
           height={280} ariaLabel={`Weekly busiest UTC hour and the transaction-weighted average hour over the trailing year; average peak ${hh(Math.round(meanPeak))}.`}
         />
       </Card>

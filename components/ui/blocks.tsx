@@ -92,7 +92,7 @@ export type TileItem = { href: string; title: string; desc?: string; value?: Rea
 export function Tiles({ items, title = 'Read next' }: { items: TileItem[]; title?: string }) {
   return (
     <Section title={title}>
-      <div className="tiles">
+      <div className={`tiles t${items.length}`}>
         {items.map((t) => (
           <Link key={t.href} className="tile" href={t.href}>
             <span className="stack" style={{ gap: 4 }}><span className="n">{t.title}</span>{t.desc && <span className="d">{t.desc}</span>}</span>

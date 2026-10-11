@@ -1,7 +1,10 @@
 import { compact, num } from '@/lib/format';
 
 // Formats are passed as strings so server components can configure client charts (functions aren't serialisable).
-export type ValueFormat = 'usd' | 'usd0' | 'usdCompact' | 'zec' | 'zecCompact' | 'pct' | 'pct0' | 'pct2' | 'count' | 'countCompact' | 'ratio' | 'ratio5' | 'x' | 'bytes' | 'days' | 'hashrate' | 'btc';
+export type ValueFormat = 'usd' | 'usd0' | 'usdCompact' | 'zec' | 'zecCompact' | 'pct' | 'pct0' | 'pct2' | 'count' | 'countCompact' | 'ratio' | 'ratio5' | 'x' | 'bytes' | 'days' | 'hashrate' | 'btc' | 'hour';
+
+// 14.49 → "14:29" (a fractional UTC hour as a clock time)
+const hhmm = (h: number) => { const m = Math.round(h * 60) % 1440; return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`; };
 
 const hashUnit = (a: number): [number, string] => (a >= 1e12 ? [1e12, 'TSol/s'] : a >= 1e9 ? [1e9, 'GSol/s'] : a >= 1e6 ? [1e6, 'MSol/s'] : a >= 1e3 ? [1e3, 'KSol/s'] : [1, 'Sol/s']);
 
@@ -28,6 +31,7 @@ export function formatValue(v: number, f: ValueFormat, axis = false): string {
     case 'days': return a >= 730 ? `${sign}${num(a / 365.25, 1)} years` : `${sign}${num(a, a < 10 ? 1 : 0)} days`;
     case 'hashrate': { const [d, u] = hashUnit(a); return `${num(a / d, a / d < 10 ? 2 : 1)} ${u}`; }
     case 'btc': return `${sign}${num(a, a < 1 ? 5 : 2)} BTC`;
+    case 'hour': return `${hhmm(a)} UTC`;
   }
 }
 
@@ -35,6 +39,7 @@ export function formatValue(v: number, f: ValueFormat, axis = false): string {
 export function unitOf(f: ValueFormat, max = 0): string | undefined {
   if (f === 'zec' || f === 'zecCompact') return 'ZEC';
   if (f === 'btc') return 'BTC';
+  if (f === 'hour') return 'UTC';
   if (f === 'bytes') return Math.abs(max) >= 1e6 ? 'MB' : 'KB';
   if (f === 'hashrate') return hashUnit(Math.abs(max))[1];
   return undefined;
@@ -55,6 +60,7 @@ const decFor = (step: number) => {
  * "5.5y". Log axes and lone values are labelled each on its own. `unit` is what the axis title shows (ZEC, BTC…).
  */
 export function axisLabels(ticks: number[], f: ValueFormat, log = false): { labels: string[]; unit?: string } {
+  if (f === 'hour') return { labels: ticks.map((t) => (Number.isFinite(t) ? hhmm(t) : '—')), unit: 'UTC' };
   const fin = ticks.filter(Number.isFinite);
   const max = fin.length ? Math.max(...fin.map(Math.abs)) : 0;
   const steps = fin.slice(1).map((t, i) => Math.abs(t - fin[i])).filter((s) => s > 0);

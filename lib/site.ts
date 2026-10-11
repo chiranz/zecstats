@@ -73,6 +73,7 @@ export const toolGroups: NavGroup[] = [
     links: [
       { href: '/tools', label: 'Methodology', desc: 'Every tool, and how every number is produced' },
       { href: '/signals', label: 'Signals', desc: 'Experimental model calls', tag: 'BETA' },
+      { href: '/pro', label: 'Pro', desc: 'Signals messages and research', tag: 'BETA' },
       { href: '/donate', label: 'Donate', desc: 'Keep the node running' },
     ],
   },
