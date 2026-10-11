@@ -329,6 +329,22 @@
    "h": 3193,
    "title": "Nav E · thumb — mobile",
    "expand": "fill"
+  },
+  "Nav-D-states.dc.html": {
+   "x": 0,
+   "y": 67065,
+   "w": 1440,
+   "h": 4785,
+   "title": "Nav D · every state (built) — desktop",
+   "expand": "fill"
+  },
+  "Nav-D-states-mobile.dc.html": {
+   "x": 1520,
+   "y": 67065,
+   "w": 390,
+   "h": 6078,
+   "title": "Nav D · every state (built) — mobile",
+   "expand": "fill"
   }
  },
  "order": [
@@ -371,7 +387,9 @@
   "Nav-D-answer-first.dc.html",
   "Nav-D-answer-first-mobile.dc.html",
   "Nav-E-thumb.dc.html",
-  "Nav-E-thumb-mobile.dc.html"
+  "Nav-E-thumb-mobile.dc.html",
+  "Nav-D-states.dc.html",
+  "Nav-D-states-mobile.dc.html"
  ],
  "notes": {
   "t_system": {
@@ -436,6 +454,13 @@
    "text": "Iteration 2 — navigation + page header (5 directions)",
    "kind": "title1",
    "maxW": 5890
+  },
+  "t_iter3_nav": {
+   "x": 0,
+   "y": 66765,
+   "text": "Iteration 3 — navigation D, every state + event-tape hover card",
+   "kind": "title1",
+   "maxW": 1910
   }
  },
  "designSystems": []
