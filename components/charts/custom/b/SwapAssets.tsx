@@ -149,8 +149,8 @@ function Panel({ months, groups, view, onChange }: Props & { view: View; onChang
       ) : dir === 'net' ? (
         <>
           <div className={s.legend} aria-hidden="true">
-            <span><b style={{ background: 'var(--s4)' }} />ZEC → asset</span>
-            <span><b style={{ background: 'var(--s2)' }} />asset → ZEC</span>
+            <span><b style={{ background: 'var(--s2)' }} />ZEC → asset</span>
+            <span><b style={{ background: 'var(--s1)' }} />asset → ZEC</span>
             <span><span style={{ color: 'var(--value)' }}>◆</span>net</span>
           </div>
           <Ranked
@@ -219,8 +219,8 @@ function Ranked({ rows, diverging, ariaLabel }: { rows: Row[]; diverging: boolea
               <g key={r.label}>
                 <title>{`${r.label}: ZEC → asset ${usdC(L)} · asset → ZEC ${usdC(R)} · net ${net >= 0 ? '▲ ' : '▼ '}${usdC(Math.abs(net))}`}</title>
                 <text x={-8} y={cy} dy="0.32em" textAnchor="end" className={s.name}>{fit(r.label)}</text>
-                <rect x={x(-L)} y={yy + 3} width={Math.max(0, x(0) - x(-L))} height={rh - 6} rx={2} fill="var(--s4)" opacity={0.85} />
-                <rect x={x(0)} y={yy + 3} width={Math.max(0, x(R) - x(0))} height={rh - 6} rx={2} fill="var(--s2)" opacity={0.85} />
+                <rect x={x(-L)} y={yy + 3} width={Math.max(0, x(0) - x(-L))} height={rh - 6} rx={2} fill="var(--s2)" opacity={0.85} />
+                <rect x={x(0)} y={yy + 3} width={Math.max(0, x(R) - x(0))} height={rh - 6} rx={2} fill="var(--s1)" opacity={0.85} />
                 <path d={`M${nx} ${cy - 6} L${nx + 6} ${cy} L${nx} ${cy + 6} L${nx - 6} ${cy} Z`} fill="var(--value)" stroke="var(--card)" strokeWidth={1} />
                 <text x={iw + 8} y={cy} dy="0.32em" className={s.val}>{net >= 0 ? '▲' : '▼'} {formatValue(Math.abs(net), 'usdCompact', true)}</text>
               </g>

@@ -45,7 +45,7 @@ export default async function Home() {
   const { pools, live } = h;
   const asOf = dateLong(f.capturedAt);
   const share = (v: number) => (v / pools.supply) * 100;
-  const poolList = (['transparent', 'sprout', 'sapling', 'orchard', 'ironwood'] as const);
+  const poolList = (['transparent', 'sprout', 'sapling', 'orchard', 'ironwood', 'lockbox'] as const); // lockbox too, so shares add to 100%
   const rowsBySlug = new Map(index.flatMap((g) => g.rows).map((r) => [r.slug, r]));
   const titleOf = (slug: string) => liveCharts.find((c) => c.id === slug)?.t ?? rowsBySlug.get(slug)?.title ?? slug;
   const total = index.reduce((a, g) => a + g.rows.length, 0);
@@ -124,7 +124,7 @@ export default async function Home() {
           <ul className={s.poolkey}>
             <li className={s.hd}><span /><span>Pool</span><span>ZEC</span><span>Share</span></li>
             {poolList.map((p) => (
-              <li key={p} className={p === 'transparent' ? undefined : s.shd}>
+              <li key={p} className={p === 'transparent' || p === 'lockbox' ? undefined : s.shd}>
                 <span className="sw" style={{ background: POOL_COLOR[p] }} />
                 <span className={s.n}>{POOL_LABEL[p]}</span>
                 <span className={s.z}>{pools[p] >= 1e6 ? `${num(pools[p] / 1e6, 2)}M` : num(pools[p])}</span>

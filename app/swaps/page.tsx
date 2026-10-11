@@ -20,7 +20,7 @@ const nm = (id: string) => NAME[id] ?? id.toUpperCase();
 const signed = (v: number) => `${v >= 0 ? '+' : '−'}${usdCompact(Math.abs(v), 1)}`;
 /** Net flow as "▲ $1.2M" / "▼ $1.2M" with its colour class (into the asset = up); flat when it rounds to $0. */
 const netFlow = (v: number) => { const d = delta(v, 0, '', 'up'); return { cls: d.cls, text: d.dir === 'flat' ? usdCompact(0) : `${d.dir === 'up' ? '▲' : '▼'} ${usdCompact(Math.abs(v), 1)}` }; };
-const IN = 'var(--s1)', OUT = 'var(--s4)';
+const IN = 'var(--s1)', OUT = 'var(--s2)'; // the site-wide in/out pair
 
 // Live's link state: ?days=7|14|30 (window) &gran=asset|token|chain (what a node is)
 const WINS = ['7', '14', '30'] as const;

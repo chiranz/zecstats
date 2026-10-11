@@ -300,7 +300,7 @@ const totalFees: ChartDef = {
       ],
       headline: { label: 'Fees, last 30 days', value: usd(usd30, 0), date: dates[i], change: null,
         sentence: `Users paid ${usd(usd30, 0)} (${num(zec30, 0)} ZEC) in fees over the 30 days to ${dateLong(dates[i])}; ${usd(usdFees[i], 0)} on the last day.` },
-      spark: spark(usd7), indexValue: `${usd(usdFees[i], 0)}/day`,
+      spark: spark(usd7), indexValue: `${usd(usd7[i]!, 0)}/day, 7-day avg`,
       defaultRange: '1Y', dataThrough: dates[i],
       notes: ['The day in progress is left out — a part-day total would read as a collapse.'],
     };

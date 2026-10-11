@@ -75,7 +75,7 @@ export default async function IronwoodPage() {
         <Kpi k="Ironwood balance today" v={compact(iw.ironwoodNow)} unit="ZEC" s={<>{num(iw.ironwoodNow)} ZEC — {num(iw.leftIronwood)} ZEC have since left the pool</>} />
         <Kpi k="Ironwood balance value" v={usdCompact(iw.ironwoodNow * iw.price)} s={<>Balance today × {usd(iw.price)} a ZEC</>} />
         <Kpi k="Value migrated, all pools" v={usdCompact(iw.fromAll * iw.price)} s={<>{compact(iw.fromAll)} ZEC of cumulative inflow at today&apos;s price</>} />
-        <Kpi k="Net Ironwood change, 24h" v={<span className={delta(iw.usdPerDay, 0, '').cls}>{iw.usdPerDay >= 0 ? '+' : '−'}{usdCompact(Math.abs(iw.usdPerDay), 1)}</span>} s={<>≈ {iw.usdPerDay >= 0 ? '+' : '−'}{num(Math.abs(iw.usdPerDay / iw.price), 0)} ZEC: every source in, minus what left. A daily rate, not a total</>} />
+        <Kpi k="Net Ironwood change, 24h" v={<span className={delta(iw.usdPerDay, 0, '').cls}>{iw.usdPerDay >= 0 ? '▲ +' : '▼ −'}{usdCompact(Math.abs(iw.usdPerDay), 1)}</span>} s={<>≈ {iw.usdPerDay >= 0 ? '+' : '−'}{num(Math.abs(iw.usdPerDay / iw.price), 0)} ZEC: every source in, minus what left. A daily rate, not a total</>} />
         <Kpi k="Blocks since activation" v={num(iw.blocksSince)} unit="blocks" s={<>Block {num(IRONWOOD_ACTIVATION_HEIGHT)} → {num(iw.height)}, about one every 75 s</>} />
       </KpiBand>
 

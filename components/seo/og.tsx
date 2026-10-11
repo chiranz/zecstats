@@ -16,7 +16,7 @@ const C = {
   bg: '#050a06', line: '#1f3a2a', inset: '#07100a', value: '#ecf8ef', text2: '#a3c2ad', muted: '#7f9c89',
   accent: '#00ff66', up: '#00ff66', down: '#ff7a6b', markLine: '#163d27', glow: '0 0 14px rgba(0,255,102,.45)',
 };
-export const OG_POOL_COLOR = { transparent: '#77837c', sprout: '#7a86a8', sapling: '#38bdf8', orchard: '#a78bfa', ironwood: '#00ff66' } as const;
+export const OG_POOL_COLOR = { transparent: '#77837c', sprout: '#5c5b98', sapling: '#38bdf8', orchard: '#a78bfa', ironwood: '#00ff66' } as const;
 
 const MONO = 'JetBrains Mono';
 const SANS = 'Geist';
