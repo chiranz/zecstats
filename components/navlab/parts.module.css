@@ -1,0 +1,58 @@
+/* Shared navigation parts: nav list, dropdown panels, section tabs, on-this-page, prev/next, menu sheet. */
+.nav{min-width:0}
+.navList{list-style:none;margin:0;padding:0;display:flex;align-items:center;gap:2px}
+.dd{display:contents}
+.panel{position:absolute;z-index:40;background:var(--raised);border:1px solid var(--line-strong);border-radius:var(--r-lg);box-shadow:var(--pop);padding:16px}
+.panel ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
+.toolsPanel{top:calc(100% + 1px);left:var(--pad);right:var(--pad);border-top:0;border-radius:0 0 var(--r-lg) var(--r-lg);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 24px}
+.grp{display:flex;flex-direction:column;gap:2px;min-width:0}
+.grpH{margin:0 0 4px;padding-inline:10px;font:500 11.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+@container nl (max-width:1000px){.toolsPanel{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* section tabs */
+.tabs{list-style:none;margin:0;padding:0;display:flex;align-items:center;gap:2px;min-width:0;overflow-x:auto;scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent);padding-right:24px}
+.tabs::-webkit-scrollbar{display:none}
+.tab{position:relative;display:inline-flex;align-items:center;gap:7px;height:40px;padding:0 11px;font:500 13px var(--mono);color:var(--text-2)!important;white-space:nowrap;text-decoration:none!important}
+.tab:hover{color:var(--value)!important}
+.tab[aria-current="page"]{color:var(--value)!important}
+.tab[aria-current="page"]::after{content:"";position:absolute;left:11px;right:11px;bottom:-1px;height:2px;border-radius:2px;background:var(--accent)}
+.feat{color:var(--value)!important}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--p-ironwood);box-shadow:var(--glow)}
+.tabV{font:500 12px var(--mono);color:var(--accent);padding:1px 6px;border-radius:5px;background:var(--accent-wash)}
+
+/* on this page */
+.otp{}
+.otpBtn{display:inline-flex;align-items:center;gap:7px;height:30px;padding:0 10px;border-radius:8px;border:1px solid var(--line);background:none;font:500 12.5px var(--mono);color:var(--text-2);cursor:pointer;white-space:nowrap}
+.otpBtn:hover,.otpBtn[aria-expanded="true"]{border-color:var(--line-strong);background:var(--raised);color:var(--value)}
+.otpPanel{top:calc(100% + 4px);right:var(--pad);width:220px;padding:8px}
+.jump{display:block;padding:7px 10px;border-radius:7px;font:500 13px var(--mono);color:var(--text)!important;text-decoration:none!important}
+.jump::before{content:"# ";color:var(--accent)}
+.jump:hover,.jump:focus-visible{background:var(--accent-wash)}
+
+/* prev / next */
+.pn{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.pnBtn{display:grid;place-items:center;width:30px;height:30px;border-radius:8px;border:1px solid var(--line);color:var(--text-2)!important}
+.pnBtn:hover{border-color:var(--line-strong);background:var(--raised);text-decoration:none!important}
+.pnPos{font:400 12.5px var(--mono);color:var(--muted);padding-inline:6px}
+@container nl (max-width:1000px){.pnIn{display:none}}
+
+/* menu sheet */
+.menu{display:flex;flex-direction:column;gap:14px}
+.menuHead{display:flex;align-items:center;justify-content:space-between}
+.menuGrid{display:grid;grid-template-columns:1fr 1fr;gap:2px}
+.menuGrid a,.menuGrid2 a{display:flex;align-items:center;min-height:44px;padding:0 10px;border-radius:8px;font:500 14px var(--mono);color:var(--text)!important;text-decoration:none!important}
+.menuGrid a[aria-current="page"]{background:var(--card);box-shadow:inset 0 0 0 1px var(--line-strong);color:var(--value)!important}
+.menuGrid a:hover,.menuGrid2 a:hover{background:var(--accent-wash)}
+.menuSec{display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--line);padding-top:12px}
+.menuList{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.menuList a{min-height:44px;align-items:center}
+.menuGrid2{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:0 2px}
+.menuGrid2 a{font-size:13px;min-height:40px}
+.menuFoot{display:flex;gap:10px;border-top:1px solid var(--line);padding-top:14px}
+.sro{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@container nl (max-width:640px){
+  .otpTxt{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .otpBtn{width:auto;padding:0 8px}
+  .pnCompact{display:none}
+  .otpPanel{right:8px}
+}

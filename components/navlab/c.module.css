@@ -1,0 +1,71 @@
+.root{display:flex;flex-direction:column}
+.bar{position:relative;z-index:30;display:flex;align-items:center;gap:6px;height:56px;padding-inline:var(--pad);border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(10px)}
+.nav{flex:1;min-width:0}
+.list{list-style:none;margin:0;padding:0;display:flex;align-items:center;gap:2px}
+.right{display:flex;align-items:center;gap:8px;margin-left:auto}
+.burger{display:none}
+.dd{display:contents}
+.panel{position:absolute;top:calc(100% + 1px);left:var(--pad);right:var(--pad);z-index:40;background:var(--raised);border:1px solid var(--line-strong);border-top:0;border-radius:0 0 var(--r-lg) var(--r-lg);box-shadow:var(--pop);padding:18px}
+.panel ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
+.q{margin:0 0 6px;padding-inline:10px;font:600 13px var(--mono);color:var(--value)}
+.q::before{content:"? ";color:var(--accent)}
+
+/* Privacy menu: Ironwood feature card + the other pages with values */
+.privPanel{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:22px}
+.feature{display:flex;flex-direction:column;gap:8px;padding:18px;border-radius:var(--r);border:1px solid var(--accent-line);background:linear-gradient(180deg,var(--accent-wash),transparent 70%),var(--card);color:var(--text)!important;text-decoration:none!important}
+.feature:hover{border-color:var(--accent)}
+.fk{display:inline-flex;align-items:center;gap:8px;font:500 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--text-2)}
+.fk i{width:7px;height:7px;border-radius:50%;background:var(--p-ironwood);box-shadow:var(--glow)}
+.fv{font:700 clamp(36px,5cqw,52px)/1 var(--mono);letter-spacing:-.03em;color:var(--value)}
+.fd{font-size:14px;color:var(--text-2);max-width:46ch}
+.bar2{display:block;height:8px;border-radius:999px;background:var(--inset);border:1px solid var(--line);overflow:hidden}
+.bar2 span{display:block;height:100%;background:var(--p-ironwood)}
+.fl{display:inline-flex;align-items:center;gap:6px;font:500 13px var(--mono);color:var(--accent)}
+.privList{display:flex;flex-direction:column;gap:4px;min-width:0}
+.more{display:inline-flex;align-items:center;gap:6px;margin:6px 10px 0;font:500 13px var(--mono)}
+
+/* Explore: four question columns + a "dig deeper" row */
+.explore{display:flex;flex-direction:column;gap:14px}
+.cols{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px 20px}
+.col{min-width:0}
+.col :global(a){padding-block:6px}
+.deeper{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;border-top:1px solid var(--line);padding:12px 10px 0}
+.deeper ul{flex-direction:row!important;flex-wrap:wrap;gap:4px 16px!important}
+.deeper a{font:500 13px var(--mono);color:var(--text-2)!important}
+.deeper a.all{color:var(--accent)!important}
+.dk{font:500 11.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+
+/* masthead: eyebrow names the question; one-line freshness on the right */
+.flow{display:flex;flex-direction:column;gap:18px;padding-top:22px}
+.mast{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px 32px;padding-inline:var(--pad)}
+.mastMain{display:flex;flex-direction:column;gap:8px;flex:1 1 560px;min-width:0}
+.eyebrow{align-self:flex-start;font:500 12.5px var(--mono);color:var(--text-2)!important}
+.eyebrow:hover{color:var(--accent)!important}
+.fresh{display:inline-flex;align-items:center;gap:8px;font:400 12px var(--mono);color:var(--muted);white-space:nowrap}
+.fresh i{width:7px;height:7px;border-radius:50%;background:var(--accent)}
+.chips{padding-inline:var(--pad)}
+.chips ul{list-style:none;margin:0;padding:0;display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+.chips a{display:block;white-space:nowrap;padding:6px 12px;border-radius:999px;font:500 12.5px var(--mono);color:var(--text-2)!important;text-decoration:none!important}
+.chips a[aria-current="true"]{background:var(--raised);box-shadow:inset 0 0 0 1px var(--line-strong);color:var(--value)!important}
+
+/* phone accordion */
+.acc{display:flex;flex-direction:column;border-top:1px solid var(--line)}
+.accSec{border-bottom:1px solid var(--line)}
+.accSec ul{list-style:none;margin:0;padding:0 0 8px;display:flex;flex-direction:column}
+.accSec ul :global(a){min-height:42px;align-items:center}
+.accH{margin:0}
+.accH button{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:48px;padding:0 10px;border:0;background:none;font:600 14px var(--mono);color:var(--value);cursor:pointer;text-align:left}
+.accH button::before{content:"? ";color:var(--accent);margin-right:4px}
+.accH button{justify-content:flex-start;gap:6px}
+.accH button svg{margin-left:auto}
+
+@container nl (max-width:1180px){.cols{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@container nl (max-width:1000px){
+  .nav,.wide{display:none}
+  .burger{display:inline-flex}
+}
+@container nl (max-width:640px){
+  .mast{gap:8px}
+  .fresh{white-space:normal}
+  .flow{padding-top:18px;gap:14px}
+}
