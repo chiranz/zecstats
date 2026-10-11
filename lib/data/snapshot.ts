@@ -6,7 +6,7 @@ import { zat } from '../format';
 // Typed accessors for the endpoints used across many pages. Page-specific endpoints get their own module.
 
 export type Live = { price_age_secs: number; price_stale: boolean; zec_btc: number; zec_btc_change_24h_pct: number; zec_btc_change_30d_pct: number; zec_usd: number; zec_usd_change_24h_pct: number };
-export type LatestBlock = { activation_time: number; end_ironwood_zat: number; end_orchard_zat: number; end_supply_zat: number; height: number; indexing_rate_per_min: number; ironwood_usd_per_day: number; node_estimated_height: number; orchard_at_activation: number; time: number; zec_usd: number };
+export type LatestBlock = { activation_time: number; aggregator_lag_blocks: number; end_ironwood_zat: number; end_orchard_zat: number; end_supply_zat: number; height: number; indexing_rate_per_min: number; ironwood_usd_per_day: number; node_estimated_height: number; orchard_at_activation: number; time: number; zec_usd: number };
 
 export type DailyStat = {
   date: string; avg_difficulty: number; block_count: number; coinbase_zat: number;
