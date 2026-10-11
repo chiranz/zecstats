@@ -22,7 +22,6 @@ export default async function ShieldHopsPage() {
   return (
     <>
       <Masthead
-        crumbs={[{ href: '/privacy', label: 'Privacy' }, { label: 'Shield-bound hops' }]}
         title="How much ZEC moves when a coin goes shielded?"
         lede={<>Usually not much: the median shield-bound hop is <b className="value">{zamt(med)} ZEC</b>. The mean is {zamt(mean)} ZEC, {num(mean / med, 0)}× higher, because a handful of very large hops pull the average up.</>}
       />

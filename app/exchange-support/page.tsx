@@ -27,7 +27,6 @@ export default async function ExchangeSupportPage() {
   return (
     <>
       <Masthead
-        crumbs={[{ label: 'Tools' }, { label: 'Cross-chain' }, { label: 'Exchanges' }]}
         title="Where can you buy ZEC on a regulated exchange?"
         cadence="hand-checked monthly"
         lede={<><b className="num value">{pct(ex.access_pop_pct, 0)}</b> of the world’s population lives where a regulated exchange offers ZEC; <b className="num value">{ex.listing_zec} of {ex.exchange_count}</b> tracked exchanges list it.</>}

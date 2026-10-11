@@ -23,7 +23,7 @@ export default async function BullRunPage() {
   }
   return (
     <>
-      <Masthead crumbs={[{ href: '/tools', label: 'Tools' }, { label: 'ZEC 2026 vs BTC 2017' }]} title="ZEC 2026 vs BTC 2017, day for day" lede={lede} />
+      <Masthead title="ZEC 2026 vs BTC 2017, day for day" lede={lede} />
       <Callout title="A sample of one, not a forecast." tone="warn">
         Built because people asked for it, not because the comparison means anything. Nothing here is a projection, a target or a number this site stands behind. The caveats are at the bottom of the page.
       </Callout>

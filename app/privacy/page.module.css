@@ -1,5 +1,5 @@
 /* Privacy hub — ported from the "Privacy" artboard. */
-.page section[id],.page details[id]{scroll-margin-top:120px}
+.page section[id],.page details[id]{scroll-margin-top:calc(var(--barh) + 20px)}
 .chHead{display:flex;flex-direction:column;gap:6px;min-width:0;flex:1 1 320px}
 .lnk{display:inline-flex;align-items:center;gap:6px;font:500 13px var(--mono)}
 .tag{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 9px;border-radius:999px;border:1px solid var(--line-strong);font:500 11px var(--mono);color:var(--text-2);white-space:nowrap}

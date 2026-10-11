@@ -41,7 +41,6 @@ export default async function TurnstilePage() {
   return (
     <>
       <Masthead
-        crumbs={[{ href: '/privacy', label: 'Privacy' }, { label: 'Orchard turnstile watch' }]}
         title="Was the Orchard bug used to mint fake ZEC?"
         cadence="index recomputed as new blocks land"
         lede={t.ever_negative

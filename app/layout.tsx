@@ -2,9 +2,11 @@ import type { Metadata, Viewport } from 'next';
 import { IBM_Plex_Sans, JetBrains_Mono, Orbitron } from 'next/font/google';
 import { TopBar } from '@/components/chrome/TopBar';
 import { Footer } from '@/components/chrome/Footer';
+import { ContextBar } from '@/components/chrome/ContextBar';
 import { Marquee } from '@/components/ticker/Marquee';
 import { getTicker } from '@/lib/data/ticker';
 import { getSearchIndex } from '@/lib/data/search-index';
+import { getNavData } from '@/lib/data/nav';
 import './globals.css';
 import './chrome.css';
 
@@ -24,6 +26,7 @@ export const viewport: Viewport = { themeColor: '#050a06', width: 'device-width'
 const themeScript = `try{var t=localStorage.getItem('zec-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}`;
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const [searchIndex, nav, ticker] = await Promise.all([getSearchIndex(), getNavData(), getTicker()]);
   return (
     <html lang="en" data-theme="dark" className={`${orbitron.variable} ${jetbrains.variable} ${plex.variable}`} suppressHydrationWarning>
       <head>
@@ -31,9 +34,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body>
         <a className="skip" href="#main">Skip to content</a>
-        <TopBar searchIndex={await getSearchIndex()} />
+        <TopBar searchIndex={searchIndex} nav={nav} />
         {/* event tape: hot topic + on-chain events, under the top bar on every page (not sticky) */}
-        <Marquee items={(await getTicker()).items} />
+        <Marquee items={ticker.items} />
+        {/* navigation D: breadcrumb + the section's pages, on pages that have siblings */}
+        <ContextBar nav={nav} />
         <main id="main" className="shell page">{children}</main>
         <Footer />
       </body>

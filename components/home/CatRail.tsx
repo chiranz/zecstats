@@ -1,6 +1,6 @@
 'use client';
 
-import { useScrollSpy } from '@/components/privacy/Subnav';
+import { useScrollSpy } from '@/components/privacy/useScrollSpy';
 
 /** Sticky category rail for the chart index; marks the group in view. Classes come from the page's CSS Module. */
 export function CatRail({ groups, className, itemClass }: { groups: { id: string; title: string; count: number }[]; className: string; itemClass: string }) {

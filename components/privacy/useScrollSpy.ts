@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import s from './Subnav.module.css';
 
 /** Id of the first watched element currently in the reading band (sticky header excluded). */
 export function useScrollSpy(ids: string[], rootMargin: string) {
@@ -16,18 +15,4 @@ export function useScrollSpy(ids: string[], rootMargin: string) {
     return () => io.disconnect();
   }, [key, rootMargin]);
   return [active, setActive] as const;
-}
-
-/** Sticky "on this page" jump links; the section in view is marked current. */
-export function Subnav({ items, label }: { items: { id: string; label: string }[]; label: string }) {
-  const [active, setActive] = useScrollSpy(items.map((i) => i.id), '-120px 0px -55% 0px');
-  return (
-    <nav className={s.subnav} aria-label={label}>
-      <ul>
-        {items.map((i) => (
-          <li key={i.id}><a href={`#${i.id}`} aria-current={active === i.id ? 'true' : undefined} onClick={() => setActive(i.id)}>{i.label}</a></li>
-        ))}
-      </ul>
-    </nav>
-  );
 }

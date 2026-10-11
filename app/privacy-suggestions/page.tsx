@@ -80,7 +80,6 @@ export default async function PrivacyTipsPage() {
   return (
     <>
       <Masthead
-        crumbs={[{ href: '/privacy', label: 'Privacy' }, { label: 'Privacy tips' }]}
         title="Which ZEC amounts blend in best?"
         lede={<>Shield and deshield in common round amounts — <b className="value">{headline.slice(0, -1).join(', ')} or {headline.at(-1)} ZEC</b> — and you hide among tens of thousands of identical transactions. A distinctive amount fingerprints you: the inverse of the <Link href="/wall-of-shame">Wall of Shame</Link>.</>}
       />

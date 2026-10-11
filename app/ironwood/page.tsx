@@ -4,7 +4,6 @@ import { Card, ChartActions, Kpi, KpiBand, More, Tiles } from '@/components/ui/b
 import { Gate } from '@/components/ironwood/Gate';
 import { DailyCrossings } from '@/components/ironwood/DailyCrossings';
 import { SizeCdf } from '@/components/ironwood/SizeCdf';
-import { Subnav } from '@/components/privacy/Subnav';
 import { getIronwood, IRONWOOD_ACTIVATION_HEIGHT } from '@/lib/data/ironwood';
 import { getTurnstileIndex } from '@/lib/data/privacy';
 import { POOL_COLOR, POOL_LABEL } from '@/lib/data/snapshot';
@@ -16,15 +15,6 @@ export const metadata: Metadata = {
   description: 'How far the Orchard → Ironwood turnstile migration has progressed: share crossed, daily crossings, migration sizes and sources.',
 };
 
-const SECTIONS = [
-  { id: 'progress', label: 'Progress' },
-  { id: 'verified', label: 'Verified supply' },
-  { id: 'reading', label: 'Reading the number' },
-  { id: 'daily', label: 'Daily crossings' },
-  { id: 'size', label: 'Migration size' },
-  { id: 'sources', label: 'Sources' },
-  { id: 'pools', label: 'Pool balances' },
-];
 
 export default async function IronwoodPage() {
   const [iw, ti] = await Promise.all([getIronwood(), getTurnstileIndex()]);
@@ -47,12 +37,10 @@ export default async function IronwoodPage() {
   return (
     <div className={`stack ${s.page}`} style={{ gap: 32 }}>
       <Masthead
-        crumbs={[{ href: '/privacy', label: 'Privacy' }, { label: 'Ironwood' }]}
         title="Zcash Ironwood Pool"
         cadence="balances refresh every block"
         lede={<>Ironwood, Zcash&apos;s newest shielded pool, has taken in {pct2(iw.pct)}% of Orchard&apos;s coins in {iw.liveDays} days. {num(iw.orchardNow)} ZEC are still in Orchard, yet to cross.</>}
       />
-      <Subnav items={SECTIONS} label="On this page" />
 
       <section className="hero" id="progress" aria-labelledby="hero-lede">
         <div className={s.heroTop}>

@@ -26,7 +26,6 @@ export default async function ToolsPage() {
   return (
     <>
       <Masthead
-        crumbs={[{ label: 'Tools & methodology' }]}
         title="Every tool, and how the numbers are made"
         lede={`${toolCount} tools in ${toolGroups.length} groups, by the question each answers, plus all ${charts.length} charts. Every figure comes from our own Zebra node, except price.`}
       />

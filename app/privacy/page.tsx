@@ -6,7 +6,6 @@ import { Icon } from '@/components/ui/Icon';
 import { TimeSeriesChart } from '@/components/charts/TimeSeriesChart';
 import { Gate } from '@/components/ironwood/Gate';
 import { Spark } from '@/components/home/Spark';
-import { Subnav } from '@/components/privacy/Subnav';
 import { AmountLookup } from '@/components/privacy/AmountLookup';
 import { getHopMedian, getPrivacy, getTurnstileIndex, ROUND_AMOUNTS, ROUND_TRIPS } from '@/lib/data/privacy';
 import { getIronwood } from '@/lib/data/ironwood';
@@ -20,16 +19,6 @@ export const metadata: Metadata = {
   description: 'How private Zcash is right now: shielded supply, pools, flows, the Ironwood migration, integrity checks and privacy hygiene.',
 };
 
-// Ironwood leads: it holds most of the shielded supply, so the hub opens on it and the shielded share follows.
-const SECTIONS = [
-  { id: 'ironwood', label: 'Ironwood' },
-  { id: 'overview', label: 'Shielded share' },
-  { id: 'pools', label: 'Pools' },
-  { id: 'flows', label: 'Flows' },
-  { id: 'integrity', label: 'Integrity' },
-  { id: 'hygiene', label: 'Privacy hygiene' },
-  { id: 'usage', label: 'Usage' },
-];
 
 const POOL_META = {
   transparent: { tag: 'Not private', tone: '', desc: 'Public balances and amounts, like Bitcoin.' },
@@ -92,9 +81,8 @@ export default async function PrivacyPage() {
 
   return (
     <div className={`stack ${s.page}`} style={{ gap: 32 }}>
-      <Masthead crumbs={[{ label: 'Privacy' }]} kicker="Zcash privacy" title="How private is Zcash right now?"
-        lede={<>Most of it now lives in Ironwood: <b>{compact(now.ironwood)} ZEC</b> — {num(iwShare)}% of all shielded ZEC — in the pool that went live {iw.liveDays} days ago. In all, {pct(now.shieldedPct)} of ZEC is shielded, up from {pct(p.yearAgo.shieldedPct)} a year ago.</>} />
-      <Subnav items={SECTIONS} label="Privacy sections" />
+      <Masthead title="How private is Zcash right now?" cadence="balances every block · flows daily"
+        lede={<><b>{pct(now.shieldedPct)} of all ZEC is shielded</b>, up from {pct(p.yearAgo.shieldedPct)} a year ago. Most of it now lives in Ironwood: <b>{compact(now.ironwood)} ZEC</b> — {num(iwShare)}% of all shielded ZEC — in the pool that went live {iw.liveDays} days ago.</>} />
 
       {/* ---------- ironwood: the current shielded pool leads the hub ---------- */}
       <section className="hero" id="ironwood" aria-label="Ironwood, the current shielded pool">

@@ -25,7 +25,6 @@ export default async function FoundersRewardPage() {
   return (
     <>
       <Masthead
-        crumbs={[{ label: 'Tools' }, { label: 'Reports' }, { label: "Founders' Reward" }]}
         title="What was the Founders' Reward worth?"
         lede={<>The 2.1M ZEC paid to Zcash’s builders from 2016 to 2020 was worth <b className="num value">{usdCompact(fr.total_usd, 1)}</b> on the days it arrived — and <b className="num value">{usdCompact(fr.value_today_usd, 2)}</b> at today’s price, {num(multiple, 1)}× more.</>}
       />

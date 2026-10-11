@@ -76,7 +76,6 @@ export default async function NewsPage() {
   return (
     <>
       <Masthead
-        crumbs={[{ label: 'News' }]}
         title="What just happened on Zcash"
         lede={<>A feed our node writes by itself: all-time highs, big daily moves and anything far from its 30-day norm, measured in σ. Newest first; the latest event was {lastAgo} h ago.</>}
       />

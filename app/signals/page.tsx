@@ -24,8 +24,6 @@ export default async function SignalsPage() {
   return (
     <>
       <Masthead
-        kicker="Experimental"
-        crumbs={[{ href: '/tools', label: 'About' }, { label: 'Signals' }]}
         title={<>When has the model changed its mind?<span className={t.beta}>BETA</span></>}
         lede={<>An allocation model run on our node&apos;s data sends a message when it changes its mind. Following its {SIGNAL_CALLS.length} calls since {dateLong(r.start)} turned $10,000 into {usd(r.followEnd, 0)} (<span className={dir(follow)}>{signed(follow)}</span>) — {gap < 0 ? 'less than' : 'more than'} simply holding ZEC, which made {usd(r.holdEnd, 0)} (<span className={dir(hold)}>{signed(hold)}</span>).</>}
       />

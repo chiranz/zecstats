@@ -1,12 +1,12 @@
 import Link from 'next/link';
-import { Masthead } from '@/components/chrome/Masthead';
+import { Masthead, type KeyFigure } from '@/components/chrome/Masthead';
 import { More, Section } from '@/components/ui/blocks';
 import { Icon } from '@/components/ui/Icon';
 import { CustomPanelView } from '@/components/charts/custom';
 import { CHART_GROUPS, GROUP_SLUGS, type ChartData, type ChartDef, type ChartGroupId, type CustomPanel, type TimeSeriesPanel } from '@/lib/charts/types';
 import { chartBySlug } from '@/lib/charts';
 import { liveTitle, getLiveCharts } from '@/lib/data/charts-a';
-import { dateLong, monthYear } from '@/lib/format';
+import { dateLong, monthYear, num } from '@/lib/format';
 import { ChartBody } from './ChartBody';
 import { headlineSentence, rich } from './rich';
 import s from './chart-page.module.css';
@@ -33,27 +33,34 @@ async function titleFor(slug: string) {
   return d ? d.short : await liveTitle(slug);
 }
 
+/** The headline number beside the H1, when the chart has one number (not a descriptor like "6 yardsticks"). */
+function keyFigure(h: ChartData['headline']): KeyFigure | undefined {
+  if (!h.value || !/\d/.test(h.value)) return undefined;
+  const c = h.change;
+  return {
+    value: h.value,
+    delta: c ? `${c.pct >= 0 ? '▲' : '▼'} ${num(Math.abs(c.pct), 1)}% vs ${c.days} days earlier` : undefined,
+    dir: !c ? 'flat' : c.pct >= 0 ? 'up' : 'dn',
+    label: `Key figure: ${h.value}${c ? `, ${c.pct >= 0 ? 'up' : 'down'} ${num(Math.abs(c.pct), 1)}% vs ${c.days} days earlier` : ''}${h.date ? `, ${dateLong(h.date)}` : ''}`,
+  };
+}
+
 export async function ChartPage({ slug }: { slug: string }) {
   const def = chartBySlug(slug);
   const gid = groupOf(slug)!;
   const group = CHART_GROUPS.find((g) => g.id === gid)!;
-  const crumbs = [{ href: '/charts', label: 'Charts' }, { href: `/charts#g-${gid}`, label: group.title }];
 
-  if (!def) return <NotBuilt slug={slug} crumbs={crumbs} groupTitle={group.title} />;
+  if (!def) return <NotBuilt slug={slug} groupTitle={group.title} />;
   const data = await safeLoad(def);
-  if (!data) return <NotBuilt slug={slug} crumbs={crumbs} groupTitle={group.title} title={def.title} failed />;
+  if (!data) return <NotBuilt slug={slug} groupTitle={group.title} title={def.title} failed />;
 
   const { headline } = data;
   const sectionPanels = data.panels.map((p, i) => ({ p, i })).filter(({ p, i }) => p.kind === 'custom' && i > 0 && p.title) as { p: CustomPanel; i: number }[];
   const ts = data.panels.find((p): p is TimeSeriesPanel => p.kind === 'timeseries');
   const history = ts?.dates.length ? `Since ${monthYear(ts.dates[0]).replace("'", '’')} · ${ts.dates.length.toLocaleString('en-US')} data points` : null;
 
-  // Prev / next inside the group, and the related tiles.
+  // Prev / next live in the context bar; the related tiles and the rest of the group close the page.
   const list = GROUP_SLUGS[gid];
-  const pos = list.indexOf(slug);
-  const prev = list[(pos - 1 + list.length) % list.length];
-  const next = list[(pos + 1) % list.length];
-  const [prevT, nextT] = await Promise.all([titleFor(prev), titleFor(next)]);
   const related = await Promise.all(
     def.related.slice(0, 4).map(async (r) => {
       const d = chartBySlug(r);
@@ -67,7 +74,7 @@ export async function ChartPage({ slug }: { slug: string }) {
 
   return (
     <div className={s.page}>
-      <Masthead crumbs={crumbs} title={def.title} lede={headlineSentence(headline.sentence, headline.value, s.mastB)} cadence={CADENCE[def.source]} />
+      <Masthead title={def.title} lede={headlineSentence(headline.sentence, headline.value, s.mastB)} cadence={CADENCE[def.source]} figure={keyFigure(headline)} />
 
       <ChartBody
         slug={def.slug}
@@ -128,11 +135,6 @@ export async function ChartPage({ slug }: { slug: string }) {
       </section>
 
       <section className="sec" aria-labelledby="next-h">
-        <nav className={s.trail} aria-label="Chart sequence">
-          <Link className={s.pill} href={`/chart/${prev}`}><span aria-hidden="true">←</span>{prevT}</Link>
-          <span className={s.pos}>{pos + 1} of {list.length} in {group.title}</span>
-          <Link className={s.pill} href={`/chart/${next}`}>{nextT}<span aria-hidden="true">→</span></Link>
-        </nav>
         {related.length > 0 && (
           <>
             <div className="sec-h"><h2 className="h2" id="next-h">Read next</h2></div>
@@ -159,11 +161,11 @@ export async function ChartPage({ slug }: { slug: string }) {
   );
 }
 
-async function NotBuilt({ slug, crumbs, groupTitle, title, failed = false }: { slug: string; crumbs: { href?: string; label: string }[]; groupTitle: string; title?: string; failed?: boolean }) {
+async function NotBuilt({ slug, groupTitle, title, failed = false }: { slug: string; groupTitle: string; title?: string; failed?: boolean }) {
   const live = (await getLiveCharts()).get(slug);
   return (
     <div className={s.page}>
-      <Masthead crumbs={crumbs} title={title ?? (await liveTitle(slug))} lede={live?.d} />
+      <Masthead title={title ?? (await liveTitle(slug))} lede={live?.d} />
       <div className={s.empty} role="status">
         <span className="kicker">{failed ? 'Data unavailable' : 'Coming soon'}</span>
         <p>

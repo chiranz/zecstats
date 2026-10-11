@@ -22,7 +22,6 @@ export default function ProPage() {
   return (
     <>
       <Masthead
-        crumbs={[{ href: '/signals', label: 'Signals' }, { label: 'Pro' }]}
         title={<>ZEC Stats Pro<span className={t.beta}>BETA</span></>}
         lede="Everything else on ZEC Stats is free. Pro is the paid part of Signals: the live messages as they are sent, a daily summary, and the research page behind them."
       />

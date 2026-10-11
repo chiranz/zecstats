@@ -46,7 +46,6 @@ export default async function WorldUsagePage() {
   return (
     <>
       <Masthead
-        crumbs={[{ label: 'Tools' }, { label: 'Reports' }, { label: 'When the world uses Zcash' }]}
         title="When does the world use Zcash?"
         lede={<>Busiest at <b className="num value">{hh(peak.hour)} UTC</b>, quietest at <b className="num value">{hh(trough.hour)} UTC</b> — {num(ratio, 2)}× apart. The peak falls in daylight across {litPeak.slice(0, 3).join(', ')}{litPeak.length > 3 ? ' and beyond' : ''}.</>}
       >

@@ -26,7 +26,6 @@ export default async function AmountLookupPage({ searchParams }: PageProps<'/amo
   return (
     <>
       <Masthead
-        crumbs={[{ href: '/privacy', label: 'Privacy' }, { label: 'Amount lookup' }]}
         title="How common is your amount?"
         lede={<>Enter an amount you plan to shield or deshield. The more past transactions share it, the bigger the crowd you hide in — a rare amount can link both ends of your trip, as on the <Link href="/wall-of-shame">Wall of Shame</Link>.</>}
       />

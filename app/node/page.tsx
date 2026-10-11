@@ -38,7 +38,6 @@ export default async function NodePage() {
   return (
     <>
       <Masthead
-        crumbs={[{ label: 'Tools' }, { label: 'Network' }, { label: 'Node status' }]}
         title="Is our Zcash node healthy?"
         lede={<>{fresh.synced ? 'Yes' : 'Not quite'}: our Zebra node is <b className="value">{fresh.synced ? 'fully synced' : 'catching up'}</b> at block <b className="num value">{num(lb.height)}</b>, {behind <= 0 ? 'level with' : `${behind} block${behind === 1 ? '' : 's'} behind`} the network’s tip, and the last block arrived {ago} ago.</>}
       />

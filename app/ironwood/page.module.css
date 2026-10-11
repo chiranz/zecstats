@@ -1,5 +1,5 @@
 /* Ironwood migration tracker — ported from the "Ironwood" artboard. */
-.page section[id],.page details[id]{scroll-margin-top:120px}
+.page section[id],.page details[id]{scroll-margin-top:calc(var(--barh) + 20px)}
 
 .heroTop{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:24px 56px;align-items:end}
 .eyebrow{display:inline-flex;align-items:center;gap:8px;font:500 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--text-2)}

@@ -40,7 +40,6 @@ export default async function ActivityPage() {
   return (
     <>
       <Masthead
-        crumbs={[{ href: '/tools', label: 'Tools' }, { label: 'Reports' }, { label: 'Transparent activity' }]}
         title="Where does transparent ZEC go?"
         lede={<>Most of it just keeps moving. In the last 7 days <b className="value">{compact(l7('transient_transparent'), 2)} ZEC</b> changed hands transparently, <b className="value">{compact(l7('exchanges'), 1)}</b> went through exchange-shaped sweeps and <b className="value">{compact(l7('shielded_savings'), 1)}</b> was parked in shielded savings.</>}
       >

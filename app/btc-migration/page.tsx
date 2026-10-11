@@ -40,7 +40,6 @@ export default async function BtcMigrationPage() {
   return (
     <>
       <Masthead
-        crumbs={[{ label: 'Tools' }, { label: 'Cross-chain' }, { label: 'Bitcoin → Zcash' }]}
         title="How much Bitcoin is moving into Zcash?"
         lede={<><b className="num value">{btcF(S.btc)}</b> was swapped into ZEC through NEAR Intents in the last {bm.days} days, in {num(S.swaps)} swaps of {bm.min_btc} BTC or more — and <b className="num value">{btcF(S.btc_over_1y)}</b> of it had not moved for over a year.</>}
       />

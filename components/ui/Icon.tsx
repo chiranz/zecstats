@@ -4,6 +4,8 @@ const PATHS: Record<string, string> = {
   'chevron-down': 'M6 9l6 6 6-6',
   'chevron-up': 'M6 15l6-6 6 6',
   'chevron-right': 'M9 6l6 6-6 6',
+  'chevron-left': 'M15 6l-6 6 6 6',
+  list: 'M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01',
   'arrow-right': 'M5 12h14M13 6l6 6-6 6',
   menu: 'M4 7h16M4 12h16M4 17h16',
   x: 'M6 6l12 12M18 6 6 18',

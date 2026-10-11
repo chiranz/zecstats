@@ -96,7 +96,6 @@ export default async function ComparePage({ searchParams }: PageProps<'/compare'
   return (
     <>
       <Masthead
-        crumbs={[{ href: '/tools', label: 'Tools' }, { label: 'Compare charts' }]}
         title="Compare charts on one time range"
         lede={charts.length ? <>{charts.length} chart{charts.length === 1 ? '' : 's'} stacked on the same {range === 'ALL' ? 'full history' : `${range} window`}{to ? <>, {dateLong(from)} to {dateLong(to)}</> : null}. Add, reorder or remove charts; the set and the range are kept in the link.</> : 'Search for any of the 58 charts and stack them on one shared time range, one above the other. The set and the range are kept in the link.'}
       />

@@ -53,7 +53,6 @@ export default async function WalletAppsPage() {
   return (
     <>
       <Masthead
-        crumbs={[{ label: 'Tools' }, { label: 'Cross-chain' }, { label: 'Wallet apps' }]}
         title="Which wallet apps route ZEC swaps?"
         cadence="updates every 10 minutes"
         lede={<><b className="value">{leader.app}</b> led the last 7 days with <b className="num value">{money(leader.usd)}</b> — {pct(leader.share_pct, 1)} of the <b className="num value">{money(wa.summary.usd)}</b> in {num(wa.summary.swaps)} ZEC swaps on NEAR Intents.</>}

@@ -5,9 +5,11 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { navSection, primaryNav, toolGroups } from '@/lib/site';
 import type { SearchItem } from '@/lib/search';
+import type { NavData } from '@/lib/data/nav';
+import { StatusPill } from './StatusPill';
 import { Icon } from '@/components/ui/Icon';
 
-export function TopBar({ searchIndex }: { searchIndex: SearchItem[] }) {
+export function TopBar({ searchIndex, nav }: { searchIndex: SearchItem[]; nav: NavData }) {
   const pathname = usePathname();
   const current = navSection(pathname);
   const [toolsOpen, setToolsOpen] = useState(false);
@@ -42,38 +44,40 @@ export function TopBar({ searchIndex }: { searchIndex: SearchItem[] }) {
             <button className="nl" type="button" aria-expanded={toolsOpen} aria-haspopup="true" aria-current={current === 'Tools' ? 'page' : undefined} onClick={() => setToolsOpen((o) => !o)}>
               Tools <Icon name={toolsOpen ? 'chevron-up' : 'chevron-down'} size={10} />
             </button>
-            {toolsOpen && <ToolsMenu />}
+            {toolsOpen && <ToolsMenu values={nav.values} />}
           </div>
           {navItem('/news', 'News')}
         </nav>
         <div className="tb-right">
-          <button className="kbd-search" type="button" aria-label="Search charts, tools and pages" onClick={() => setSearchOpen(true)}>
+          <button className="kbd-search" type="button" aria-label="Search charts, tools and pages" aria-haspopup="dialog" onClick={() => setSearchOpen(true)}>
             <Icon name="search" size={15} />
-            <span className="lbl">Search {searchIndex.filter((s) => s.kind === 'Chart').length} charts &amp; tools</span>
-            <span className="kbd lbl">⌘K</span>
+            <span className="lbl" aria-hidden="true">Search</span>
+            <span className="kbd lbl" aria-hidden="true">⌘K</span>
           </button>
-          <ThemeToggle />
+          <StatusPill fresh={nav.fresh} />
+          <span className="tb-wide"><ThemeToggle /></span>
           <Link className="btn primary donate" href="/donate">Donate</Link>
           <button className="btn icon burger" type="button" aria-label={sheetOpen ? 'Close menu' : 'Open menu'} aria-expanded={sheetOpen} onClick={() => setSheetOpen((o) => !o)}>
             <Icon name={sheetOpen ? 'x' : 'menu'} size={18} />
           </button>
         </div>
       </div>
-      {sheetOpen && <MobileSheet current={current} onSearch={() => { setSheetOpen(false); setSearchOpen(true); }} />}
-      {searchOpen && <SearchPalette index={searchIndex} onClose={() => setSearchOpen(false)} />}
+      {sheetOpen && <MobileSheet current={current} nav={nav} onSearch={() => { setSheetOpen(false); setSearchOpen(true); }} />}
+      {searchOpen && <SearchPalette index={searchIndex} values={nav.values} onClose={() => setSearchOpen(false)} />}
     </header>
   );
 }
 
-function ToolsMenu() {
+/** Tools mega menu: Privacy first (its own column, Ironwood with its value), then six groups in three columns. */
+function ToolsMenu({ values }: { values: Record<string, string> }) {
   return (
     <div className="mega" role="menu" aria-label="Tools">
-      {toolGroups.map((g) => (
-        <div className="grp" key={g.title}>
+      {toolGroups.map((g, i) => (
+        <div className={`grp${i === 0 ? ' grp-priv' : ''}`} key={g.title}>
           <h4>{g.title}</h4>
           {g.links.map((l) => (
             <Link className="mi" role="menuitem" href={l.href} key={l.href}>
-              <b>{l.label}{l.tag && <span className="tag">{l.tag}</span>}</b>
+              <b>{l.label}{l.tag && <span className="tag">{l.tag}</span>}{i === 0 && l.href === '/ironwood' && values[l.href] && <span className="mi-v">{values[l.href]}</span>}</b>
               {l.desc && <span>{l.desc}</span>}
             </Link>
           ))}
@@ -83,7 +87,7 @@ function ToolsMenu() {
   );
 }
 
-function MobileSheet({ current, onSearch }: { current: string | null; onSearch: () => void }) {
+function MobileSheet({ current, nav, onSearch }: { current: string | null; nav: NavData; onSearch: () => void }) {
   return (
     <div className="m-sheet" role="dialog" aria-label="Menu">
       <div className="shell stack">
@@ -93,7 +97,15 @@ function MobileSheet({ current, onSearch }: { current: string | null; onSearch: 
             <Link key={l.href} href={l.href} className={current === l.label ? 'on' : undefined}>{l.label}</Link>
           ))}
         </div>
-        {toolGroups.map((g) => (
+        <div className="stack" style={{ gap: 6 }}>
+          <span className="kicker">Privacy</span>
+          <ul className="m-list">
+            {nav.privacy.map((l) => (
+              <li key={l.href}><Link href={l.href}>{l.featured && <i className="cx-dot" aria-hidden="true" />}{l.href === '/privacy' ? 'Privacy hub' : l.label}{l.value && <span className="m-v">{l.value}</span>}</Link></li>
+            ))}
+          </ul>
+        </div>
+        {toolGroups.slice(1).map((g) => (
           <div key={g.title} className="stack" style={{ gap: 6 }}>
             <span className="kicker">{g.title}</span>
             <div className="m-grid">{g.links.map((l) => <Link key={l.href} href={l.href}>{l.label}</Link>)}</div>
@@ -125,7 +137,7 @@ export function ThemeToggle({ wide = false }: { wide?: boolean }) {
   );
 }
 
-function SearchPalette({ index, onClose }: { index: SearchItem[]; onClose: () => void }) {
+function SearchPalette({ index, values, onClose }: { index: SearchItem[]; values: Record<string, string>; onClose: () => void }) {
   const router = useRouter();
   const [q, setQ] = useState('');
   const [sel, setSel] = useState(0);
@@ -186,7 +198,7 @@ function SearchPalette({ index, onClose }: { index: SearchItem[]; onClose: () =>
                   <button type="button" role="option" aria-selected={idx === sel} key={it.href} className={`p-row${idx === sel ? ' sel' : ''}`} onMouseEnter={() => setSel(idx)} onClick={() => go(it.href)}>
                     <span className="ic"><Icon name={it.kind === 'Chart' ? 'chart' : it.kind === 'Tool' ? 'tool' : 'page'} size={14} /></span>
                     <span><b>{it.title}</b>{it.desc && <small>{it.desc}</small>}</span>
-                    <span className="v">{it.group}</span>
+                    <span className={values[it.href] ? 'v val' : 'v'}>{values[it.href] ?? it.group}</span>
                   </button>
                 );
               })}

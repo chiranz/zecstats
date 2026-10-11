@@ -29,7 +29,6 @@ export default async function WhatIfPage() {
   return (
     <>
       <Masthead
-        crumbs={[{ href: '/tools', label: 'Tools' }, { label: 'What if gold' }]}
         title="What if Zcash took a share of gold?"
         lede={<>If every ZEC that will ever exist added up to 1% of gold&apos;s {big(WHAT_IF_ASSETS[0].size)}, one ZEC would be worth ${num(gold1, 0)} — {num(gold1 / w.zecUsd, 1)}× the ${num(w.zecUsd, 2)} it closed at on {dateLong(w.date)}. Pick another asset or share below.</>}
       />

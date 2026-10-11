@@ -1,36 +1,27 @@
-import Link from 'next/link';
 import type { ReactNode } from 'react';
-import { getFreshness } from '@/lib/data/snapshot';
-import { dateLong, num } from '@/lib/format';
+import { PageCadence } from './cadence';
 
-export type Crumb = { href?: string; label: string };
+export type KeyFigure = { value: ReactNode; delta?: ReactNode; dir?: 'up' | 'dn' | 'flat'; label: string };
 
-/** Page header: crumbs, H1, one-sentence answer, and the data-freshness note on the right. */
-export async function Masthead({ kicker, crumbs, title, lede, children, freshness = true, cadence = 'updates daily' }: { kicker?: string; crumbs?: Crumb[]; title: ReactNode; lede?: ReactNode; children?: ReactNode; freshness?: boolean; cadence?: string }) {
-  const f = await getFreshness();
+/**
+ * Page header (navigation direction D, "answer first"): the H1 and the one-sentence answer. Where the page sits is
+ * said by the context bar, and freshness by the status pill, so neither repeats here. Single-number pages (charts)
+ * add the key figure on the right; phones hide it because the sentence already carries the number.
+ * `cadence` is this page's own update rhythm when it differs from the site's daily update; the status popover shows it.
+ */
+export function Masthead({ title, lede, children, figure, cadence }: { title: ReactNode; lede?: ReactNode; children?: ReactNode; figure?: KeyFigure; cadence?: string }) {
   return (
-    <header className="mast">
-      <div className="stack" style={{ gap: 8, flex: '1 1 560px', minWidth: 0 }}>
-        {crumbs && (
-          <nav className="crumbs" aria-label="Breadcrumb">
-            <Link href="/">ZEC Stats</Link>
-            {crumbs.map((c) => (
-              <span key={c.label} style={{ display: 'contents' }}>
-                <span aria-hidden="true">›</span>
-                {c.href ? <Link href={c.href}>{c.label}</Link> : <span>{c.label}</span>}
-              </span>
-            ))}
-          </nav>
-        )}
-        {kicker && <span className="kicker">{kicker}</span>}
+    <header className={`mast${figure ? ' with-fig' : ''}`}>
+      {cadence && <PageCadence value={cadence} />}
+      <div className="mast-t">
         <h1 className="h1">{title}</h1>
         {lede && <p className="lede">{lede}</p>}
         {children}
       </div>
-      {freshness && (
-        <div className="fresh">
-          <span className="live"><i aria-hidden="true" />Node {f.synced ? 'synced' : 'catching up'} · block <span className="num">{num(f.height)}</span></span>
-          <span>Data through {dateLong(f.dataThrough)} · {cadence}</span>
+      {figure && (
+        <div className="mast-fig" aria-label={figure.label}>
+          <span className="mast-fv" aria-hidden="true">{figure.value}</span>
+          {figure.delta && <span className={`delta${figure.dir === 'dn' ? ' dn' : ''}`} aria-hidden="true">{figure.delta}</span>}
         </div>
       )}
     </header>

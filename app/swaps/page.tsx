@@ -42,7 +42,6 @@ export default async function SwapsPage() {
   return (
     <>
       <Masthead
-        crumbs={[{ label: 'Tools' }, { label: 'Cross-chain' }, { label: 'Swaps' }]}
         title="Where does ZEC sit in cross-chain swaps?"
         lede={<>Over the last {net.days_covered} days on NEAR Intents, ZEC ranked <b className="num value">#{zec.rank} of {net.node_count}</b> assets by PageRank — <b className="num value">{num(zec.weight, 2)}×</b> its weight by market cap.</>}
       >

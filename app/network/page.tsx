@@ -90,7 +90,6 @@ export default async function NetworkPage() {
   return (
     <>
       <Masthead
-        crumbs={[{ label: 'Tools' }, { label: 'Network' }, { label: 'Network nodes' }]}
         title="Zcash network nodes"
         cadence="crawler runs continuously"
         lede={<><b className="num value">{reachable}</b> nodes answered in the last 24 hours, across <b className="num value">{nCountries}</b> countries.</>}

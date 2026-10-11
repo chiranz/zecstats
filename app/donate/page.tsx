@@ -16,7 +16,6 @@ export default async function DonatePage() {
   return (
     <>
       <Masthead
-        crumbs={[{ href: '/tools', label: 'About' }, { label: 'Donate' }]}
         title="Keep the node running"
         lede={<>ZEC Stats is free. Running the Zebra node, the servers and the tooling behind it costs about <b>{usd(DONATE.monthlyCostUsd, 0)} a month</b> — {num(DONATE.monthlyCostUsd / px, 2)} ZEC at today&apos;s ${num(px, 2)}. If the site is useful to you, a donation of any size helps cover it.</>}
       />

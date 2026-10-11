@@ -21,7 +21,6 @@ export default async function CorrelatePage() {
   return (
     <>
       <Masthead
-        crumbs={[{ href: '/tools', label: 'Tools' }, { label: 'Correlations' }]}
         title="Which Zcash metrics move together?"
         lede={<>Every pair of metrics, scored from −1 (opposite) to +1 (together). Over the last year ZEC&apos;s price tracked transactions per day at r {rTxt(priceTx)} and shielded supply at r {rTxt(priceShield)}. Pick any cell for its scatter.</>}
       />

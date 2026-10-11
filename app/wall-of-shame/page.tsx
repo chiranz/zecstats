@@ -52,7 +52,6 @@ export default async function WallOfShamePage() {
   return (
     <>
       <Masthead
-        crumbs={[{ href: '/privacy', label: 'Privacy' }, { label: 'Wall of Shame' }]}
         title="Wall of Shame"
         lede={<>Shield-and-deshield round trips that reused a near-identical amount — <b className="num value">{num(n)}</b> found so far. Each one lets an observer link the transparent addresses on both sides of the shielded pool.</>}
       />

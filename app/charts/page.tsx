@@ -72,7 +72,7 @@ export default async function ChartsPage() {
   );
   return (
     <>
-      <Masthead crumbs={[{ label: 'Charts' }]} title={`All ${ALL_SLUGS.length} Zcash charts`} lede="Grouped by the question they answer. Every chart has a permalink, CSV and PNG." />
+      <Masthead title={`All ${ALL_SLUGS.length} Zcash charts`} lede="Grouped by the question they answer. Every chart has a permalink, CSV and PNG." />
       <ChartsIndex items={items} groups={CHART_GROUPS} />
     </>
   );

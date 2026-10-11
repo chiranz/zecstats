@@ -57,7 +57,6 @@ export default async function HalvingPage() {
   return (
     <>
       <Masthead
-        crumbs={[{ label: 'Tools' }, { label: 'Network' }, { label: 'Halving' }]}
         title="When is the next Zcash halving?"
         lede={<>At block <b className="num value">{num(next.height)}</b>, about <b className="num value">{num(h.daysLeft)} days</b> away (around {dateLong(next.date!)}): the block reward drops from {rewardStr(h.reward)} to {rewardStr(after)}.</>}
       />

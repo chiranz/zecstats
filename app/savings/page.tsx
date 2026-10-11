@@ -18,7 +18,6 @@ export default async function SavingsPage() {
   return (
     <>
       <Masthead
-        crumbs={[{ href: '/tools', label: 'Tools' }, { label: 'Investment calculator' }]}
         title="What if you had bought ZEC every month?"
         lede="Choose a start date, how often you buy and how much. We replay real daily closing prices, with no smoothing, and set Zcash against Bitcoin bought on the same days."
       />

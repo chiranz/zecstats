@@ -24,7 +24,6 @@ export default async function MetricsPage() {
   return (
     <>
       <Masthead
-        crumbs={[{ href: '/tools', label: 'Tools' }, { label: 'Metrics table' }]}
         title="Every headline number, and how it moved"
         lede={<>{defaults} Zcash numbers in one table, each set against 28 days and 12 months ago. Over 28 days the price-linked numbers {pc.dir === 'up' ? 'rose' : 'fell'} (ZEC <span className={pc.dir}>{pc.text}</span>) while on-chain activity {tc.dir === 'up' ? 'rose' : 'fell'} (transactions <span className={tc.dir}>{tc.text}</span>).</>}
       />

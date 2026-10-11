@@ -74,7 +74,6 @@ export default async function TxSizesPage() {
   return (
     <>
       <Masthead
-        crumbs={[{ label: 'Tools' }, { label: 'Reports' }, { label: 'Transaction sizes' }]}
         title="How big is a transparent Zcash transaction?"
         lede={<>Half of the {num(N)} transparent transactions between {dateLong(first)} and {dateLong(last)} moved <b className="num value">{fmt(P.p50)}</b> or less. The average is far higher because a few giant transfers carry most of the money.</>}
       />
