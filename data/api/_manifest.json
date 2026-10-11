@@ -209,6 +209,16 @@
     "utxo-survival": {
       "route": "/api/utxo-survival",
       "bytes": 16175257
+    },
+    "wall-of-shame": {
+      "route": "/wall-of-shame",
+      "bytes": 133137,
+      "parsedFrom": "page html"
+    },
+    "privacy-suggestions": {
+      "route": "/privacy-suggestions",
+      "bytes": 12014,
+      "parsedFrom": "page html"
     }
   }
 }
