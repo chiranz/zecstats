@@ -1,6 +1,6 @@
 .flows{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden}
 .flow{background:var(--card);padding:16px 18px;display:flex;flex-direction:column;gap:6px;min-width:0}
-.fk{display:flex;align-items:center;gap:8px;font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.fk{display:flex;align-items:center;gap:8px;font:500 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .fk i{width:10px;height:10px;border-radius:3px;flex:none}
 .fv{font:700 clamp(24px,3vw,34px)/1.1 var(--mono);color:var(--value);letter-spacing:-.02em}
 .fv small{font-size:.5em;font-weight:500;color:var(--text-2);margin-left:4px}

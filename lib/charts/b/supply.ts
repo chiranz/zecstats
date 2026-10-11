@@ -3,7 +3,7 @@ import type { ChartDef } from '../types';
 import { getCompleteDailyStats } from '@/lib/data/snapshot';
 import { getDevFund, getMktcapIssuance, type IssuancePoint } from '@/lib/data/charts-b';
 import { num, zat, compact, dateLong } from '@/lib/format';
-import { C, tint, bars, line, area, panel, rolling, changeOver, changeWords, spark, HALVINGS, UPGRADES } from './util';
+import { C, tint, bars, line, area, panel, rolling, changeOver, changeWords, spark, spanWord, HALVINGS, UPGRADES } from './util';
 
 const CAP = 21_000_000;
 
@@ -39,7 +39,7 @@ const supply: ChartDef = {
       ] })],
       headline: { label: 'Total supply', value: `${num(s[i])} ZEC`, date: dates[i], change,
         sentence: `${num(s[i])} ZEC had been mined by ${dateLong(dates[i])} — ${((s[i] / CAP) * 100).toFixed(1)}% of the 21M cap, with ${compact(left)} ZEC still to come.` },
-      spark: spark(s, 3650), indexValue: `${compact(s[i])} ZEC`,
+      spark: spark(s, 3650), sparkWindow: '10-year', indexValue: `${compact(s[i])} ZEC`,
       defaultRange: 'ALL', events: [...HALVINGS, { date: '2019-12-11', label: 'Blossom' }], dataThrough: dates[i],
     };
   },
@@ -81,7 +81,7 @@ const inflation: ChartDef = {
       ],
       headline: { label: 'Inflation rate', value: `${rate[i]!.toFixed(2)}%/yr`, date: dates[i], change: null,
         sentence: `Supply is growing **${rate[i]!.toFixed(2)}% a year** at the current pace: ${num(em7[i]!)} ZEC issued per day on a 7-day average to ${dateLong(dates[i])}.` },
-      spark: spark(rate, 1825), indexValue: `${rate[i]!.toFixed(2)}%/yr`,
+      spark: spark(rate, 1825), sparkWindow: '5-year', indexValue: `${rate[i]!.toFixed(2)}%/yr`,
       defaultRange: '5Y', events: [...HALVINGS, { date: '2019-12-11', label: 'Blossom' }], dataThrough: dates[i],
       notes: [`Lockbox releases are paid through a coinbase but issue nothing new, so they are left out: ${[...released].map(([t, v]) => `${num(v)} ZEC on ${dateLong(t)}`).join(', ')} (NU6.1). The first years run off the scale on ALL — switch to Log.`],
     };
@@ -158,11 +158,11 @@ const hashrate: ChartDef = {
           line('hr', 'Daily estimate', tint(C.zec, 45), hr, { width: 1.1 }), line('hr7', '7-day average', C.zec, hr7, { width: 2.2 })] }),
         panel({ title: 'Difficulty change, day over day', dates, format: 'pct', zeroBaseline: true, height: 170, series: [bars('dchg', 'Difficulty change', C.s2, dchg, { agg: 'mean' })] }),
       ],
-      headline: { label: 'Network hashrate', value: gs(hr[i]), date: dates[i], change: changeOver(dates, hr, 28),
-        sentence: `The network ran at an estimated ${gs(hr[i])} on ${dateLong(dates[i])}; the 7-day average of ${gs(hr7[i]!)} is ${changeWords(change)}.` },
-      spark: spark(hr7), indexValue: gs(hr[i]),
+      headline: { label: 'Network hashrate, 7-day average', value: gs(hr7[i]!), date: dates[i], change,
+        sentence: `The network ran at an estimated ${gs(hr7[i]!)} over the 7 days to ${dateLong(dates[i])}, ${changeWords(change)}; ${gs(hr[i])} on the last day.` },
+      spark: spark(hr7), indexValue: gs(hr7[i]!),
       defaultRange: '1Y', events: [...UPGRADES], dataThrough: dates[i],
-      notes: ['Shown as H/s on the axis; for Equihash read each “H” as one solution.'],
+      notes: ['Equihash counts solutions, so the rate is in Sol/s (GSol/s = a billion solutions a second), not hashes.'],
     };
   },
 };
@@ -213,7 +213,7 @@ const impliedGw: ChartDef = {
       } }],
       headline: { label: 'Zcash implied mining draw', value: power(z.gw), date: z.date, change: null,
         sentence: `Zcash’s hashrate implies about ${power(z.gw)} on today’s hardware at ${compact(z.supply)} coins issued; Bitcoin was drawing ${b ? power(b) : 'n/a'} when it had issued as many${ratio ? ` — ${ratio.toFixed(1)}× more` : ''}.` },
-      spark: spark(zec.map((p) => p.gw), 120), indexValue: power(z.gw),
+      spark: spark(zec.map((p) => p.gw), 120), sparkWindow: spanWord(zec[Math.max(0, zec.length - 120)].date, z.date), indexValue: power(z.gw),
       ranges: false, dataThrough: z.date,
       notes: ['Weekly points. Both converted at current-generation ASIC efficiency, so early Bitcoin is understated.'],
     };

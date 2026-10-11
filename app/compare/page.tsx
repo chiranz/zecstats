@@ -8,7 +8,8 @@ import type { ValueFormat } from '@/components/charts/valueFormat';
 import { ComparePicker, type PickItem } from '@/components/tools/ComparePicker';
 import { CHARTS, chartBySlug } from '@/lib/charts';
 import { CHART_GROUPS, GROUP_SLUGS, type TimeSeriesPanel } from '@/lib/charts/types';
-import { getChartCatalogue, getMetricSeries } from '@/lib/data/tools';
+import { getChartCatalogue, getMetricSeries, metricCount } from '@/lib/data/tools';
+import { POOL_COLOR, POOLS } from '@/lib/data/snapshot';
 import { dateLong } from '@/lib/format';
 import { pageMetadata } from '@/lib/seo';
 import { SectionLd } from '@/components/seo/SectionLd';
@@ -22,6 +23,8 @@ const PRESETS = [
   { label: 'Hashrate vs price', charts: ['hashrate', 'price'] },
 ];
 const SERIES_COLORS = ['var(--s1)', 'var(--s2)', 'var(--s3)', 'var(--s4)', 'var(--s5)', 'var(--s6)'];
+/** A metric-series line named after a pool keeps that pool's colour; anything else takes the generic order. */
+const lineColor = (name: string, i: number) => { const p = POOLS.find((k) => name.toLowerCase().startsWith(k)); return p ? POOL_COLOR[p] : SERIES_COLORS[i % 6]; };
 const UNIT_FORMAT: Record<string, ValueFormat> = { usd: 'usd', zec: 'zecCompact', pct: 'pct', count: 'count', mult: 'x', ratio: 'ratio', kb: 'bytes', big: 'countCompact' };
 
 /** Registry sentences mark the key number with **bold**. */
@@ -52,7 +55,7 @@ async function loadPlot(slug: string, titles: Map<string, string>): Promise<Plot
     slug, title, api: 'metric-series',
     panels: units.map((u) => ({
       kind: 'timeseries', dates: ms.dates, format: UNIT_FORMAT[u] ?? 'countCompact', logToggle: u === 'usd',
-      series: lines.filter((l) => l.unit === u).map((l, i) => ({ key: l.name, label: l.name, color: SERIES_COLORS[i % 6], values: l.series })),
+      series: lines.filter((l) => l.unit === u).map((l, i) => ({ key: l.name, label: l.name, color: lineColor(l.name, i), values: l.series })),
     })),
     note: 'Drawn from the daily metric series while this chart’s full definition is not registered.',
   };
@@ -73,7 +76,7 @@ export default async function ComparePage({ searchParams }: PageProps<'/compare'
   const allSlugs = Object.values(GROUP_SLUGS).flat();
   const charts = [...new Set(raw.split(',').map((x) => x.trim()).filter((x) => allSlugs.includes(x)))].slice(0, 6);
 
-  const catalogue = await getChartCatalogue();
+  const [catalogue, mc] = await Promise.all([getChartCatalogue(), metricCount()]);
   const titles = new Map<string, string>(catalogue.map((c) => [c.id, c.t.replace(/^Zcash\s+/, '')]));
   for (const c of CHARTS) titles.set(c.slug, c.short);
   const groupOf = new Map<string, string>(Object.entries(GROUP_SLUGS).flatMap(([g, slugs]) => slugs.map((s) => [s, CHART_GROUPS.find((x) => x.id === g)!.title] as [string, string])));
@@ -97,7 +100,7 @@ export default async function ComparePage({ searchParams }: PageProps<'/compare'
       <SectionLd path="/compare" />
       <Masthead
         title="Compare charts on one time range"
-        lede={charts.length ? <>{charts.length} chart{charts.length === 1 ? '' : 's'} stacked on the same {windowWords}{to ? <>, {dateLong(from)} to {dateLong(to)}</> : null}. Add, reorder or remove charts; the set and the range are kept in the link.</> : 'Search for any of the 58 charts and stack them on one shared time range, one above the other. The set and the range are kept in the link.'}
+        lede={charts.length ? <>{charts.length} chart{charts.length === 1 ? '' : 's'} stacked on the same {windowWords}{to ? <>, {dateLong(from)} to {dateLong(to)}</> : null}. Add, reorder or remove charts; the set and the range are kept in the link.</> : `Search for any of the ${allSlugs.length} charts and stack them on one shared time range, one above the other. The set and the range are kept in the link.`}
       />
       <ComparePicker items={items} charts={charts} state={state} bounds={end ? { from: firstAll, to: end } : null} hasEvents={hasEvents} />
       {charts.length === 0 && (
@@ -128,7 +131,7 @@ export default async function ComparePage({ searchParams }: PageProps<'/compare'
                 <div key={i} className="stack" style={{ gap: 6 }}>
                   {panel.title && <p className="small mono">{panel.title}</p>}
                   {sp2.dates.length > 1
-                    ? <TimeSeriesChart dates={sp2.dates} series={sp2.series} format={panel.format} stacked={panel.stacked} shareToggle={panel.shareToggle} yDomain={panel.yDomain} zeroBaseline={panel.zeroBaseline} logToggle={panel.logToggle} defaultLog={panel.defaultLog} step={panel.step} ranges={false} events={ann && i === 0 ? p.events : undefined} height={Math.min(panel.height ?? 280, 280)} ariaLabel={`${p.title}${panel.title ? ` — ${panel.title}` : ''}, ${dateLong(from)} to ${dateLong(to)}`} />
+                    ? <TimeSeriesChart dates={sp2.dates} series={sp2.series} format={panel.format} unit={panel.unit} endLabel={panel.endLabel} stacked={panel.stacked} shareToggle={panel.shareToggle} yDomain={panel.yDomain} zeroBaseline={panel.zeroBaseline} logToggle={panel.logToggle} defaultLog={panel.defaultLog} step={panel.step} ranges={false} events={ann && i === 0 ? p.events : undefined} height={Math.min(panel.height ?? 280, 280)} ariaLabel={`${p.title}${panel.title ? ` — ${panel.title}` : ''}, ${dateLong(from)} to ${dateLong(to)}`} />
                     : <p className="note">No data in this window.</p>}
                 </div>
               );
@@ -144,8 +147,8 @@ export default async function ComparePage({ searchParams }: PageProps<'/compare'
       <Tiles
         items={[
           { href: '/correlate', title: 'Correlations', desc: 'How strongly any two of these metrics move together, as a number.', value: 'r from −1 to +1' },
-          { href: '/charts', title: 'All 58 charts', desc: 'The full index, grouped by the question each chart answers.', value: '7 groups' },
-          { href: '/metrics', title: 'Metrics table', desc: 'Every headline number with its 28-day and 12-month change.', value: '43 metrics' },
+          { href: '/charts', title: `All ${allSlugs.length} charts`, desc: 'The full index, grouped by the question each chart answers.', value: `${CHART_GROUPS.length} groups` },
+          { href: '/metrics', title: 'Metrics table', desc: 'Every headline number with its 28-day and 12-month change.', value: `${mc.tracked} metrics` },
           { href: '/btc-bull-run', title: 'ZEC 2026 vs BTC 2017', desc: 'Two price runs aligned by day instead of by date.', value: 'Day by day' },
         ]}
       />

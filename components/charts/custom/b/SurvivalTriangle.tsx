@@ -34,14 +34,12 @@ export function SurvivalTriangle(props: Record<string, unknown>) {
     return out;
   }, [cells, cw, ch, nR]);
 
+  // a tick where each year starts; when two crowd, the newer year keeps its label, so a partial first year (2016) is
+  // the one dropped and the years still read in order
   const yearTicks = (dates: string[], pos: (i: number) => number, minGap: number) => {
+    const starts = dates.flatMap((d, i) => (i > 0 && d.slice(0, 4) === dates[i - 1].slice(0, 4) ? [] : [{ p: pos(i), t: d.slice(0, 4) }]));
     const out: { p: number; t: string }[] = [];
-    dates.forEach((d, i) => {
-      if (i > 0 && d.slice(0, 4) === dates[i - 1].slice(0, 4)) return;
-      const p = pos(i);
-      if (out.length && Math.abs(p - out[out.length - 1].p) < minGap) return;
-      out.push({ p, t: d.slice(0, 4) });
-    });
+    for (let k = starts.length - 1; k >= 0; k--) if (!out.length || Math.abs(starts[k].p - out[0].p) >= minGap) out.unshift(starts[k]);
     return out;
   };
   const xt = yearTicks(cols, (i) => i * cw, narrow ? 64 : 56);

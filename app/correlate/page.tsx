@@ -30,7 +30,7 @@ export default async function CorrelatePage() {
       <Correlate data={data} defaults={CORR_DEFAULTS} />
       <More summary="How to read it">
         <p><b>Each pair appears once.</b> Correlation is symmetric — A against B is the same number as B against A — so the grid shows only the lower half instead of every value twice.</p>
-        <p><b>r, not r².</b> The signed r is printed in every cell, and the colour (blue together, orange opposite) only repeats it, so nothing depends on telling hues apart.</p>
+        <p><b>r, not r².</b> The signed r is printed in every cell, and the colour (blue together, rust opposite) only repeats it, so nothing depends on telling hues apart.</p>
         <p><b>The forward price metrics</b> (ZEC price 30 or 90 days later) are the price shifted back in time. Correlating a metric against them hints at whether it led the price — over this history, not as a rule.</p>
         <p><b>Trends inflate r.</b> Two series that both grew over the years will correlate strongly even if their day-to-day moves are unrelated. Shorter windows are a useful check. Correlation is not causation.</p>
       </More>

@@ -61,6 +61,13 @@ export function changePct(vs: (number | null)[], days = 28): number | null {
   return ((b - a) / Math.abs(a)) * 100;
 }
 
+/** Change in percentage points of the last value vs `days` rows earlier, as a headline change (shares and rates). */
+export function changePtsH(vs: (number | null)[], days = 28): Headline['change'] {
+  const i = lastIdx(vs);
+  const a = i >= days ? vs[i - days] : null, b = vs[i];
+  return a == null || b == null ? null : { pct: b - a, days, pts: true };
+}
+
 /** ≤n points from the last `window` rows, for index sparklines. */
 export function spark(vs: (number | null)[], window = 365, n = 60): number[] {
   const xs = vs.slice(-window).filter((v): v is number => v != null && Number.isFinite(v));

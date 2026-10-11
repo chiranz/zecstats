@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { Icon } from '@/components/ui/Icon';
-import { dateLong } from '@/lib/format';
+import { dateLong, type Good } from '@/lib/format';
 import type { MetricGroupId, MetricRow, MetricsTable as Table, PeriodKey } from '@/lib/data/tools';
 import { CopyButton } from './CopyButton';
 import { Spark } from './Spark';
@@ -15,6 +15,14 @@ import { downloadCsv, replaceQuery } from '@/components/tools/browser';
 const PERIODS: PeriodKey[] = ['7D', '28D', '3M', '6M', '12M'];
 const PERIOD_WORD: Record<PeriodKey, string> = { '7D': '7 days', '28D': '28 days', '3M': '3 months', '6M': '6 months', '12M': '12 months' };
 const DEFAULT_CMP: PeriodKey[] = ['28D', '12M'];
+const PERIOD_SPAN: Record<PeriodKey, string> = { '7D': '7-day', '28D': '28-day', '3M': '3-month', '6M': '6-month', '12M': '12-month' };
+/** The API's chart link where it points at the wrong chart. */
+const CHART_FIX: Record<string, string> = { 'Exchange Trading Volume': 'exch-vol', 'Shielded Tx Share': 'tx-types' };
+/** Rows where neither direction is good or bad (Bitcoin's own figures, migration between pools, issuance, funding):
+ *  their changes are drawn muted. Every other row is better when it rises. */
+const NEUTRAL = new Set(['Transparent Pool', 'Sprout Pool', 'Sapling Pool', 'Orchard Pool', 'Total Supply', 'Emission / Day', 'Lockbox (Dev Fund)', 'Avg Difficulty',
+  'Blocks / Day', 'Avg Block Size', 'Total Fees Paid / Day', 'BTC Perp Funding (APR)', 'ZEC Perp Funding (APR)', 'ZEC−BTC Funding Spread', 'BTC Open Interest', 'BTC Perp Volume (24h)']);
+const goodOf = (name: string): Good => (NEUTRAL.has(name) ? 'neutral' : 'up');
 
 export type Sort = { col: 0 | 1; dir: 'desc' | 'asc' };
 /** View state read from the link on the server (?cmp=28D,12M&m=…&spark=0&sort=1a), so a shared link opens as sent. */
@@ -66,7 +74,7 @@ export function MetricsTable({ table, groups, view, asOf, bounds, defaults }: {
   });
 
   const rows = table.rows.filter((r) => sel.includes(r.id));
-  const chg = (r: MetricRow, p: PeriodKey) => change(r.now, r.periods[p].from, r.kind, r.signed);
+  const chg = (r: MetricRow, p: PeriodKey) => change(r.now, r.periods[p].from, r.kind, r.signed, goodOf(r.name));
   const sortKey = cmp[Math.min(sort.col, cmp.length - 1)];
   const byGroup = groups.map((g) => {
     const list = rows.filter((r) => r.group === g.id);
@@ -128,13 +136,13 @@ export function MetricsTable({ table, groups, view, asOf, bounds, defaults }: {
       <section className="sec" aria-labelledby="tbl-h">
         <h2 className="sr-only" id="tbl-h">Metrics table</h2>
         <div className={s.sumline}>
-          <p className="takeaway">Over {PERIOD_WORD[first]} <b className="up">{rose} rose</b> and <b className="dn">{fell} fell</b>. Rows are grouped by subject and sorted by <b>{sortKey} change</b> ({sort.dir === 'desc' ? 'biggest rise first' : 'biggest fall first'}) inside each group.</p>
+          <p className="takeaway">Over {PERIOD_WORD[first]} <b>{rose} rose</b> and <b>{fell} fell</b>. Rows are grouped by subject and sorted by <b>{sortKey} change</b> ({sort.dir === 'desc' ? 'biggest rise first' : 'biggest fall first'}) inside each group.</p>
           <p className="small mono">Click a name for its chart · {rows.length} rows · {byGroup.length} groups</p>
         </div>
         <div className={`tbl-wrap ${s.wrap}`}>
           <table className={`t ${s.mt}`}>
             <caption className="sr-only">Zcash metrics now, with change over {cmp.map((p) => PERIOD_WORD[p]).join(' and ')}, grouped by subject</caption>
-            <colgroup><col className={s.cName} /><col className={s.cNow} />{cmp.map((p) => <col key={p} />)}</colgroup>
+            <colgroup><col className={s.cName} /><col className={s.cNow} />{cmp.map((p) => <col key={p} className={s.chgCol} />)}</colgroup>
             <thead>
               <tr>
                 <th scope="col" className={s.lft}>Metric</th>
@@ -142,7 +150,7 @@ export function MetricsTable({ table, groups, view, asOf, bounds, defaults }: {
                 {cmp.map((p, i) => {
                   const on = Math.min(sort.col, cmp.length - 1) === i;
                   return (
-                    <th key={p} scope="col" aria-sort={on ? (sort.dir === 'desc' ? 'descending' : 'ascending') : undefined}>
+                    <th key={p} scope="col" className={s.chgCol} aria-sort={on ? (sort.dir === 'desc' ? 'descending' : 'ascending') : undefined}>
                       <button className={s.sort} type="button" onClick={() => onSort(i as 0 | 1)} aria-label={`Sort by ${p} change`}>
                         {p} change
                         <svg width="12" height="12" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
@@ -163,20 +171,22 @@ export function MetricsTable({ table, groups, view, asOf, bounds, defaults }: {
                   return (
                     <tr key={r.id}>
                       <th scope="row" className={s.mname} headers={`g-${g.id}`}>
-                        <Link href={`/chart/${r.chart}`}>{r.label}</Link>
-                        {r.def && ['Market Cap', 'Total Supply', 'Network Hashrate'].includes(r.name) && <span className={s.added} title="Hidden by default on the current site">default now</span>}
+                        <Link href={`/chart/${CHART_FIX[r.name] ?? r.chart}`}>{r.label}</Link>
                         <span className={s.u}>{r.desc}</span>
                       </th>
-                      <td><span className={s.nowv}>{now.v}{now.unit && <small>{now.unit}</small>}</span></td>
+                      <td>
+                        <span className={s.nowv}>{now.v}{now.unit && <small>{now.unit}</small>}</span>
+                        <span className={s.mob}>{cmp.map((p) => { const c = chg(r, p); return <span key={p}><i>{p}</i> {c ? <b className={c.cls === 'muted' ? s.flat : c.cls}>{c.text}</b> : <span className="muted">no data</span>}</span>; })}</span>
+                      </td>
                       {cmp.map((p) => {
                         const c = chg(r, p);
                         const per = r.periods[p];
-                        if (!c) return <td key={p}><span className={s.nodata} title={per.from === 0 ? `Was 0 on ${dateLong(table.periodDates[p])}` : 'No history this far back'}>{per.from === 0 ? 'Was 0 then' : 'No data'}</span></td>;
+                        if (!c) return <td key={p} className={s.chgCol}><span className={s.nodata} title={per.from === 0 ? `Was 0 on ${dateLong(table.periodDates[p])}` : 'No history this far back'}>{per.from === 0 ? 'Was 0 then' : 'No data'}</span></td>;
                         return (
-                          <td key={p}>
+                          <td key={p} className={s.chgCol}>
                             <span className={s.chg}>
-                              {spark && <Spark values={per.spark} />}
-                              <span className={s.cv}><b className={c.dir === 'flat' ? s.flat : c.dir}>{c.text}</b><small>from {fmtMetricText(per.from, r.kind)}</small></span>
+                              {spark && <Spark values={per.spark} window={PERIOD_SPAN[p]} label={r.label} />}
+                              <span className={s.cv}><b className={c.cls === 'muted' ? s.flat : c.cls}>{c.text}</b><small>from {fmtMetricText(per.from, r.kind)}</small></span>
                             </span>
                           </td>
                         );

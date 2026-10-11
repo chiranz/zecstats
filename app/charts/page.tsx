@@ -4,7 +4,7 @@ import { ChartsIndex, type IndexItem, type UnitKind } from '@/components/chart-p
 import { groupOf, safeLoad } from '@/components/chart-page/ChartPage';
 import type { ValueFormat } from '@/components/charts/valueFormat';
 import { CHARTS, ALL_SLUGS } from '@/lib/charts';
-import { CHART_GROUPS, VS_BTC, type ChartGroupId } from '@/lib/charts/types';
+import { CHART_GROUPS, VS_BTC } from '@/lib/charts/types';
 import { getLiveCharts, liveTitle } from '@/lib/data/charts-a';
 import { dateLong } from '@/lib/format';
 import { pageMetadata } from '@/lib/seo';
@@ -37,8 +37,6 @@ function unitOf(f: ValueFormat | undefined): UnitKind | undefined {
   return 'Count';
 }
 
-const FEAT_COLOR: Partial<Record<ChartGroupId, string>> = { privacy: 'var(--p-ironwood)', costbasis: 'var(--zec)' };
-
 export default async function ChartsPage() {
   const live = await getLiveCharts();
   const items: IndexItem[] = await Promise.all(
@@ -48,7 +46,7 @@ export default async function ChartsPage() {
       const group = groupOf(slug)!;
       const base = { slug, group, vsBtc: VS_BTC.includes(slug) };
       if (!def) {
-        return { ...base, title: await liveTitle(slug), built: false, value: '—', spark: [], ext: false, pools: [], keywords: `${l?.d ?? ''} ${SYNONYMS[slug] ?? ''}` };
+        return { ...base, title: await liveTitle(slug), built: false, value: '—', spark: [], sparkWindow: '1-year', ext: false, pools: [], keywords: `${l?.d ?? ''} ${SYNONYMS[slug] ?? ''}` };
       }
       const data = await safeLoad(def);
       const ts = data?.panels.find((p) => p.kind === 'timeseries');
@@ -59,12 +57,14 @@ export default async function ChartsPage() {
         built: !!data,
         value,
         spark: data?.spark ?? [],
+        sparkWindow: data?.sparkWindow ?? '1-year',
         ext: def.source === 'external',
         source: def.source,
         unit: unitOf(ts && ts.kind === 'timeseries' ? ts.format : undefined),
         pools: def.pools ?? [],
         keywords: `${def.title} ${def.question} ${l?.t ?? ''} ${l?.d ?? ''} ${SYNONYMS[slug] ?? ''}`,
-        feat: data ? { value: data.headline.value, change: data.headline.change ?? null, caption: `${data.headline.label} · ${dateLong(data.headline.date)}`, color: FEAT_COLOR[group] ?? 'var(--zec)', descriptor: data.indexValue && data.indexValue !== data.headline.value ? data.indexValue : undefined } : undefined,
+        // the descriptor is the index value when it says something the headline value doesn't ("5 pools"), never the same number twice
+        feat: data ? { value: data.headline.value, change: data.headline.change ?? null, caption: `${data.headline.label} · ${data.headline.note ?? dateLong(data.headline.date)}`, color: 'var(--text-2)', descriptor: data.indexValue && !data.indexValue.startsWith(data.headline.value) ? data.indexValue : undefined } : undefined,
       };
     }),
   );

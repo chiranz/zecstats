@@ -4,9 +4,9 @@ import { More, Section } from '@/components/ui/blocks';
 import { Icon } from '@/components/ui/Icon';
 import { CustomPanelView } from '@/components/charts/custom';
 import { CHART_GROUPS, GROUP_SLUGS, type ChartData, type ChartDef, type ChartGroupId, type CustomPanel, type TimeSeriesPanel } from '@/lib/charts/types';
-import { chartBySlug } from '@/lib/charts';
+import { ALL_SLUGS, chartBySlug } from '@/lib/charts';
 import { liveTitle, getLiveCharts } from '@/lib/data/charts-a';
-import { dateLong, monthYear, num } from '@/lib/format';
+import { dateLong, delta, monthYear, num } from '@/lib/format';
 import { ChartBody } from './ChartBody';
 import { headlineSentence, rich } from './rich';
 import s from './chart-page.module.css';
@@ -34,14 +34,19 @@ async function titleFor(slug: string) {
 }
 
 /** The headline number beside the H1, when the chart has one number (not a descriptor like "6 yardsticks"). */
-function keyFigure(h: ChartData['headline']): KeyFigure | undefined {
+export function keyFigure(h: ChartData['headline']): KeyFigure | undefined {
   if (!h.value || !/\d/.test(h.value)) return undefined;
   const c = h.change;
+  // a share or rate changes in points; a level by a relative %
+  const suffix = c?.pts ? ' pts' : '%', digits = c?.pts ? 2 : c && Math.abs(c.pct) >= 100 ? 0 : 1;
+  const after = [c && `vs ${c.days} days earlier`, h.note].filter(Boolean).join(' · ');
+  const words = c ? `, ${delta(c.pct, digits, suffix).dir === 'flat' ? 'flat' : `${c.pct > 0 ? 'up' : 'down'} ${num(Math.abs(c.pct), digits)}${suffix}`} vs ${c.days} days earlier` : '';
   return {
     value: h.value,
-    delta: c ? `${c.pct >= 0 ? '▲' : '▼'} ${num(Math.abs(c.pct), 1)}% vs ${c.days} days earlier` : undefined,
-    dir: !c ? 'flat' : c.pct >= 0 ? 'up' : 'dn',
-    label: `Key figure: ${h.value}${c ? `, ${c.pct >= 0 ? 'up' : 'down'} ${num(Math.abs(c.pct), 1)}% vs ${c.days} days earlier` : ''}${h.date ? `, ${dateLong(h.date)}` : ''}`,
+    change: c ? { v: c.pct, digits, suffix, good: c.good, after } : undefined,
+    delta: !c && h.note ? h.note : undefined,
+    dir: 'flat',
+    label: `Key figure: ${h.value}${words}${h.note ? ` (${h.note})` : ''}${h.date ? `, ${dateLong(h.date)}` : ''}`,
   };
 }
 
@@ -153,7 +158,7 @@ export async function ChartPage({ slug }: { slug: string }) {
           <h3 className="kicker">More in {group.title}</h3>
           <div className={s.chips}>
             {siblings.map((x) => <Link key={x.slug} className="chip" href={`/chart/${x.slug}`}>{x.title}</Link>)}
-            <Link className="chip" href="/charts">All 58 charts →</Link>
+            <Link className="chip" href="/charts">All {ALL_SLUGS.length} charts →</Link>
           </div>
         </div>
       </section>
@@ -174,7 +179,7 @@ async function NotBuilt({ slug, groupTitle, title, failed = false }: { slug: str
             : `This chart is part of the ${groupTitle} group. Its page is coming soon.`}
         </p>
         <div className="row">
-          <Link className="btn" href="/charts">All 58 charts</Link>
+          <Link className="btn" href="/charts">All {ALL_SLUGS.length} charts</Link>
         </div>
       </div>
     </div>

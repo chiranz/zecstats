@@ -1,8 +1,9 @@
 import 'server-only';
 import type { ChartDef } from '../types';
-import { POOL_COLOR, POOL_LABEL, POOLS, poolsFromRow, type DailyStat, type Pool } from '@/lib/data/snapshot';
+import { POOL_COLOR, POOL_LABEL, POOLS, poolsFromRow, type Pool } from '@/lib/data/snapshot';
+import { poolFlows, shieldingWindows } from '@/lib/data/flows';
 import { api } from '@/lib/data/core';
-import { dateLong, num, zat as Z } from '@/lib/format';
+import { dateLong, delta, num } from '@/lib/format';
 import { NU_EVENTS, changePct, changeWords, completeDaily, dataThrough, fmt, headline, lastIdx, sma, spark } from './common';
 
 const POOL_META = {
@@ -21,7 +22,7 @@ export const pools: ChartDef = {
   group: 'privacy',
   source: 'onchain',
   sourceNote: 'Daily balance at end of UTC day · our Zebra node (consensus value pools)',
-  unit: 'ZEC (or share of shielded ZEC with “Share %”)',
+  unit: 'ZEC (or share of total supply with “Share %”)',
   pools: ['transparent', 'sprout', 'sapling', 'orchard', 'ironwood'],
   api: ['daily-stats', 'pool-balances'],
   related: ['shielding-rate', 'flow-compare', 'flow-ironwood', 'anonymity'],
@@ -40,7 +41,7 @@ export const pools: ChartDef = {
       paragraphs: [
         'Balances are the consensus value-pool totals at the end of each complete UTC day, read from our Zebra node. The current partial day is left out.',
         'Transparent is available as a chip but starts hidden: at ~12M ZEC it would bury the shielded pools beneath it.',
-        'Share % divides each visible pool by the total of the visible pools, so it answers “where does shielded ZEC sit?” when Transparent is off.',
+        'Share % divides each pool by total supply — all five pools, Transparent included even while it is hidden — so with Transparent off the shielded stack tops out near 30%: the shielded share of all ZEC.',
       ],
     },
   ],
@@ -72,24 +73,13 @@ export const pools: ChartDef = {
       defaultRange: '5Y',
       events: NU_EVENTS.filter((e) => e.date >= '2020-01-01'),
       dataThrough: await dataThrough(),
+      notes: ['Share % is each pool’s share of total supply (Transparent counts even while hidden), not of the visible pools.'],
     };
   },
 };
 
 /* ------------------------------------------------------------ flows (shared) */
-/** Daily flows per pool, as the live site derives them. Transparent runs backwards: its inflow is deshielding. */
-export function poolFlows(r: DailyStat, pool: Pool): { inflow: number; outflow: number; balance: number } {
-  if (pool === 'transparent') {
-    const mig = r.ironwood_inflow_shielded_zat || 0;
-    return {
-      inflow: Z(r.sprout_outflow_zat + r.sapling_outflow_zat + r.orchard_outflow_zat + r.ironwood_outflow_zat - mig),
-      outflow: Z(r.sprout_inflow_zat + r.sapling_inflow_zat + r.orchard_inflow_zat + r.ironwood_inflow_zat - mig),
-      balance: Z(r.end_transparent_zat),
-    };
-  }
-  const k = pool as Exclude<Pool, 'transparent'>;
-  return { inflow: Z(r[`${k}_inflow_zat`] || 0), outflow: Z(r[`${k}_outflow_zat`] || 0), balance: Z(r[`end_${k}_zat`]) };
-}
+export { poolFlows };
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 const signed = (v: number) => `${v >= 0 ? '+' : '−'}${num(Math.abs(v), 0)} ZEC`;
 
@@ -108,7 +98,7 @@ function flowDef(pool: Pool, o: { title: string; question: string; note: string;
     sourceNote: 'End-of-day balance + daily pool flows · our Zebra node', unit: 'ZEC; ZEC per day', pools: [pool], api: ['daily-stats'], related: o.related,
     explainer: [
       { ...FLOW_INTRO(name), paragraphs: [...FLOW_INTRO(name).paragraphs, o.extra] },
-      { heading: 'Methodology', paragraphs: ['The balance is the consensus value-pool total at the end of each complete UTC day. Flows are the day’s value entering and leaving the pool; outflows are drawn below zero so a mirrored day reads as turnover at a glance. On long ranges the bars are summed into multi-day columns (the tooltip says how many days).', o.note] },
+      { heading: 'Methodology', paragraphs: ['The balance is the consensus value-pool total at the end of each complete UTC day. Flows are the day’s value entering and leaving the pool; outflows are drawn below zero so a mirrored day reads as turnover at a glance. On long ranges each column is the average day of the days it covers (the tooltip names them).', o.note] },
     ],
     async load() {
       const all = await completeDaily();
@@ -123,8 +113,8 @@ function flowDef(pool: Pool, o: { title: string; question: string; note: string;
         panels: [
           { kind: 'timeseries', title: `${name} balance`, dates, format: 'zec', height: 260, series: [{ key: 'bal', label: 'Balance', color: POOL_COLOR[pool], values: bal, type: 'area' }] },
           { kind: 'timeseries', title: 'Daily flows', dates, format: 'zec', height: 220, zeroBaseline: true, series: [
-            { key: 'in', label: o.inLabel, color: pool === 'transparent' || pool === 'sprout' ? 'var(--s2)' : POOL_COLOR[pool], values: f.map((x) => x.inflow), type: 'bar' },
-            { key: 'out', label: o.outLabel, color: 'var(--s4)', values: f.map((x) => -x.outflow), type: 'bar' },
+            { key: 'in', label: o.inLabel, color: POOL_COLOR[pool], values: f.map((x) => x.inflow), type: 'bar' },
+            { key: 'out', label: o.outLabel, color: 'var(--s2)', values: f.map((x) => -x.outflow), type: 'bar' },
           ] },
         ],
         headline: headline(`${name} balance`, v, dates[i], `The ${name} pool held **${v}** at the end of ${dateLong(dates[i])}; over the last 7 days **${signed(in7 - out7)}** net (${num(in7, 0)} in, ${num(out7, 0)} out).`, changePct(bal, 28)),
@@ -164,9 +154,9 @@ export const flowOrchard = flowDef('orchard', {
   note: 'Orchard activated with NU5 on 31 May 2022; the chart starts there.',
 });
 export const flowIronwood = flowDef('ironwood', {
-  title: 'Ironwood flows + balance', question: 'How is the Ironwood pool filling?', defaultRange: 'ALL', from: '2026-07-14',
+  title: 'Ironwood flows + balance', question: 'How is the Ironwood pool filling?', defaultRange: 'ALL', from: '2026-07-28',
   inLabel: 'Inflow', outLabel: 'Outflow', related: ['flow-orchard', 'pools', 'shielding-rate', 'anonymity'],
-  extra: '**The flat zero at the left is not missing data.** Ironwood activated on 28 Jul 2026 (block 3,428,143) and holds nothing before that. Its inflow so far is dominated by migration from Orchard.',
+  extra: '**The chart starts at activation.** Ironwood went live on 28 Jul 2026 (block 3,428,143) and held nothing before that. Its inflow so far is dominated by migration from Orchard.',
   note: 'Ironwood inflow includes Orchard → Ironwood migration; the transparent-flows chart subtracts it.',
 });
 
@@ -192,18 +182,19 @@ export const flowCompare: ChartDef = {
         '**The pools are different ages.** Sprout and Sapling mostly drain; Orchard and Ironwood mostly fill. Much of what looks like sentiment is the generational hand-off described on shielded pool balances.',
       ],
     },
-    { heading: 'Methodology', paragraphs: ['Small multiples instead of five overlaid lines, so mirrored moves line up vertically and no pool hides another. Each row has its own y-scale; compare shapes and signs across rows, magnitudes within one. Long ranges sum days into columns.'] },
+    { heading: 'Methodology', paragraphs: ['Small multiples instead of five overlaid lines, so mirrored moves line up vertically and no pool hides another. All five rows share one y-scale, so a bar’s height compares across rows: a near-flat row is a pool where little moves, not a squashed one. On long ranges each column is the average day of the days it covers.', 'The 7-day figure is the last 7 complete UTC days, the same window /activity uses.'] },
   ],
   async load() {
     const rows = await completeDaily();
     const dates = rows.map((r) => r.date);
     const net = (k: Pool) => rows.map((r) => { const f = poolFlows(r, k); return f.inflow - f.outflow; });
-    const shieldNet7 = -sum(net('transparent').slice(-7));
-    const prior7 = -sum(net('transparent').slice(-14, -7));
+    const { now, prior } = await shieldingWindows(7, rows);
+    const shieldNet7 = now.net, prior7 = prior.net;
     return {
-      panels: POOLS.map((k, i) => ({ kind: 'timeseries' as const, title: `${POOL_LABEL[k]} · net ZEC/day`, dates, format: 'zecCompact' as const, height: i === 0 ? 200 : 150, zeroBaseline: true, series: [{ key: k, label: POOL_LABEL[k], color: POOL_COLOR[k], values: net(k), type: 'bar' as const }] })),
-      headline: headline('Net shielding, 7 days', signed(shieldNet7), dates[dates.length - 1], `Shielded pools gained **${signed(shieldNet7)}** net from transparent in the 7 days to ${dateLong(dates[dates.length - 1])}, against ${signed(prior7)} the week before.`),
+      panels: POOLS.map((k, i) => ({ kind: 'timeseries' as const, title: `${POOL_LABEL[k]} · net ZEC/day`, dates, format: 'zecCompact' as const, height: i === 0 ? 220 : 180, zeroBaseline: true, sharedY: true, series: [{ key: k, label: POOL_LABEL[k], color: POOL_COLOR[k], values: net(k), type: 'bar' as const }] })),
+      headline: headline('Net shielding, 7 days', signed(shieldNet7), now.to, `Shielded pools gained **${signed(shieldNet7)}** net from transparent in the 7 complete days ${dateLong(now.from)} – ${dateLong(now.to)}, against ${signed(prior7)} the 7 days before.`),
       spark: spark(sma(net('transparent').map((v) => -v), 7), 180),
+      sparkWindow: '6-month',
       indexValue: `${signed(shieldNet7).replace(' ZEC', '')} ZEC 7d`,
       defaultRange: '3M',
       dataThrough: dates[dates.length - 1],
@@ -241,19 +232,20 @@ export const shieldingRate: ChartDef = {
     const pct = rows.map((r) => poolsFromRow(r).shieldedPct);
     const netSh = rows.map((r) => { const f = poolFlows(r, 'transparent'); return f.outflow - f.inflow; });
     const i = lastIdx(pct);
-    const ch = changePct(pct, 28);
     const v = `${pct[i]!.toFixed(2)}%`;
     const pts = pct[i]! - pct[i - 28]!;
+    const pd = delta(pts, 2, ' points');
     return {
       panels: [
-        { kind: 'timeseries', title: '% of supply shielded', dates, format: 'pct', yDomain: [0, 100], height: 300, series: [{ key: 'pct', label: 'Shielded share', color: 'var(--p-ironwood)', values: pct, type: 'area' }] },
+        { kind: 'timeseries', title: '% of supply shielded', dates, format: 'pct', yDomain: [0, 100], height: 300, series: [{ key: 'pct', label: 'Shielded share', color: 'var(--s1)', values: pct, type: 'area' }] },
         { kind: 'timeseries', title: 'Net shielding per day', dates, format: 'zec', zeroBaseline: true, height: 200, series: [
           { key: 'net', label: 'Net shielded', color: 'var(--s2)', values: netSh, type: 'bar', agg: 'mean' },
           { key: 'avg', label: '7-day average', color: 'var(--value)', values: sma(netSh, 7), type: 'line', width: 1.6 },
         ] },
       ],
-      headline: headline('Shielded share', v, dates[i], `**${v}** of all mined ZEC sits in shielded pools on ${dateLong(dates[i])} — ${pts >= 0 ? '▲' : '▼'} ${Math.abs(pts).toFixed(2)} points in 28 days.`, ch),
+      headline: { ...headline('Shielded share', v, dates[i], `**${v}** of all mined ZEC sits in shielded pools on ${dateLong(dates[i])} — ${pd.dir === 'flat' ? 'flat' : pd.text} in 28 days.`), change: { pct: pts, days: 28, pts: true } },
       spark: spark(pct, 1827),
+      sparkWindow: '5-year',
       indexValue: v,
       defaultRange: '5Y',
       events: NU_EVENTS,
@@ -301,7 +293,6 @@ export const anonymity: ChartDef = {
     return {
       panels: [{ kind: 'custom', component: 'a-anonymity', props: { buckets } }],
       headline: headline('Anonymity set at 1 ZEC', num(at(1).shieldCum, 0), through, `Deshield 1 ZEC and **${num(at(1).shieldCum, 0)}** past shields could be your source; at 1,000 ZEC only **${num(at(1000).shieldCum, 0)}**.`),
-      spark: buckets.map((b) => Math.log10(Math.max(1, b.shieldCum))),
       indexValue: 'by amount',
       ranges: false,
       dataThrough: through,
@@ -369,7 +360,7 @@ export const poolResidency: ChartDef = {
   source: 'onchain',
   sourceNote: 'Coin-days per pool · our Zebra node',
   unit: 'days',
-  pools: ['transparent', 'sprout', 'sapling', 'orchard', 'ironwood'],
+  pools: ['transparent', 'sapling', 'orchard', 'ironwood'],
   api: ['coin-age'],
   related: ['mean-coin-age', 'pools', 'orchard-internal', 'dormant'],
   explainer: [
@@ -381,7 +372,7 @@ export const poolResidency: ChartDef = {
         '**So rising residency is not dormancy.** It is consistent with a pool nobody touches, and equally with a pool used heavily by people who never take value out — on a privacy chain, the healthier outcome. For transparent coins, where real age is visible, see mean transparent coin age.',
       ],
     },
-    { heading: 'Methodology', paragraphs: ['Cumulative coin-days per pool: each ZEC accrues one coin-day per day in the pool; outflows remove coin-days in proportion to the average. Average residency = coin-days ÷ pool balance.'] },
+    { heading: 'Methodology', paragraphs: ['Cumulative coin-days per pool: each ZEC accrues one coin-day per day in the pool; outflows remove coin-days in proportion to the average. Average residency = coin-days ÷ pool balance.', 'Sprout is not drawn: its coin-day series stops on 28 Jan 2021, so it has no residency since.'] },
   ],
   async load() {
     const [ages, through] = await Promise.all([api<Age[]>('coin-age'), dataThrough()]);
@@ -392,11 +383,12 @@ export const poolResidency: ChartDef = {
     for (const r of rows) if (r.avg_age_days > 0 && per[r.pool]) per[r.pool][idx.get(r.date)!] = r.avg_age_days;
     const last = (k: Pool) => per[k][lastIdx(per[k])] ?? null;
     return {
-      panels: [{ kind: 'timeseries', dates, format: 'days', zeroBaseline: true, series: POOLS.map((k) => ({ key: k, label: POOL_LABEL[k], color: POOL_COLOR[k], values: per[k], type: 'line' as const, width: k === 'transparent' ? 1.4 : 1.8 })) }],
+      panels: [{ kind: 'timeseries', dates, format: 'days', zeroBaseline: true, series: POOLS.filter((k) => k !== 'sprout').map((k) => ({ key: k, label: POOL_LABEL[k], color: POOL_COLOR[k], values: per[k], type: 'line' as const, width: k === 'transparent' ? 1.4 : 1.8 })) }],
       headline: headline('Sapling residency', fmt(last('sapling'), 'days'), dates[dates.length - 1], `Sapling ZEC has gone **${num(last('sapling'), 0)} days** on average without crossing a pool boundary, Orchard **${num(last('orchard'), 0)}** and Ironwood **${num(last('ironwood'), 0)}** (${dateLong(dates[dates.length - 1])}).`),
       spark: spark(per.sapling),
-      indexValue: '5 pools',
+      indexValue: '4 pools',
       defaultRange: '5Y',
+      notes: ['Sprout residency is unavailable after Jan 2021 (its coin-day series stops), so it is not drawn.'],
       events: NU_EVENTS.filter((e) => e.date >= '2018-01-01'),
       dataThrough: dates[dates.length - 1],
     };

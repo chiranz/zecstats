@@ -14,7 +14,7 @@ type Key = { key: string; label: string; color: string; ring?: boolean };
 const STATUS: Key[] = [
   { key: 'at_tip', label: 'At tip', color: 'var(--up)' },
   { key: 'out_of_sync', label: 'Out of sync', color: 'var(--warn)' },
-  { key: 'unknown_sync', label: 'Height unknown', color: 'var(--unknown)', ring: true },
+  { key: 'unknown_sync', label: 'Height unknown', color: 'var(--unknown)' },
 ];
 
 export function NodeMap({ bubbles, unreachable, clients, totals }: {
@@ -91,7 +91,7 @@ export function NodeMap({ bubbles, unreachable, clients, totals }: {
                   off += len;
                   return el;
                 })}
-                <text x={b.x} y={b.y} dy="0.36em" textAnchor="middle" className={s.bubN} style={{ fontSize: n >= 10 ? 13 : 11 }}>{n}</text>
+                <text x={b.x} y={b.y} dy="0.36em" textAnchor="middle" className={s.bubN} style={{ fontSize: n >= 10 ? 13 : 12 }}>{n}</text>
               </g>
             );
           })}

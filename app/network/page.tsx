@@ -62,9 +62,10 @@ export default async function NetworkPage() {
   for (const g of net.geo) if (g.status !== 'unreachable') { const c = CLIENT_LABEL[g.client] ? g.client : 'unknown'; clientTotals[`client:${c}`] = (clientTotals[`client:${c}`] ?? 0) + 1; }
   const mapClients = CLIENT_ORDER.map((k) => ({ key: k, label: CLIENT_LABEL[k], color: CLIENT_COLOR[k] }));
 
-  // ---- software (per reachable address, as the API reports it) ----
-  const clientCounts = CLIENT_ORDER.map((k) => ({ key: k, label: CLIENT_LABEL[k], value: net.by_client.find((c) => c.client === k)?.count ?? 0, color: CLIENT_COLOR[k] }));
+  // ---- software: per reachable node (the map's de-duplicated list), the same basis as every other node count here ----
+  const clientCounts = CLIENT_ORDER.map((k) => ({ key: k, label: CLIENT_LABEL[k], value: clientTotals[`client:${k}`] ?? 0, color: CLIENT_COLOR[k] }));
   const addrTotal = clientCounts.reduce((a, c) => a + c.value, 0);
+  const dual = net.reachable_total - reachable; // dual-stack nodes counted once per address by the crawler
   const leader = clientCounts[0];
   const zcashd = clientCounts.find((c) => c.key === 'zcashd')!;
   const maxVer = Math.max(...net.by_version.map((v) => v.count));
@@ -145,15 +146,15 @@ export default async function NetworkPage() {
 
         <Card
           title="What software do they run?"
-          takeaway={<><b>{leader.label}</b> leads with <b>{leader.value}</b> of {addrTotal} reachable addresses ({pct((leader.value / addrTotal) * 100, 0)}); zcashd is down to <b>{zcashd.value}</b>.</>}
+          takeaway={<><b>{leader.label}</b> leads with <b>{leader.value}</b> of {addrTotal} reachable nodes ({pct((leader.value / addrTotal) * 100, 0)}); zcashd is down to <b>{zcashd.value}</b>.</>}
           actions={<ChartActions api="network" name="node software" />}
-          foot={`Versions with 2 or more nodes. zcashd advertises itself as “MagicBean”. Counts are per reachable address, so a dual-stack node can appear twice (${addrTotal}, not ${reachable}).`}
+          foot={`The bar counts reachable nodes, like the map. The version table counts addresses (versions with 2 or more), so a dual-stack node appears there once per address. zcashd advertises itself as “MagicBean”.`}
         >
-          <ShareBar label={`Node software: ${clientCounts.map((c) => `${c.label} ${c.value}`).join(', ')}`} parts={clientCounts} />
+          <ShareBar label={`Node software, per reachable node: ${clientCounts.map((c) => `${c.label} ${c.value}`).join(', ')}`} parts={clientCounts} />
           <div className="tbl-wrap">
             <table className={`t ${r.compact}`}>
               <caption className="sr-only">Advertised node versions</caption>
-              <thead><tr><th scope="col">Advertised version</th><th scope="col" style={{ textAlign: 'left' }}>Client</th><th scope="col">Nodes</th></tr></thead>
+              <thead><tr><th scope="col">Advertised version</th><th scope="col" style={{ textAlign: 'left' }}>Client</th><th scope="col">Addresses</th></tr></thead>
               <tbody>
                 {net.by_version.map((v) => {
                   const c = clientOfAgent(v.user_agent);
@@ -171,7 +172,7 @@ export default async function NetworkPage() {
         </Card>
       </div>
 
-      <Section id="directory" title="Which nodes are visible right now?" aside={<span className="small">{num(known)} addresses known · {net.reachable_total} confirmed reachable in the last 24h</span>}>
+      <Section id="directory" title="Which nodes are visible right now?" aside={<span className="small">{num(known)} addresses known · {net.reachable_total} reachable addresses in the last 24h{dual > 0 ? ` (${reachable} nodes; ${dual} dual-stack node${dual === 1 ? '' : 's'} listed once per address)` : ''}</span>}>
         <NodeDirectory rows={rows} clients={CLIENT_ORDER.map((k) => ({ key: k, label: CLIENT_LABEL[k] }))} />
         <p className="small">Addresses are masked to the first two octets. Sync is measured when a node is indexed; “behind” counts blocks below that node’s own reported tip and our node’s tip at the time (currently block {num(lb.height)}).</p>
       </Section>
@@ -227,7 +228,7 @@ export default async function NetworkPage() {
         { href: '/node', title: 'Node status', desc: 'Is the node behind these numbers healthy?', value: <>{NODE_VERSION} · {fresh.synced ? 'synced' : 'catching up'}</> },
         { href: '/chart/hashrate', title: 'Hashrate + difficulty', desc: 'How much mining power secures the chain.' },
         { href: '/chart/block-size', title: 'Average block size', desc: 'How full blocks are, day by day.', value: <>Block {num(lb.height)}</> },
-        { href: '/halving', title: 'Halving', desc: 'When the block reward next drops to 0.78125 ZEC.', value: <>~{num(halving.daysLeft)} days</> },
+        { href: '/halving', title: 'Halving', desc: `When the block reward next drops to ${halving.next.rewardAfter} ZEC.`, value: <>~{num(halving.daysLeft)} days</> },
       ]} />
     </>
   );

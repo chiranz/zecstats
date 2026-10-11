@@ -3,7 +3,7 @@ import type { ChartDef } from '../types';
 import { getCompleteDailyStats, type DailyStat } from '@/lib/data/snapshot';
 import { getFeeStats, getNewAddresses } from '@/lib/data/charts-b';
 import { num, usd, zat, dateLong } from '@/lib/format';
-import { C, tint, bars, line, panel, rolling, wma, lastIndex, changeOver, changeWords, spark, sum, UPGRADES, IRONWOOD } from './util';
+import { C, tint, bars, line, panel, rolling, wma, lastIndex, changeOver, changeWords, spark, sum, withGood, UPGRADES, IRONWOOD } from './util';
 
 const userTx = (r: DailyStat) => Math.max(0, r.tx_count - (r.block_count || 0));
 
@@ -21,7 +21,7 @@ const tx: ChartDef = {
     { heading: 'What counts as a transaction here?', paragraphs: [
       'Every user-initiated transaction in every pool — transparent, Sprout, Sapling, Orchard, Ironwood and mixed. Coinbase transactions are left out: each block has exactly one, so counting them would add a constant floor that measures block production, not use.',
       'A transaction is not a payment and an address is not a person. One transaction can carry many outputs and wallets derive a fresh address per payment, so neither count maps cleanly onto people. What the series does show reliably is the shape of demand for block space over time.',
-      'The columns are single days; the green line is a 7-day average and the dashed line a 50-week weighted moving average, which shows the long-run trend under the daily noise. For the split between transparent, shielding, deshielding and fully shielded activity, see transaction types.',
+      'The columns are days (on long ranges, the average day of the days a column covers); the green line is a 7-day average and the dashed line a 50-week weighted moving average, which shows the long-run trend under the daily noise. The headline is the 7-day average, the same figure the metrics table uses. For the split between transparent, shielding, deshielding and fully shielded activity, see transaction types.',
     ] },
   ],
   related: ['tx-types', 'total-fees', 'velocity', 'tx-issuance'],
@@ -32,27 +32,30 @@ const tx: ChartDef = {
     const avg = rolling(v, 7);
     const w50 = wma(v, 350);
     const i = v.length - 1;
-    const change = changeOver(dates, v, 28);
+    const change = changeOver(dates, avg, 28);
+    const peak = v.indexOf(Math.max(...v.slice(-365)), v.length - 365);
     return {
-      panels: [panel({ dates, format: 'count', zeroBaseline: true, series: [
+      panels: [panel({ dates, format: 'count', zeroBaseline: true, unit: 'transactions', series: [
         bars('tx', 'Transactions', tint(C.zec, 42), v),
         line('avg7', '7-day average', C.zec, avg, { width: 2.2 }),
         line('w50', '50-week WMA', C.text2, w50, { dashed: true, width: 1.5 }),
       ] })],
-      headline: { label: 'Transactions per day', value: num(v[i]), date: dates[i], change,
-        sentence: `${num(v[i])} user transactions on ${dateLong(dates[i])}, ${changeWords(change)}; the 7-day average is ${num(avg[i])}.` },
-      spark: spark(avg), indexValue: `${num(v[i])}/day`,
+      headline: { label: 'Transactions per day, 7-day average', value: num(avg[i]), date: dates[i], change,
+        sentence: `Zcash carried ${num(avg[i])} user transactions a day over the 7 days to ${dateLong(dates[i])}, ${changeWords(change)}; the last day had ${num(v[i])}.` },
+      spark: spark(avg), indexValue: `${num(avg[i])}/day`,
+      notes: [`Busiest day of the last year: ${dateLong(dates[peak])}, ${num(v[peak])} transactions — on long ranges a column is an average day, so read single-day peaks on the 3M range or closer.`],
       ranges: ['1M', '3M', '6M', '1Y', '5Y', 'ALL'], defaultRange: '1Y', events: [...UPGRADES], dataThrough: dates[i],
     };
   },
 };
 
+// transaction kinds are not pools: the generic categorical palette, never pool hues
 const TX_TYPES = [
-  { key: 'transparent', label: 'Transparent only', color: C.transparent, f: (r: DailyStat) => Math.max(0, r.tx_transparent_only - (r.block_count || 0)) },
-  { key: 'shielding', label: 'Shielding (t→z)', color: C.s2, f: (r: DailyStat) => r.tx_shielding },
-  { key: 'deshielding', label: 'Deshielding (z→t)', color: C.s4, f: (r: DailyStat) => r.tx_deshielding },
+  { key: 'transparent', label: 'Transparent only', color: C.s6, f: (r: DailyStat) => Math.max(0, r.tx_transparent_only - (r.block_count || 0)) },
+  { key: 'shielding', label: 'Shielding (t→z)', color: C.s1, f: (r: DailyStat) => r.tx_shielding },
+  { key: 'deshielding', label: 'Deshielding (z→t)', color: C.s2, f: (r: DailyStat) => r.tx_deshielding },
   { key: 'mixed', label: 'Mixed', color: C.s3, f: (r: DailyStat) => r.tx_mixed },
-  { key: 'shielded', label: 'Fully shielded (z→z)', color: C.zec, f: (r: DailyStat) => r.tx_fully_shielded },
+  { key: 'shielded', label: 'Fully shielded (z→z)', color: C.s4, f: (r: DailyStat) => r.tx_fully_shielded },
 ];
 
 const txTypes: ChartDef = {
@@ -82,11 +85,12 @@ const txTypes: ChartDef = {
     const shieldedShare = rows.map((_, j) => (total[j] ? ((total[j] - cols[0][j]) / total[j]) * 100 : null));
     const share7 = rolling(shieldedShare, 7);
     const i = rows.length - 1;
+    const full7 = sum(cols[4].slice(-7)) / sum(total.slice(-7)) * 100;
     return {
-      panels: [panel({ dates, format: 'count', stacked: true, shareToggle: true, series: TX_TYPES.map((t, k) => bars(t.key, t.label, t.color, cols[k])) })],
-      headline: { label: 'Touched a shielded pool', value: `${shieldedShare[i]!.toFixed(1)}%`, date: dates[i], change: null,
-        sentence: `${shieldedShare[i]!.toFixed(1)}% of ${num(total[i])} user transactions on ${dateLong(dates[i])} touched a shielded pool; ${num(cols[4][i])} were fully shielded (z→z).` },
-      spark: spark(share7), indexValue: `${shieldedShare[i]!.toFixed(0)}% shielded`,
+      panels: [panel({ dates, format: 'count', stacked: true, shareToggle: true, unit: 'transactions', series: TX_TYPES.map((t, k) => bars(t.key, t.label, t.color, cols[k])) })],
+      headline: { label: 'Touched a shielded pool, 7-day average', value: `${share7[i]!.toFixed(1)}%`, date: dates[i], change: share7[i - 28] != null ? { pct: share7[i]! - share7[i - 28]!, days: 28, pts: true } : null,
+        sentence: `Over the 7 days to ${dateLong(dates[i])}, ${share7[i]!.toFixed(1)}% of user transactions touched a shielded pool (the metrics table’s shielded tx share); ${full7.toFixed(1)}% were fully shielded (z→z).` },
+      spark: spark(share7), indexValue: `${share7[i]!.toFixed(0)}% touch a shielded pool`,
       defaultRange: '3M', events: [IRONWOOD], dataThrough: dates[i],
       notes: ['Transparent-only excludes the one coinbase transaction per block; mining-pool payouts are still in it.'],
     };
@@ -120,16 +124,16 @@ const newAddresses: ChartDef = {
     const total = rows.map((r) => r.new_total);
     const avg = rolling(total, 7);
     const i = rows.length - 1;
-    const change = changeOver(dates, total, 28);
+    const change = changeOver(dates, avg, 28);
     return {
-      panels: [panel({ dates, format: 'count', zeroBaseline: true, series: [
+      panels: [panel({ dates, format: 'count', zeroBaseline: true, unit: 'addresses', series: [
         bars('excl', 'New addresses (excl. mining)', tint(C.zec, 42), excl),
         line('avg7', '7-day average (all)', C.zec, avg, { width: 2.2 }),
         line('mining', 'Mining payouts', C.s4, mining, { hidden: true, width: 1.4 }),
       ] })],
-      headline: { label: 'New transparent addresses', value: num(total[i]), date: dates[i], change,
-        sentence: `${num(total[i])} transparent addresses received coins for the first time on ${dateLong(dates[i])}, ${changeWords(change)}; the 7-day average is ${num(avg[i])}.` },
-      spark: spark(avg), indexValue: `${num(total[i])}/day`,
+      headline: { label: 'New transparent addresses, 7-day average', value: num(avg[i]), date: dates[i], change,
+        sentence: `${num(avg[i])} transparent addresses a day received coins for the first time over the 7 days to ${dateLong(dates[i])}, ${changeWords(change)}; ${num(total[i])} on the last day.` },
+      spark: spark(avg), indexValue: `${num(avg[i])}/day`,
       defaultRange: '1Y', dataThrough: dates[i],
       notes: [`Mining payouts created ${num(mining[i])} new addresses on the last day — switch the series on to see them.`],
     };
@@ -176,7 +180,7 @@ const velocity: ChartDef = {
     const iw = series[4].values, tr = series[0].values;
     const i = lastIndex(iw);
     return {
-      panels: [panel({ dates, format: 'countCompact', zeroBaseline: true, series })],
+      panels: [panel({ dates, format: 'countCompact', zeroBaseline: true, unit: 'actions / 1,000 ZEC', endLabel: true, series })],
       headline: { label: 'Ironwood actions per 1,000 ZEC', value: (iw[i] ?? 0).toFixed(2), date: dates[i], change: changeOver(dates, iw, 28),
         sentence: `Each 1,000 ZEC in Ironwood saw ${(iw[i] ?? 0).toFixed(2)} actions a day over the week to ${dateLong(dates[i])}, against ${(tr[i] ?? 0).toFixed(2)} for transparent ZEC.` },
       spark: spark(iw), indexValue: `${(iw[i] ?? 0).toFixed(2)} / 1K ZEC`,
@@ -212,13 +216,13 @@ const density: ChartDef = {
     const avg = rolling(v, 7, 4);
     const i = rows.length - 1;
     return {
-      panels: [panel({ dates, format: 'countCompact', zeroBaseline: true, series: [
-        line('daily', 'Daily', tint(C.zec, 45), v, { width: 1.1 }),
+      panels: [panel({ dates, format: 'countCompact', zeroBaseline: true, unit: 'actions per tx', series: [
+        line('daily', 'Daily', tint(C.muted, 70), v, { width: 1.1 }),
         line('avg7', '7-day average', C.zec, avg, { width: 2.2 }),
       ] })],
-      headline: { label: 'Actions per shielded tx', value: (v[i] ?? 0).toFixed(2), date: dates[i], change: changeOver(dates, avg, 28),
-        sentence: `The average shielded transaction on ${dateLong(dates[i])} carried ${(v[i] ?? 0).toFixed(2)} actions (${num(rows[i].total_shielded_actions)} actions across ${num(rows[i].shielded_tx_count)} transactions).` },
-      spark: spark(avg), indexValue: `${(v[i] ?? 0).toFixed(2)} / tx`,
+      headline: { label: 'Actions per shielded tx, 7-day average', value: (avg[i] ?? 0).toFixed(2), date: dates[i], change: changeOver(dates, avg, 28),
+        sentence: `Over the 7 days to ${dateLong(dates[i])} the average shielded transaction carried ${(avg[i] ?? 0).toFixed(2)} actions; on the last day ${(v[i] ?? 0).toFixed(2)} (${num(rows[i].total_shielded_actions)} actions across ${num(rows[i].shielded_tx_count)} transactions).` },
+      spark: spark(avg), indexValue: `${(avg[i] ?? 0).toFixed(2)} / tx`,
       defaultRange: '1Y', events: [...UPGRADES], dataThrough: dates[i],
     };
   },
@@ -250,7 +254,7 @@ const blockSize: ChartDef = {
     const i = rows.length - 1;
     return {
       panels: [panel({ dates, format: 'bytes', logToggle: true, zeroBaseline: true, series: [
-        line('daily', 'Daily average', tint(C.zec, 45), v, { width: 1.1 }),
+        line('daily', 'Daily average', tint(C.muted, 70), v, { width: 1.1 }),
         line('avg7', '7-day average', C.zec, avg, { width: 2.2 }),
       ] })],
       headline: { label: 'Average block size', value: `${((v[i] ?? 0) / 1000).toFixed(1)} KB`, date: dates[i], change: changeOver(dates, avg, 28),
@@ -315,7 +319,7 @@ const fees: ChartDef = {
   api: ['fee-stats'],
   explainer: [
     { heading: 'How do you read a Zcash fee?', paragraphs: [
-      'Fees are quoted in zatoshi — 100,000,000 zat make one ZEC — because a typical fee is a few thousand of them. The green line is the median transaction; the blue pair brackets the middle half (25th–75th percentile) and the grey pair the middle 80% (10th–90th). The log scale is on by default because fees span orders of magnitude.',
+      'Fees are quoted in zatoshi — 100,000,000 zat make one ZEC — because a typical fee is a few thousand of them. The green line is the median transaction; the blue pair brackets the middle half (25th–75th percentile, the 75th dashed) and the grey pair the middle 80% (10th–90th, the 90th dashed). Each line is named at its right end. The log scale is on by default because fees span orders of magnitude.',
       'Mean above median is the signal, not noise. ZIP-317 prices a transaction by how many logical actions it contains, so a handful of many-action transactions drag the mean up while the median stays where an ordinary payment sits.',
       'The node reports no fee field. Each fee is derived from the identity consensus enforces — transparent inputs plus value released by shielded bundles equals transparent outputs plus value absorbed plus the fee — which makes these exact rather than estimated.',
     ] },
@@ -331,17 +335,17 @@ const fees: ChartDef = {
     const r = rows[i];
     const median = r.median_fee_zat;
     return {
-      panels: [panel({ dates, format: 'count', logToggle: true, defaultLog: true, series: [
+      panels: [panel({ dates, format: 'count', logToggle: true, defaultLog: true, unit: 'zat', endLabel: true, series: [
         line('median', 'Median', C.zec, k('median_fee_zat'), { width: 2.4 }),
         line('mean', 'Mean', C.text, k('mean_fee_zat'), { dashed: true, width: 1.5 }),
-        line('p25', '25th pct', C.s2, k('p25_fee_zat'), { width: 1.5 }),
-        line('p75', '75th pct', C.s2, k('p75_fee_zat'), { width: 1.5 }),
+        line('p25', '25th pct', C.s1, k('p25_fee_zat'), { width: 1.5 }),
+        line('p75', '75th pct', C.s1, k('p75_fee_zat'), { dash: '6 3', width: 1.5 }),
         line('p10', '10th pct', C.muted, k('p10_fee_zat'), { width: 1.3 }),
-        line('p90', '90th pct', C.muted, k('p90_fee_zat'), { width: 1.3 }),
+        line('p90', '90th pct', C.muted, k('p90_fee_zat'), { dash: '6 3', width: 1.3 }),
         line('p99', '99th pct', C.s4, k('p99_fee_zat'), { hidden: true, width: 1.3 }),
       ] })],
-      headline: { label: 'Median fee', value: `${num(median)} zat`, date: dates[i], change: changeOver(dates, raw('median_fee_zat'), 28),
-        sentence: `The median transaction on ${dateLong(dates[i])} paid ${num(median)} zat (${usd((median / 1e8) * r.zec_usd, 2)} at that day’s close); the mean was ${num(r.mean_fee_zat)} zat.` },
+      headline: { label: 'Median fee', value: `${num(median)} zat`, date: dates[i], change: withGood(changeOver(dates, raw('median_fee_zat'), 28), 'down'),
+        sentence: `The median transaction on ${dateLong(dates[i])} paid ${num(median)} zat (${usd((median / 1e8) * r.zec_usd, 2)} at that day’s close); the mean was ${num(r.mean_fee_zat)} zat that day and ${num(k('mean_fee_zat')[i])} zat over 7 days, the dashed line.` },
       spark: spark(k('median_fee_zat')), indexValue: `${num(median)} zat`,
       defaultRange: '1Y', events: [{ date: '2024-11-23', label: 'NU6' }], dataThrough: dates[i],
       notes: ['Each line is a 7-day average of that day’s percentile, in zatoshi (1 ZEC = 100,000,000 zat). Min and max are left out: single outliers.'],

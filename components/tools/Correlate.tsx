@@ -12,10 +12,17 @@ import { downloadCsv, replaceQuery } from '@/components/tools/browser';
 const WINDOWS: CorrWindowKey[] = ['3M', '6M', '1Y', '2Y', '5Y', 'ALL'];
 const pairIndex = (i: number, j: number, m: number) => { const a = Math.min(i, j), b = Math.max(i, j); return a * m - (a * (a + 1)) / 2 + (b - a - 1); };
 const rTxt = (r: number) => (Math.abs(r) < 0.005 ? '0.00' : `${r > 0 ? '+' : '−'}${num(Math.abs(r), 2)}`);
-const tint = (r: number) => `color-mix(in srgb, ${r >= 0 ? 'var(--s2)' : 'var(--s4)'} ${Math.round(Math.abs(r) * 62)}%, var(--inset))`;
+// diverging pair, never pool hues: blue = together, rust = opposite
+const tint = (r: number) => `color-mix(in srgb, ${r >= 0 ? 'var(--s1)' : 'var(--s2)'} ${Math.round(Math.abs(r) * 62)}%, var(--inset))`;
+/** Axis tick in the metric's own unit (the metric-series `unit`): $1.2K, 29%, 3.4×, 4.1M ZEC. */
+const tick = (v: number, unit?: string) => {
+  const c = compact(Math.abs(v), 2), sg = v < 0 ? '−' : '';
+  return unit === 'usd' ? `${sg}$${c}` : unit === 'pct' ? `${sg}${c}%` : unit === 'mult' ? `${sg}${c}×` : unit === 'kb' ? `${sg}${c} KB` : `${sg}${c}`;
+};
+const unitWord = (unit?: string) => (unit === 'zec' ? ' (ZEC)' : unit === 'count' ? ' (per day)' : '');
 const strength = (r: number) => { const a = Math.abs(r); return a >= 0.9 ? 'almost in lockstep' : a >= 0.7 ? 'strongly' : a >= 0.4 ? 'moderately' : a >= 0.2 ? 'weakly' : 'barely'; };
 
-function Scatter({ xs, ys, xLabel, yLabel }: { xs: number[]; ys: number[]; xLabel: string; yLabel: string }) {
+function Scatter({ xs, ys, xLabel, yLabel, xUnit, yUnit }: { xs: number[]; ys: number[]; xLabel: string; yLabel: string; xUnit?: string; yUnit?: string }) {
   const [ref, w] = useWidth<HTMLDivElement>(520);
   const h = Math.min(360, Math.max(240, Math.round(w * 0.62)));
   const m = { t: 12, r: 12, b: 40, l: 54 };
@@ -35,15 +42,15 @@ function Scatter({ xs, ys, xLabel, yLabel }: { xs: number[]; ys: number[]; xLabe
       <svg width={w} height={h} role="img" aria-label={`Scatter of ${yLabel} against ${xLabel}, ${n} days, with a least-squares fit line`}>
         <defs><clipPath id="sc-clip"><rect width={iw} height={ih} /></clipPath></defs>
         <g transform={`translate(${m.l},${m.t})`}>
-          {y.ticks(4).map((t) => <g key={`y${t}`}><line x1={0} x2={iw} y1={y(t)} y2={y(t)} stroke="var(--grid)" /><text x={-8} y={y(t)} dy="0.32em" textAnchor="end">{compact(t, 2)}</text></g>)}
-          {x.ticks(4).map((t) => <text key={`x${t}`} x={x(t)} y={ih + 16} textAnchor="middle">{compact(t, 2)}</text>)}
+          {y.ticks(4).map((t) => <g key={`y${t}`}><line x1={0} x2={iw} y1={y(t)} y2={y(t)} stroke="var(--grid)" /><text x={-8} y={y(t)} dy="0.32em" textAnchor="end">{tick(t, yUnit)}</text></g>)}
+          {x.ticks(4).map((t) => <text key={`x${t}`} x={x(t)} y={ih + 16} textAnchor="middle">{tick(t, xUnit)}</text>)}
           <line x1={0} x2={iw} y1={ih} y2={ih} stroke="var(--axis)" />
           <g clipPath="url(#sc-clip)">
-            {xs.map((v, i) => (i % step ? null : <circle key={i} cx={x(v)} cy={y(ys[i])} r={2} fill="var(--s2)" opacity={0.35 + 0.65 * (i / n)} />))}
+            {xs.map((v, i) => (i % step ? null : <circle key={i} cx={x(v)} cy={y(ys[i])} r={2} fill="var(--s1)" opacity={0.25 + 0.75 * (i / n)} />))}
             <line x1={x(x0)} x2={x(x1)} y1={y(my + slope * (x0 - mx))} y2={y(my + slope * (x1 - mx))} stroke="var(--value)" strokeDasharray="5 4" strokeWidth={1.4} />
           </g>
-          <text x={iw} y={ih + 34} textAnchor="end">{xLabel} →</text>
-          <text x={0} y={-2} style={{ fontSize: 10.5 }}>↑ {yLabel}</text>
+          <text x={iw} y={ih + 34} textAnchor="end">{xLabel}{unitWord(xUnit)} →</text>
+          <text x={0} y={-2}>↑ {yLabel}{unitWord(yUnit)}</text>
         </g>
       </svg>
     </div>
@@ -102,7 +109,7 @@ export function Correlate({ data, defaults }: { data: Correlations; defaults: st
     const start = N - ({ '3M': 92, '6M': 183, '1Y': 366, '2Y': 731, '5Y': 1827, ALL: N }[win]);
     const xs: number[] = [], ys: number[] = [];
     for (let k = Math.max(0, start); k < N; k++) { const a = sx[k], b = sy[k]; if (a != null && b != null) { xs.push(a); ys.push(b); } }
-    return { xs, ys, nx: data.metrics[ax].label, ny: data.metrics[ay].label };
+    return { xs, ys, nx: data.metrics[ax].label, ny: data.metrics[ay].label, ux: series.metrics[ax].unit, uy: series.metrics[ay].unit, from: series.dates[Math.max(0, start)], to: series.dates[N - 1] };
   }, [ay, ax, series, win, data.metrics]);
 
   const csv = () => {
@@ -164,9 +171,9 @@ export function Correlate({ data, defaults }: { data: Correlations; defaults: st
         <div className="card">
           <div className="stack" style={{ gap: 6 }}>
             <h2 className="h3">{active ? `How does ${data.metrics[active[0]].label} track ${data.metrics[active[1]].label}?` : 'Pick a cell'}</h2>
-            {active && (() => { const v = r(active[0], active[1]); return <p className="takeaway">{v == null ? 'Not enough shared days in this window.' : <>r <b className="mono">{rTxt(v)}</b>, r² <b className="mono">{num(v * v, 3)}</b> over <b className="mono">{num(nOf(active[0], active[1]))}</b> shared days. Later days are drawn darker.</>}</p>; })()}
+            {active && (() => { const v = r(active[0], active[1]); return <p className="takeaway">{v == null ? 'Not enough shared days in this window.' : <>r <b className="mono">{rTxt(v)}</b>, r² <b className="mono">{num(v * v, 3)}</b> over <b className="mono">{num(nOf(active[0], active[1]))}</b> shared days. Later days are drawn more opaque{scatter ? <> (faint {dateLong(scatter.from)} → solid {dateLong(scatter.to)})</> : null}.</>}</p>; })()}
           </div>
-          {scatter ? <Scatter xs={scatter.xs} ys={scatter.ys} xLabel={scatter.nx} yLabel={scatter.ny} /> : <p className="note">{loadErr ? 'Could not load the daily series for the scatter.' : 'Loading the daily series…'}</p>}
+          {scatter ? <Scatter xs={scatter.xs} ys={scatter.ys} xLabel={scatter.nx} yLabel={scatter.ny} xUnit={scatter.ux} yUnit={scatter.uy} /> : <p className="note">{loadErr ? 'Could not load the daily series for the scatter.' : 'Loading the daily series…'}</p>}
           <p className="small">Each dot is one day · dashed line: least-squares fit · correlation is not causation.</p>
         </div>
         <div className="card">

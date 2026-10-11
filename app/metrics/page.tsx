@@ -7,8 +7,9 @@ import { asOfBounds, metricsTableAsOf } from './asOf';
 import s from '@/components/tools/metrics.module.css';
 import { change } from '@/components/tools/metricFormat';
 import { COMPARE_PERIODS, getCorrelations, getMetricsTable, METRIC_GROUPS, metricId, pairIndex, type PeriodKey } from '@/lib/data/tools';
-import { getLive } from '@/lib/data/snapshot';
-import { dateLong, delta, num } from '@/lib/format';
+import { ALL_SLUGS } from '@/lib/charts';
+import { CHART_GROUPS } from '@/lib/charts/types';
+import { dateLong, dateShort, num, usd } from '@/lib/format';
 import { pageMetadata } from '@/lib/seo';
 import { SectionLd } from '@/components/seo/SectionLd';
 
@@ -18,7 +19,7 @@ const PERIODS = COMPARE_PERIODS.map((p) => p.key);
 
 export default async function MetricsPage({ searchParams }: PageProps<'/metrics'>) {
   const sp = await searchParams;
-  const [latest, corr, live, bounds] = await Promise.all([getMetricsTable(), getCorrelations(), getLive(), asOfBounds()]);
+  const [latest, corr, bounds] = await Promise.all([getMetricsTable(), getCorrelations(), asOfBounds()]);
   // ?date= (live's as-of view): a complete day inside the series; anything else is the latest day
   const date = isoDay(one(sp.date));
   const table = date && date >= bounds.min && date < bounds.max ? await metricsTableAsOf(latest, date) : latest;
@@ -38,6 +39,9 @@ export default async function MetricsPage({ searchParams }: PageProps<'/metrics'
   // an early as-of day can have no 28-day history; the second sentence is then left out
   const pc = price && change(price.now, price.periods['28D'].from, price.kind, false);
   const tc = tx && change(tx.now, tx.periods['28D'].from, tx.kind, false);
+  // how the market rows moved over 28 days, counted rather than assumed
+  const mkt = table.rows.filter((x) => x.def && x.group === 'market').map((x) => change(x.now, x.periods['28D'].from, x.kind, x.signed)).filter((c) => c != null);
+  const mUp = mkt.filter((c) => c.dir === 'up').length, mDn = mkt.filter((c) => c.dir === 'dn').length;
   const defaults = table.rows.filter((r) => r.def).length;
   const i = corr.metrics.findIndex((m) => m.id === metricId('Shielded Supply'));
   const j = corr.metrics.findIndex((m) => m.id === metricId('Shielded % of Supply'));
@@ -48,7 +52,7 @@ export default async function MetricsPage({ searchParams }: PageProps<'/metrics'
       <SectionLd path="/metrics" />
       <Masthead
         title="Every headline number, and how it moved"
-        lede={<>{asOf ? <>As of <b className="value">{dateLong(asOf)}</b>: </> : null}{defaults} Zcash numbers in one table, each set against 28 days and 12 months {asOf ? 'before' : 'ago'}.{pc && tc ? <> Over 28 days the price-linked numbers {pc.dir === 'up' ? 'rose' : 'fell'} (ZEC <span className={pc.dir}>{pc.text}</span>) while on-chain activity {tc.dir === 'up' ? 'rose' : 'fell'} (transactions <span className={tc.dir}>{tc.text}</span>).</> : null}</>}
+        lede={<>{asOf ? <>As of <b className="value">{dateLong(asOf)}</b>: </> : null}{defaults} Zcash numbers in one table, each set against 28 days and 12 months {asOf ? 'before' : 'ago'}.{pc && tc ? <> Over 28 days ZEC&apos;s price {pc.dir === 'up' ? 'rose' : pc.dir === 'dn' ? 'fell' : 'held'} (<span className={pc.cls}>{pc.text}</span>) and transactions per day {tc.dir === 'up' ? 'rose' : tc.dir === 'dn' ? 'fell' : 'held'} (<span className={tc.cls}>{tc.text}</span>, 7-day average); {mUp} of the {mkt.length} market rows rose and {mDn} fell.</> : null}</>}
       />
       <MetricsTable table={table} groups={METRIC_GROUPS} view={view} asOf={asOf} bounds={bounds} defaults={latest.rows.filter((r) => r.def).map((r) => r.id)} />
       <div className={s.fnotes}>
@@ -66,8 +70,8 @@ export default async function MetricsPage({ searchParams }: PageProps<'/metrics'
         items={[
           { href: '/correlate', title: 'Correlations', desc: 'Which of these numbers actually move together, and which move opposite.', value: r != null ? <>Shielded supply vs shielded % · r {num(r, 3)}</> : undefined },
           { href: '/compare', title: 'Compare charts', desc: 'Put any two of these rows on one time axis, with one shared range.', value: 'e.g. Price vs tx/day' },
-          { href: '/chart/price', title: 'ZEC price', desc: 'The full price history with moving averages and log scale.', value: <>${num(live.zec_usd, 2)} <span className={live.zec_usd_change_24h_pct >= 0 ? 'up' : 'dn'} style={{ fontSize: 13 }}>{delta(live.zec_usd_change_24h_pct).text}</span></> },
-          { href: '/charts', title: 'All 58 charts', desc: 'Every chart behind this table, grouped by subject.', value: '7 groups' },
+          { href: '/chart/price', title: 'ZEC price', desc: 'The full price history with moving averages and log scale.', value: price ? <>{usd(price.now, 2)} <span className="muted" style={{ fontSize: 13 }}>close, {dateShort(table.date)}</span></> : undefined },
+          { href: '/charts', title: `All ${ALL_SLUGS.length} charts`, desc: 'Every chart behind this table, grouped by subject.', value: `${CHART_GROUPS.length} groups` },
         ]}
       />
     </>

@@ -19,7 +19,7 @@ export function DotPlot(props: Record<string, unknown>) {
     <figure className={s.dots} role="img" aria-label={ariaLabel}>
       <div className={s.dotHead} aria-hidden="true">
         <span />
-        <span className={s.dotTrack}><span className={s.refLab} style={{ left: `${refPct}%` }}>{ref.label} {formatValue(ref.value, format)}</span></span>
+        <span className={s.dotTrack}><span className={s.refLab} style={{ left: `${refPct}%`, transform: `translateX(${refPct > 65 ? -100 : refPct < 35 ? 0 : -50}%)` }}>{ref.label} {formatValue(ref.value, format)}</span></span>
         <span />
       </div>
       {rows.map((r) => (

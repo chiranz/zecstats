@@ -105,6 +105,7 @@ export default async function TxSizesPage({ searchParams }: PageProps<'/tx-sizes
 
   const rangeLabel = `${dateLong(first)} – ${dateLong(last)}`;
   const dataThrough = stats.at(-1)!.date;
+  const tx7 = stats.slice(-7).reduce((a, x) => a + x.tx_count - x.block_count, 0) / 7;
 
   return (
     <>
@@ -239,16 +240,16 @@ export default async function TxSizesPage({ searchParams }: PageProps<'/tx-sizes
           title="How big are the largest transactions each day?"
           takeaway={<>The top 1% of transactions are each worth <b>{fmt(avgP99)}</b> or more on an average day — about <b>{num(avgP99 / avgMed)}×</b> the median.</>}
           actions={<ChartActions api="tx-values" name="upper tail" />}
-          foot={`Log scale · P99 highlighted, the rest grey for context · data through ${dateLong(dataThrough)}`}
+          foot={`Log scale · P99 highlighted, the rest grey for context, each with its own dash and named at its right end · the window is the page’s range · data through ${dateLong(dataThrough)}`}
         >
           <TimeSeriesChart
-            dates={dates} format="usdCompact" logToggle defaultLog ranges={['1M', '3M', '6M', '1Y']} defaultRange="1Y" height={320}
+            dates={dates} format="usdCompact" logToggle defaultLog ranges={false} height={320} endLabel
             series={[
-              { key: 'p999', label: 'P99.9', color: 'var(--p-transparent)', values: days.map((d) => u(d, 'p999_zat')), width: 1.2 },
+              { key: 'p999', label: 'P99.9', color: 'var(--text-2)', values: days.map((d) => u(d, 'p999_zat')), width: 1.2, dash: '8 3' },
               { key: 'p99', label: 'P99', color: 'var(--s2)', values: p99, width: 2.4 },
-              { key: 'p95', label: 'P95', color: 'var(--p-transparent)', values: days.map((d) => u(d, 'p95_zat')), width: 1.2 },
-              { key: 'p90', label: 'P90', color: 'var(--p-transparent)', values: days.map((d) => u(d, 'p90_zat')), width: 1.2, dashed: true },
-              { key: 'p50', label: 'Median', color: 'var(--p-transparent)', values: med, width: 1.2, dashed: true },
+              { key: 'p95', label: 'P95', color: 'var(--other)', values: days.map((d) => u(d, 'p95_zat')), width: 1.2 },
+              { key: 'p90', label: 'P90', color: 'var(--other)', values: days.map((d) => u(d, 'p90_zat')), width: 1.2, dash: '2 3' },
+              { key: 'p50', label: 'Median', color: 'var(--text-2)', values: med, width: 1.2, dash: '10 3 2 3' },
             ]}
             ariaLabel="Daily P90, P95, P99 and P99.9 transaction sizes with the median, log dollar scale."
           />
@@ -256,21 +257,21 @@ export default async function TxSizesPage({ searchParams }: PageProps<'/tx-sizes
 
         <Card
           title="How many transactions a day, and how many dollars?"
-          takeaway={<>An average day carried <b>{num(perDay)}</b> transactions moving <b>{fmt(usdPerDay)}</b>; the busiest was {dateLong(dates[busiest])} ({num(counts[busiest])}) and the biggest dollar day {dateLong(dates[richest])} ({fmt(usdDay[richest])}).</>}
+          takeaway={<>An average day carried <b>{num(perDay)}</b> transactions moving <b>{fmt(usdPerDay)}</b>; the busiest single day was {dateLong(dates[busiest])} ({num(counts[busiest])}) and the biggest single dollar day {dateLong(dates[richest])} ({fmt(usdDay[richest])}), both marked on the charts.</>}
           actions={<ChartActions api="tx-values" name="transactions and dollars per day" />}
-          foot={`Two panels instead of two y-axes: a count and a dollar total are different quantities · data through ${dateLong(dataThrough)}`}
+          foot={`Two panels instead of two y-axes: a count and a dollar total are different quantities · where several days share a column it shows their average day, so a single-day peak sits above its column · the window is the page’s range · data through ${dateLong(dataThrough)}`}
         >
           <span className={r.panelLbl}>Transactions per day</span>
           <TimeSeriesChart
-            dates={dates} format="count" ranges={['1M', '3M', '6M', '1Y']} defaultRange="1Y" height={220}
-            series={[{ key: 'n', label: 'Transactions', color: 'var(--s2)', type: 'bar', values: counts, agg: 'mean' }, { key: 'avg', label: '30-day average', color: 'var(--value)', values: roll(counts), width: 1.4 }]}
-            ariaLabel={`Transparent transactions per day, average ${num(perDay)}.`}
+            dates={dates} format="count" unit="transactions" ranges={false} height={220} events={[{ date: dates[busiest], label: `busiest day ${num(counts[busiest])}` }]}
+            series={[{ key: 'n', label: 'Transactions', color: 'color-mix(in srgb, var(--s2) 60%, transparent)', type: 'bar', values: counts, agg: 'mean' }, { key: 'avg', label: '30-day average', color: 'var(--s2)', values: roll(counts), width: 2 }]}
+            ariaLabel={`Transparent transactions per day, average ${num(perDay)}; busiest day ${dateLong(dates[busiest])} with ${num(counts[busiest])}.`}
           />
           <span className={r.panelLbl}>Dollars moved per day</span>
           <TimeSeriesChart
-            dates={dates} format="usdCompact" ranges={['1M', '3M', '6M', '1Y']} defaultRange="1Y" height={220}
-            series={[{ key: 'u', label: 'Dollars moved', color: 'var(--s4)', type: 'bar', values: usdDay, agg: 'mean' }, { key: 'avg', label: '30-day average', color: 'var(--value)', values: roll(usdDay), width: 1.4 }]}
-            ariaLabel={`Dollars moved by transparent transactions per day, average ${fmt(usdPerDay)}.`}
+            dates={dates} format="usdCompact" ranges={false} height={220} events={[{ date: dates[richest], label: `biggest day ${fmt(usdDay[richest])}` }]}
+            series={[{ key: 'u', label: 'Dollars moved', color: 'color-mix(in srgb, var(--s4) 60%, transparent)', type: 'bar', values: usdDay, agg: 'mean' }, { key: 'avg', label: '30-day average', color: 'var(--s4)', values: roll(usdDay), width: 2 }]}
+            ariaLabel={`Dollars moved by transparent transactions per day, average ${fmt(usdPerDay)}; biggest day ${dateLong(dates[richest])} with ${fmt(usdDay[richest])}.`}
           />
         </Card>
       </Section>
@@ -293,7 +294,7 @@ export default async function TxSizesPage({ searchParams }: PageProps<'/tx-sizes
       <Tiles items={[
         { href: '/shield-hops', title: 'Shield-bound hop sizes', desc: 'The same report for coins going private.' },
         { href: '/wall-of-shame', title: 'Wall of Shame', desc: 'Round trips that reused a near-identical amount.' },
-        { href: '/chart/tx', title: 'Transactions per day', desc: 'Every transaction type, not just transparent.', value: <>{num(stats.at(-1)!.tx_count - stats.at(-1)!.block_count)} / day</> },
+        { href: '/chart/tx', title: 'Transactions per day', desc: 'Every transaction type, not just transparent.', value: <>{num(tx7)} / day, 7-day avg</> },
         { href: '/privacy-suggestions', title: 'Privacy tips', desc: 'Round amounts with the biggest crowd to hide in.' },
       ]} />
     </>

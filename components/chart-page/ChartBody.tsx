@@ -4,14 +4,14 @@
 // window kept in the link as ?from=&to= like the live site), the Linear/Log switch, the annotations toggle, the
 // share/download actions, the panels themselves and the "selected range" KPI band (which follows the range).
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { TimeSeriesChart, type ChartEvent } from '@/components/charts/TimeSeriesChart';
+import { canLog as logOk, LOG_WHY, TimeSeriesChart, type ChartEvent } from '@/components/charts/TimeSeriesChart';
 import { CustomPanelView } from '@/components/charts/custom';
 import { formatValue } from '@/components/charts/valueFormat';
 import { customWindow, isRangeKey, presetFrom, windowIndex, withLivePresets, type DateWindow, type RangeKey } from '@/components/charts/range';
 import { AnnToggle, CustomRange, RangeSeg, useCustomRange } from '@/components/charts/RangeControl';
 import { customPanelCsv, findChartSvg, saveBlob, saveCsv, svgToPng, timeSeriesCsv } from '@/components/charts/exportChart';
 import { Icon } from '@/components/ui/Icon';
-import { dateLong } from '@/lib/format';
+import { dateLong, delta } from '@/lib/format';
 import type { ChartPanel, TimeSeriesPanel } from '@/lib/charts/types';
 import s from './chart-page.module.css';
 
@@ -66,6 +66,13 @@ function applyHide(p: TimeSeriesPanel, hide: string[] | null): TimeSeriesPanel {
 
 const isTs = (p: ChartPanel): p is TimeSeriesPanel => p.kind === 'timeseries';
 
+/** Panels marked `sharedY` get one y-domain (over what is visible in the window), so their magnitudes compare. */
+function shareY(ps: ChartPanel[]): ChartPanel[] {
+  let lo = 0, hi = 0, any = false;
+  for (const p of ps) if (isTs(p) && p.sharedY) for (const x of p.series) if (!x.hidden) for (const v of x.values) if (v != null && Number.isFinite(v)) { lo = Math.min(lo, v); hi = Math.max(hi, v); any = true; }
+  return any && hi > lo ? ps.map((p) => (isTs(p) && p.sharedY ? { ...p, yDomain: [lo, hi] as [number, number] } : p)) : ps;
+}
+
 /** Keep a control's state in the link without adding history entries. */
 const setQuery = (edit: (q: URLSearchParams) => void) => {
   const q = new URLSearchParams(window.location.search);
@@ -90,7 +97,7 @@ export function ChartBody(props: ChartBodyProps) {
   const defaultRange: RangeKey = ranges ? (props.defaultRange && ranges.includes(props.defaultRange) ? props.defaultRange : ranges.includes('1Y') ? '1Y' : ranges[ranges.length - 1]) : 'ALL';
   const [range, setRange] = useState<RangeKey>(defaultRange);
   const [win, setWin] = useState<DateWindow | null>(null); // a custom window replaces the preset
-  const canLog = tsPanels.some((p) => p.logToggle);
+  const hasLog = tsPanels.some((p) => p.logToggle);
   const defaultLog = tsPanels.some((p) => p.logToggle && p.defaultLog);
   const [log, setLog] = useState(defaultLog);
   const hasEvents = hasTs && !!events?.length;
@@ -110,14 +117,19 @@ export function ChartBody(props: ChartBodyProps) {
     const r = q.get('range')?.toUpperCase();
     if (cw) setWin(cw);
     else if (ranges && isRangeKey(r) && ranges.includes(r)) setRange(r);
-    if (canLog && q.get('scale') === 'log') setLog(true);
-    if (canLog && q.get('scale') === 'linear') setLog(false);
+    if (hasLog && q.get('scale') === 'log') setLog(true);
+    if (hasLog && q.get('scale') === 'linear') setLog(false);
     if (hasEvents && q.get('ann') === '0') setAnn(false);
     if (hideKey && q.has(hideKey)) { setHide((q.get(hideKey) ?? '').split(',').map((x) => x.trim()).filter(Boolean)); setFromUrl(1); }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const sliced = useMemo(() => panels.map((p) => (isTs(p) ? applyHide(slicePanel(p, range, win), hide) : p)), [panels, range, win, hide]);
+  const sliced = useMemo(() => shareY(panels.map((p) => (isTs(p) ? applyHide(slicePanel(p, range, win), hide) : p))), [panels, range, win, hide]);
+  // log needs every visible value above zero in every log-capable panel of this window; otherwise the switch is off
+  const logAllowed = sliced.every((p) => !isTs(p) || !p.logToggle || logOk(p.series));
+  const logOn = log && logAllowed;
+  const logPanels = sliced.filter((p) => isTs(p) && p.logToggle).length;
+  const tsCount = sliced.filter(isTs).length;
   const first = sliced.find(isTs);
   const span = first && first.dates.length ? `${dateLong(first.dates[0])} – ${dateLong(first.dates[first.dates.length - 1])}` : null;
   const rangeName = win ? 'Custom' : range;
@@ -195,17 +207,18 @@ export function ChartBody(props: ChartBodyProps) {
           {msg && <span className={s.toast} aria-hidden="true">{msg}</span>}
         </div>
 
-        {(ranges || canLog || hasEvents) && (
+        {(ranges || hasLog || hasEvents) && (
           <div className={s.ctl}>
             {ranges && <RangeSeg ranges={ranges} active={win ? null : range} onPreset={pickPreset} custom={{ ...custom, window: win }} />}
-            {ranges && canLog && <span className={s.vsep} aria-hidden="true" />}
-            {canLog && (
-              <div className="seg" role="group" aria-label="Scale">
-                <button type="button" aria-pressed={!log} onClick={() => pickLog(false)}>Linear</button>
-                <button type="button" aria-pressed={log} onClick={() => pickLog(true)}>Log</button>
+            {ranges && hasLog && <span className={s.vsep} aria-hidden="true" />}
+            {hasLog && (
+              <div className="seg" role="group" aria-label="Scale" title={logAllowed ? undefined : LOG_WHY}>
+                <button type="button" aria-pressed={!logOn} onClick={() => pickLog(false)}>Linear</button>
+                <button type="button" aria-pressed={logOn} disabled={!logAllowed} aria-describedby={logAllowed ? undefined : 'log-why'} onClick={() => pickLog(true)}>Log</button>
+                {!logAllowed && <span className="sr-only" id="log-why">{LOG_WHY}</span>}
               </div>
             )}
-            {hasEvents && (ranges || canLog) && <span className={s.vsep} aria-hidden="true" />}
+            {hasEvents && (ranges || hasLog) && <span className={s.vsep} aria-hidden="true" />}
             {hasEvents && <AnnToggle on={ann} onChange={pickAnn} />}
           </div>
         )}
@@ -225,10 +238,12 @@ export function ChartBody(props: ChartBodyProps) {
             );
           }
           const tsIndex = tsPanels.indexOf(panels[i] as TimeSeriesPanel);
-          const useLog = !!p.logToggle && log;
+          const useLog = !!p.logToggle && logOn;
+          // name the scale on the panel when only some panels are on log
+          const scaleTag = useLog && logPanels < tsCount ? ' · log scale' : '';
           return (
             <div key={i} className={s.panel}>
-              {p.title && <h3 className={s.pt}>{p.title}</h3>}
+              {(p.title || scaleTag) && <h3 className={s.pt}>{p.title ?? 'Log scale'}{p.title && scaleTag}</h3>}
               <TimeSeriesChart
                 key={`${win ? `${win.from}_${win.to}` : range}-${useLog}-${fromUrl}`}
                 dates={p.dates}
@@ -239,6 +254,8 @@ export function ChartBody(props: ChartBodyProps) {
                 yDomain={p.yDomain}
                 zeroBaseline={p.zeroBaseline}
                 step={p.step}
+                unit={p.unit}
+                endLabel={p.endLabel}
                 ranges={false}
                 logToggle={false}
                 defaultLog={useLog}
@@ -256,7 +273,7 @@ export function ChartBody(props: ChartBodyProps) {
         )}
         <div className={s.cap}>
           <span>Data through {dateLong(dataThrough)} · {sourceNote}</span>
-          {span && <span>{span}{canLog ? ` · ${log ? 'log' : 'linear'}` : ''}</span>}
+          {span && <span>{span}{logOn && logPanels === tsCount ? ' · log' : ''}</span>}
         </div>
       </section>
       {first && <RangeStats panel={first} range={ranges ? rangeName : 'ALL'} span={span} />}
@@ -299,30 +316,31 @@ function RangeStats({ panel, range, span }: { panel: TimeSeriesPanel; range: str
     return { firstP, last, hi, lo, avg: sum / pts.length, label, bars, extras, per: cadence(pts.map((p) => p.d)) };
   }, [panel]);
   if (!st) return null;
+  // counts carry the panel's unit ("5,707 transactions"); other formats name their own unit
+  const u = panel.unit && (panel.format === 'count' || panel.format === 'countCompact') ? panel.unit : undefined;
   const f = (v: number) => formatValue(v, panel.format);
-  // Change: percentage points for % series, relative % otherwise
+  // Change: percentage points for % series, relative % otherwise (none when the start is 0 or the sign flips)
   const diff = st.last.v - st.firstP.v;
   const pts = panel.format.startsWith('pct');
-  const rel = st.firstP.v !== 0 ? (diff / Math.abs(st.firstP.v)) * 100 : null;
+  const rel = st.firstP.v > 0 && st.last.v >= 0 ? (diff / st.firstP.v) * 100 : null;
   const dv = pts ? diff : rel;
-  const arrow = dv == null ? '' : dv > 0 ? '▲' : dv < 0 ? '▼' : '';
-  const chgText = dv == null ? '—' : pts ? `${arrow} ${Math.abs(dv).toFixed(2)} pts` : `${arrow} ${Math.abs(dv) >= 100 ? Math.round(Math.abs(dv)).toLocaleString('en-US') : Math.abs(dv).toFixed(1)}%`;
+  const d = delta(dv, pts ? 2 : dv != null && Math.abs(dv) >= 100 ? 0 : 1, pts ? ' pts' : '%');
   return (
     <section className={s.band} aria-label="Selected range statistics">
       <div className={s.bandH}><h2 className="kicker">Selected range · {range}</h2>{span && <span className="small mono">{span}</span>}</div>
       <div className={`kpis${st.extras.length === 2 ? ' six' : ''}`} role="list">
-        <Tile k="Latest" v={f(st.last.v)} s={`${st.label === 'Total' ? 'total' : st.label}, ${dateLong(st.last.d)}`} />
+        <Tile k="Latest" v={f(st.last.v)} u={u} s={`${st.label === 'Total' ? 'total' : st.label}, ${dateLong(st.last.d)}`} />
         {st.bars
-          ? <Tile k="Average" v={f(st.avg)} s={`per ${st.per} over the range`} />
-          : <Tile k="Change" v={chgText} cls={dv != null && dv > 0 ? 'up' : dv != null && dv < 0 ? 'dn' : ''} s={`from ${f(st.firstP.v)} on ${dateLong(st.firstP.d)}`} />}
-        <Tile k="Range high" v={f(st.hi.v)} s={dateLong(st.hi.d)} />
-        <Tile k="Range low" v={f(st.lo.v)} s={dateLong(st.lo.d)} />
-        {st.extras.map((x) => <Tile key={x.label} k={x.label} v={x.v == null ? '—' : f(x.v)} s={x.ratio ? `${st.label} is ${x.ratio.toFixed(2)}× this` : 'latest'} />)}
+          ? <Tile k="Average" v={f(st.avg)} u={u} s={`per ${st.per} over the range`} />
+          : <Tile k="Change" v={d.text} cls={d.cls === 'muted' ? '' : d.cls} s={`from ${f(st.firstP.v)} on ${dateLong(st.firstP.d)}`} />}
+        <Tile k="Range high" v={f(st.hi.v)} u={u} s={dateLong(st.hi.d)} />
+        <Tile k="Range low" v={f(st.lo.v)} u={u} s={dateLong(st.lo.d)} />
+        {st.extras.map((x) => <Tile key={x.label} k={x.label} v={x.v == null ? '—' : f(x.v)} u={x.v == null ? undefined : u} s={x.ratio ? `${st.label} is ${x.ratio.toFixed(2)}× this` : 'latest'} />)}
       </div>
     </section>
   );
 }
 
-function Tile({ k, v, s: sub, cls = '' }: { k: string; v: string; s: string; cls?: string }) {
-  return <div className="kpi" role="listitem"><span className="k">{k}</span><span className={`v ${cls}`}>{v}</span><span className="s">{sub}</span></div>;
+function Tile({ k, v, u, s: sub, cls = '' }: { k: string; v: string; u?: string; s: string; cls?: string }) {
+  return <div className="kpi" role="listitem"><span className="k">{k}</span><span className={`v ${cls}`}>{v}{u && <span className="u">{u}</span>}</span><span className="s">{sub}</span></div>;
 }

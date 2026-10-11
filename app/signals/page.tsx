@@ -3,7 +3,7 @@ import { Masthead } from '@/components/chrome/Masthead';
 import { Callout, Card, Kpi, KpiBand, More, Section, Tiles } from '@/components/ui/blocks';
 import { TimeSeriesChart } from '@/components/charts/TimeSeriesChart';
 import t from '@/components/tools/tools.module.css';
-import { getSignalsReplay, SIGNAL_CALLS } from '@/lib/data/tools';
+import { getSignalsReplay, metricCount, SIGNAL_CALLS } from '@/lib/data/tools';
 import { dateLong, num, usd } from '@/lib/format';
 import { pageMetadata } from '@/lib/seo';
 import { SectionLd } from '@/components/seo/SectionLd';
@@ -16,7 +16,8 @@ const signed = (v: number | null, suffix = '%') => (v == null ? '—' : `${v > 0
 const dir = (v: number | null) => (v == null || v === 0 ? undefined : v > 0 ? 'up' : 'dn');
 
 export default async function SignalsPage() {
-  const r = await getSignalsReplay();
+  const [r, mc] = await Promise.all([getSignalsReplay(), metricCount()]);
+  const months = (Date.parse(r.end) - Date.parse(r.start)) / (30.44 * 86400000);
   const follow = (r.followEnd / r.startUsd - 1) * 100, hold = (r.holdEnd / r.startUsd - 1) * 100, avg = (r.avgShareEnd / r.startUsd - 1) * 100;
   const changes = SIGNAL_CALLS.filter((c) => c.effect != null);
   const helped = changes.filter((c) => (c.effect ?? 0) > 0).length, hurt = changes.filter((c) => (c.effect ?? 0) < 0).length;
@@ -44,10 +45,10 @@ export default async function SignalsPage() {
       <Card
         title="What would $10,000 have become, following the calls or holding?"
         takeaway={<>Following the calls ends at <b>{usd(r.followEnd, 0)}</b>, holding at <b>{usd(r.holdEnd, 0)}</b>. The calls cut the worst fall from {num(r.holdDd, 0)}% to {num(r.followDd, 0)}% but gave up {num(Math.abs(gap), 0)} points of return.</>}
-        foot={`$10,000 on ${dateLong(r.start)}, moved to each call's share of ZEC at the price it quoted, rest in cash · 0.1% fee on each trade · marked at daily closes through ${dateLong(r.end)} · dashed line: live calls from ${dateLong(firstLive)}`}
+        foot={`$10,000 on ${dateLong(r.start)}, moved to each call's share of ZEC at the price it quoted, rest in cash · 0.1% fee on each trade · marked at daily closes through ${dateLong(r.end)} · vertical line: live calls from ${dateLong(firstLive)}`}
       >
         <TimeSeriesChart dates={r.dates} ranges={false} format="usd0" height={280} events={[{ date: firstLive, label: 'live from here' }]}
-          series={[{ key: 'f', label: 'Following the calls', color: 'var(--zec)', values: r.follow }, { key: 'h', label: 'Holding ZEC', color: 'var(--text-2)', dashed: true, values: r.hold }]}
+          series={[{ key: 'f', label: 'Following the calls', color: 'var(--s1)', values: r.follow }, { key: 'h', label: 'Holding ZEC', color: 'var(--text-2)', dashed: true, values: r.hold }]}
           ariaLabel={`Value of $10,000 following the calls versus holding ZEC, ${dateLong(r.start)} to ${dateLong(r.end)}`} />
         <p className="small mono">Share of the account in ZEC</p>
         <TimeSeriesChart dates={r.dates} ranges={false} format="pct0" height={150} step yDomain={[0, 100]} events={[{ date: firstLive, label: 'live' }]}
@@ -85,7 +86,7 @@ export default async function SignalsPage() {
 
       <More summary="Read this before trusting any of it">
         <p><b>{SIGNAL_CALLS.length - live.length} of the {SIGNAL_CALLS.length} calls are replayed, not live.</b> For each day before the channel existed the model was run on the data through that day and no further, and the same rules decided whether it would have spoken. It could not see the future, but its design was settled in September 2026 with this history in view, so the replay flatters it. The {live.length} calls from {dateLong(firstLive)} on were decided live, hour by hour, and written down before anyone knew how they would turn out — those are the record proper.</p>
-        <p><b>Under three months is a short record.</b> A handful of calls cannot tell skill from luck, and one big move decides most of the result.</p>
+        <p><b>{months < 3 ? 'Under three months' : `${Math.round(months)} months`} is a short record.</b> A handful of calls cannot tell skill from luck, and one big move decides most of the result.</p>
         <p><b>Fills are idealised.</b> Replayed calls trade at the day&apos;s closing price, live ones at the price in the message. Real fills would differ, cash earns nothing here, and taxes are ignored.</p>
         <p><b>Thresholds re-fit daily,</b> so the suggested share can move a long way on a small change in the score. That shows up as trades, and the fees are counted.</p>
         <p><b>How this page computes the record.</b> The replay above is recomputed from the call log and daily closes.</p>
@@ -94,7 +95,7 @@ export default async function SignalsPage() {
         items={[
           { href: '/pro', title: 'ZEC Stats Pro', desc: 'The paid channel and the password-protected research page.', value: 'Not open yet' },
           { href: '/chart/price', title: 'ZEC price', desc: 'The price every call was judged against.', value: usd(r.endPrice, 2) },
-          { href: '/metrics', title: 'Metrics table', desc: 'The on-chain numbers the model reads, with their recent change.', value: '43 metrics' },
+          { href: '/metrics', title: 'Metrics table', desc: 'The on-chain numbers the model reads, with their recent change.', value: `${mc.tracked} metrics` },
           { href: '/btc-bull-run', title: 'ZEC 2026 vs BTC 2017', desc: 'Another way people read the 2026 run — with the same caveats.', value: 'Day by day' },
         ]}
       />

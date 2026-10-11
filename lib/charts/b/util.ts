@@ -1,6 +1,7 @@
 // Pure helpers for registry-b (usage, holders, supply, markets). No data access here — loaders pass rows in.
 import type { Series, ChartEvent } from '@/components/charts/TimeSeriesChart';
 import type { TimeSeriesPanel } from '../types';
+import type { Good } from '@/lib/format';
 
 // ─── colours (CSS variables only; tints via color-mix so both themes work) ───────────────────────────────
 export const C = {
@@ -63,6 +64,23 @@ export function changeOver(dates: string[], values: V, days: number): { pct: num
   if (a == null || b == null || !a || Date.parse(dates[j]) > target) return null;
   return { pct: ((b - a) / Math.abs(a)) * 100, days };
 }
+/** A change with the direction that counts as good (fees: 'down'). */
+export const withGood = (c: { pct: number; days: number } | null, good: Good) => (c ? { ...c, good } : null);
+/** A change in percentage points between the last valid value and the one `days` calendar days earlier (shares, rates). */
+export function changePts(dates: string[], values: V, days: number): { pct: number; days: number; pts: true } | null {
+  const i = lastIndex(values);
+  if (i < 0) return null;
+  const target = Date.parse(dates[i]) - days * 86400000;
+  let j = i;
+  while (j > 0 && Date.parse(dates[j]) > target) j--;
+  const a = values[j], b = values[i];
+  return a == null || b == null || Date.parse(dates[j]) > target ? null : { pct: b - a, days, pts: true };
+}
+/** "1-year", "5-year", "4-month": the span a sparkline covers, from its first and last dates. */
+export function spanWord(from: string, to: string): string {
+  const d = (Date.parse(to) - Date.parse(from)) / 86400000;
+  return d >= 540 ? `${Math.round(d / 365.25)}-year` : d >= 300 ? '1-year' : d >= 45 ? `${Math.round(d / 30.44)}-month` : `${Math.max(1, Math.round(d))}-day`;
+}
 /** ≤90-point sparkline (thinned evenly from the last `span` valid values). */
 export function spark(values: V, span = 365, n = 90): number[] {
   const xs = values.filter((v): v is number => v != null && Number.isFinite(v)).slice(-span);
@@ -81,11 +99,12 @@ export const addDays = (d: string, n: number) => new Date(Date.parse(`${d}T00:00
 
 // ─── copy helpers ────────────────────────────────────────────────────────────────────────────────────────
 /** "up 4.2% on 28 days earlier" / "down …" / "flat …" — words, so the sentence never relies on colour. */
-export function changeWords(ch: { pct: number; days: number } | null | undefined): string {
+export function changeWords(ch: { pct: number; days: number; pts?: boolean } | null | undefined): string {
   if (!ch) return '';
   const a = Math.abs(ch.pct);
-  if (a < 0.05) return `flat on ${ch.days} days earlier`;
-  return `${ch.pct > 0 ? 'up' : 'down'} ${a.toFixed(1)}% on ${ch.days} days earlier`;
+  const d = ch.pts ? 2 : 1;
+  if (a < 0.5 * 10 ** -d) return `flat on ${ch.days} days earlier`;
+  return `${ch.pct > 0 ? 'up' : 'down'} ${a.toFixed(d)}${ch.pts ? ' points' : '%'} on ${ch.days} days earlier`;
 }
 
 // ─── shared events (network upgrades and halvings) ───────────────────────────────────────────────────────

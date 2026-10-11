@@ -30,7 +30,7 @@
 .dotTrack { position: relative; height: 22px; }
 .dotRow .dotTrack::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 1px solid var(--grid); }
 .refLine { position: absolute; top: -9px; bottom: -9px; width: 0; border-left: 1.5px dashed var(--text-2); }
-.refLab { position: absolute; bottom: 0; transform: translateX(-50%); white-space: nowrap; font: 500 11.5px var(--mono); color: var(--text-2); }
+.refLab { position: absolute; bottom: 0; transform: translateX(-50%); white-space: nowrap; font: 500 12px var(--mono); color: var(--text-2); }
 .dotMark { position: absolute; top: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; box-shadow: 0 0 0 2px var(--card); }
 .dotVal { font: 500 13.5px var(--mono); color: var(--value); text-align: right; white-space: nowrap; }
 .dots figcaption { margin-top: 10px; }
@@ -41,15 +41,15 @@
 .ph { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
 .pp { font: 700 16px var(--mono); color: var(--value); }
 .pp span { font-size: 12px; font-weight: 500; color: var(--text-2); }
-.model { margin-left: 8px; font: 400 11.5px var(--mono); color: var(--muted); }
+.model { margin-left: 8px; font: 400 12px var(--mono); color: var(--muted); }
 .hist { display: block; width: 100%; height: 110px; margin-top: 4px; }
 .hx { position: relative; height: 12px; }
-.hx span { position: absolute; transform: translateX(-50%); font: 400 11px var(--mono); color: var(--muted); }
+.hx span { position: absolute; transform: translateX(-50%); font: 400 12px var(--mono); color: var(--muted); }
 
 @media (max-width: 560px) {
   .dotHead, .dotRow { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) auto; gap: 10px; }
   .dotName { font-size: 13px; }
   .dotVal { font-size: 12.5px; }
-  .refLab { font-size: 11px; }
+  .refLab { font-size: 12px; }
   .multi { grid-template-columns: minmax(0, 1fr); }
 }

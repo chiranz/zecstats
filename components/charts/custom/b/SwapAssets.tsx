@@ -25,7 +25,7 @@ const GRANS: [Gran, string][] = [['token', 'Token'], ['chain', 'Chain'], ['raw',
 const KEYS = { dir: ['swap-dir', 'dir'], win: ['swap-window', 'mode'], gran: ['swap-grouping', 'gran'] } as const;
 const DEFAULT: View = { dir: 'out', win: 'monthly', gran: 'token' };
 const NOUN: Record<Gran, string> = { token: 'tokens', chain: 'chains', raw: 'assets' };
-const SPARE = ['var(--s2)', 'var(--s3)', 'var(--s5)', 'var(--s1)', 'var(--btc)'];
+const SPARE = ['var(--s2)', 'var(--s3)', 'var(--s5)', 'var(--s1)', 'var(--s4)']; // generic hues only: --btc means Bitcoin
 const OTHER = 'var(--s6)';
 
 const usdC = (v: number) => formatValue(v, 'usdCompact');

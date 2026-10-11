@@ -9,7 +9,7 @@
 .bub { cursor: pointer; outline: none; }
 .bub:focus-visible circle:first-child { stroke: var(--accent); stroke-width: 2px; }
 .bubN { fill: var(--value) !important; font-weight: 600; pointer-events: none; }
-.lat { fill: var(--muted); font-size: 11px; }
+.lat { fill: var(--muted); font-size: 12px; }
 .trow { display: grid; grid-template-columns: 10px 1fr auto; gap: 8px; align-items: center; }
 .tdiv { height: 1px; background: var(--line); margin: 2px 0; }
 .tcl { display: flex; flex-wrap: wrap; gap: 4px 10px; color: var(--text); }

@@ -52,9 +52,10 @@ export const getSyncTotals = cache(async () => {
   return { ...t, reachable: t.at_tip + t.out_of_sync + t.unknown_sync };
 });
 
-// Client display names + colours: one palette for this page (map, share bar, version table, directory).
+// Client display names + colours: one palette for this page (map, share bar, version table, directory). Generic
+// categorical hues — never a pool colour, and none near --warn/--up, which the sync-status view uses.
 export const CLIENT_LABEL: Record<string, string> = { Zakura: 'Zakura', Zebra: 'Zebra', zcashd: 'zcashd', unknown: 'Not reported' };
-export const CLIENT_COLOR: Record<string, string> = { Zakura: 'var(--s3)', Zebra: 'var(--s2)', zcashd: 'var(--s4)', unknown: 'var(--p-transparent)' };
+export const CLIENT_COLOR: Record<string, string> = { Zakura: 'var(--s5)', Zebra: 'var(--s1)', zcashd: 'var(--s4)', unknown: 'var(--other)' };
 export const clientOfAgent = (ua: string) => (/Zakura/i.test(ua) ? 'Zakura' : /Zebra/i.test(ua) ? 'Zebra' : /MagicBean/i.test(ua) ? 'zcashd' : 'unknown');
 
 /** Plain-language status labels (the API's own labels, de-jargoned). */

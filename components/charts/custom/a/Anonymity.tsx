@@ -30,8 +30,8 @@ export function Anonymity(props: Record<string, unknown>) {
       </div>
       <XYChart
         series={[
-          { key: 'shield', label: 'Shielding txs ≥ amount (your crowd)', color: 'var(--p-ironwood)', points: buckets.map((x) => [x.mid, x.shieldCum]) },
-          { key: 'deshield', label: 'Deshielding txs ≥ amount', color: 'var(--s4)', points: buckets.map((x) => [x.mid, x.deshieldCum]), dashed: true },
+          { key: 'shield', label: 'Shielding txs ≥ amount (your crowd)', color: 'var(--s1)', points: buckets.map((x) => [x.mid, x.shieldCum]) },
+          { key: 'deshield', label: 'Deshielding txs ≥ amount', color: 'var(--s2)', points: buckets.map((x) => [x.mid, x.deshieldCum]), dashed: true },
         ]}
         xFormat="zecAmount" yFormat="countCompact" xLabel="amount (ZEC, log scale) →" xLog step yLogDefault logToggle
         xTicks={[0.01, 0.1, 1, 10, 100, 1000, 10000]}

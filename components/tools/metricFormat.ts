@@ -1,4 +1,4 @@
-import { compact, num } from '@/lib/format';
+import { compact, delta, num, type Good } from '@/lib/format';
 
 /** 20.74e9 -> "20.74B": two decimals at every unit, as the table reads best when rows line up. */
 function compact2(v: number): string {
@@ -23,28 +23,29 @@ export function fmtMetric(v: number | null | undefined, kind: MetricKind): { v: 
     case 'zecC': return { v: `${sign}${compact2(a)}`, unit: 'ZEC' };
     case 'zec': return { v: `${sign}${num(a, 0)}`, unit: 'ZEC' };
     case 'count': return { v: `${sign}${num(a, a < 100 ? 1 : 0)}` };
-    case 'hash': return { v: num(a / 1e9, 2), unit: 'GH/s' };
+    case 'hash': return { v: num(a / 1e9, 2), unit: 'GSol/s' };
     case 'bytes': return { v: num(a / 1000, 0), unit: 'KB' };
     case 'big': return { v: compact(v, 2) };
   }
 }
 export const fmtMetricText = (v: number | null | undefined, kind: MetricKind) => { const f = fmtMetric(v, kind); return f.unit ? `${f.v} ${f.unit}` : f.v; };
 
-/** Change from `from` to `now`. Relative % when both are positive; otherwise a difference in the metric's own unit
- *  (flows and funding rates change sign, so a percentage would be meaningless). */
-export function change(now: number, from: number | null, kind: MetricKind, signed: boolean): { text: string; dir: 'up' | 'dn' | 'flat'; value: number } | null {
+/** Change from `from` to `now`. Shares and rates (kind 'pct') always change in percentage points; otherwise a relative %
+ *  when both are positive, else a difference in the metric's own unit (flows change sign, so a percentage would be
+ *  meaningless). The arrow is the direction and `cls` the colour, good or bad per `good`; a change that rounds to 0 is flat. */
+export function change(now: number, from: number | null, kind: MetricKind, signed: boolean, good: Good = 'up'): { text: string; dir: 'up' | 'dn' | 'flat'; cls: 'up' | 'dn' | 'muted'; value: number } | null {
   if (from == null || !Number.isFinite(from)) return null;
+  if (kind === 'pct') { const d = delta(now - from, 2, ' pts', good); return { ...d, value: now - from }; }
   if (!signed && from <= 0) return null;
   if (signed && (from <= 0 || now <= 0 || kind === 'usdSigned')) {
-    const d = now - from;
-    const dir = Math.abs(d) < 1e-9 ? 'flat' : d > 0 ? 'up' : 'dn';
-    const mag = kind === 'pct' ? `${num(Math.abs(d), 2)} pts` : kind === 'usdSigned' ? `$${compact2(Math.abs(d))}` : fmtMetricText(Math.abs(d), kind);
+    const df = now - from;
+    const d = delta(df, 0, '', good);
+    const mag = kind === 'usdSigned' ? `$${compact2(Math.abs(df))}` : fmtMetricText(Math.abs(df), kind);
     // rank sign-crossing rows by their relative size against the old level so sorting stays meaningful
-    return { text: `${dir === 'up' ? '▲' : dir === 'dn' ? '▼' : ''} ${mag}`.trim(), dir, value: (d / Math.max(Math.abs(from), 1e-9)) * 100 };
+    return { text: d.dir === 'flat' ? mag : `${d.dir === 'up' ? '▲' : '▼'} ${mag}`, dir: d.dir, cls: d.cls, value: (df / Math.max(Math.abs(from), 1e-9)) * 100 };
   }
   const p = (now / from - 1) * 100;
   const a = Math.abs(p);
-  const digits = a >= 100 ? 0 : a < 1 ? 2 : 1;
-  const dir = a < 0.005 ? 'flat' : p > 0 ? 'up' : 'dn';
-  return { text: `${dir === 'up' ? '▲' : dir === 'dn' ? '▼' : ''} ${num(a, digits)}%`.trim(), dir, value: p };
+  const d = delta(p, a >= 100 ? 0 : a < 1 ? 2 : 1, '%', good);
+  return { ...d, value: p };
 }

@@ -2,6 +2,7 @@
 // FROZEN: additive changes only — two agents implement registry-a.ts and registry-b.ts against it.
 import type { Series, RangeKey, ChartEvent } from '@/components/charts/TimeSeriesChart';
 import type { ValueFormat } from '@/components/charts/valueFormat';
+import type { Good } from '@/lib/format';
 
 export type ChartGroupId = 'price' | 'costbasis' | 'privacy' | 'usage' | 'holders' | 'supply' | 'markets';
 
@@ -15,7 +16,7 @@ export const CHART_GROUPS: { id: ChartGroupId; title: string; question: string; 
   { id: 'markets', title: 'Markets & cross-chain', question: 'Where does ZEC trade and move between chains?', desc: 'NEAR Intents swaps and bridge, exchange volume and Hyperliquid derivatives.' },
 ];
 
-/** Group membership (58 charts). Order inside a group = display order; the first is the "Start here" hub. */
+/** Group membership (every chart; the count is ALL_SLUGS.length). Order inside a group = display order; the first is the "Start here" hub. */
 export const GROUP_SLUGS: Record<ChartGroupId, string[]> = {
   price: ['price', 'market-cap', 'zec-btc-ratio', 'fdv-vs-btc', 'implied-mcap', 'etf-holdings', 'volatility', 'mktcap-issuance', 'tx-issuance', 'volume-issuance', 'vol-issuance'],
   costbasis: ['realized-all', 'mvrv', 'realized', 'cost-basis', 'pool-profit', 'pool-usd'],
@@ -44,6 +45,12 @@ export type TimeSeriesPanel = {
   defaultLog?: boolean;
   step?: boolean;
   height?: number;
+  /** y-axis title for counts the format can't name ("transactions", "UTXOs") */
+  unit?: string;
+  /** name each line at its right end (same-hue or many-line panels) */
+  endLabel?: boolean;
+  /** panels marked sharedY share one y-domain on the chart page, so magnitudes compare across rows */
+  sharedY?: boolean;
 };
 
 /** Escape hatch for non-time-series charts (heatmaps, histograms, x = coins issued…). `component` names a client
@@ -56,7 +63,11 @@ export type Headline = {
   label: string;     // e.g. "Shielded supply"
   value: string;     // formatted, e.g. "4.97M ZEC"
   date: string;      // YYYY-MM-DD of the value (last complete day unless noted)
-  change?: { pct: number; days: number } | null; // vs N days earlier
+  /** vs N days earlier: a relative % — or, with `pts`, a change in percentage points (for a share or rate headline).
+   *  `good` says which way is good (default 'up'). */
+  change?: { pct: number; days: number; pts?: boolean; good?: Good } | null;
+  /** when the value is not a plain daily figure: "weekly · 3 Oct", "close, 10 Oct" — shown beside the key figure */
+  note?: string;
   sentence: string;  // one-sentence takeaway, consistent with value/date
 };
 
@@ -65,6 +76,8 @@ export type ChartData = {
   headline: Headline;
   /** For the index/sparkline: a short series (≤90 points) and a short descriptor when there's no single number. */
   spark?: number[];
+  /** the period the spark covers, read out with it ("5-year"); default "1-year" (the last 365 daily values) */
+  sparkWindow?: string;
   indexValue?: string; // e.g. "$1,234" or "5 pools"
   ranges?: RangeKey[] | false;
   defaultRange?: RangeKey;

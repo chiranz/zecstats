@@ -1,5 +1,5 @@
 import 'server-only';
-import { dateLong } from '@/lib/format';
+import { dateLong, dateShort, num } from '@/lib/format';
 import type { ChartDef } from '../types';
 import { api } from '@/lib/data/core';
 import { POOL_COLOR, POOL_LABEL, POOLS, type Pool } from '@/lib/data/snapshot';
@@ -142,10 +142,10 @@ export const realized: ChartDef = {
     const pr = (k: Pool) => rows.map((r) => (r[`rp_${k}`] > 0 ? r[`rp_${k}`] : null));
     return {
       panels: [
-        { kind: 'timeseries', title: 'Realized price, overall and by pool', dates, format: 'usd', logToggle: true, height: 340, series: [
+        { kind: 'timeseries', title: 'Realized price, overall and by pool', dates, format: 'usd', logToggle: true, height: 340, endLabel: true, series: [
           { key: 'rp', label: 'Realized (all pools)', color: 'var(--value)', values: rows.map((r) => r.realized_price), type: 'line', width: 2.4 },
           ...POOLS.map((k) => ({ key: k, label: POOL_LABEL[k], color: POOL_COLOR[k], values: pr(k), type: 'line' as const, width: 1.3, hidden: k === 'sprout' })),
-          { key: 'spot', label: 'Spot', color: 'var(--text-2)', values: rows.map((r) => r.spot_price), type: 'line', dashed: true, width: 1.2 },
+          { key: 'spot', label: 'Spot', color: 'var(--text)', values: rows.map((r) => r.spot_price), type: 'line', dash: '2 3', width: 1.4 },
         ] },
         { kind: 'timeseries', title: 'Realized cap vs market cap', dates, format: 'usdCompact', height: 220, series: [
           { key: 'rc', label: 'Realized cap', color: 'var(--s2)', values: rows.map((r) => r.realized_cap), type: 'line', width: 2 },
@@ -203,18 +203,18 @@ export const costBasis: ChartDef = {
     const below = POOLS.filter((k) => latest[k] && latest[k]!.avg_acquisition_price < spotNow).length;
     return {
       panels: [
-        { kind: 'timeseries', dates, format: 'usd', logToggle: true, series: [
-          { key: 'spot', label: 'Spot', color: 'var(--text-2)', values: spot, type: 'line', dashed: true, width: 1.2 },
+        { kind: 'timeseries', dates, format: 'usd', logToggle: true, endLabel: true, series: [
+          { key: 'spot', label: 'Spot (close)', color: 'var(--text)', values: spot, type: 'line', dash: '2 3', width: 1.4 },
           ...POOLS.map((k) => ({ key: k, label: POOL_LABEL[k], color: POOL_COLOR[k], values: per[k], type: 'line' as const, width: 1.8 })),
         ] },
         { kind: 'custom', title: 'Where does each pool’s basis sit against spot today?', component: 'a-dotplot', props: {
           rows: POOLS.map((k) => ({ label: POOL_LABEL[k], color: POOL_COLOR[k], value: latest[k]?.avg_acquisition_price ?? null, note: latest[k] ? `${(spotNow / latest[k]!.avg_acquisition_price).toFixed(1)}×` : undefined })),
-          reference: { label: 'spot', value: spotNow }, format: 'usd', log: true,
-          caption: `Acquisition price per pool on ${dateLong(through)}; the multiple is spot ÷ basis.`,
+          reference: { label: `close ${dateShort(through)}`, value: spotNow }, format: 'usd', log: true,
+          caption: `Acquisition price per pool on ${dateLong(through)}; spot is that day’s close, and the multiple is spot ÷ basis.`,
           ariaLabel: `Average acquisition price of each pool against the spot price of ${fmt(spotNow, 'usd')}.`,
         } },
       ],
-      headline: headline('Pools below spot', `${below} of 5`, through, `**${below} of 5 pools** hold coins that cost less than today’s ${fmt(spotNow, 'usd0')} to move in; Ironwood’s basis is the highest at **${fmt(latest.ironwood?.avg_acquisition_price, 'usd0')}** (${dateLong(through)}).`),
+      headline: { ...headline('Pools below spot', `${below} of 5`, through, `**${below} of 5 pools** hold coins that cost less than the ${dateLong(through)} close of ${fmt(spotNow, 'usd0')} to move in; Ironwood’s basis is the highest at **${fmt(latest.ironwood?.avg_acquisition_price, 'usd0')}**.`), note: `vs the ${dateShort(through)} close` },
       spark: spark(per.orchard),
       indexValue: '5 pools vs spot',
       defaultRange: '1Y',
@@ -229,7 +229,7 @@ export const poolProfit: ChartDef = {
   slug: 'pool-profit',
   title: 'Cost basis & % in profit by pool',
   short: 'Cost basis & % in profit by pool',
-  question: 'How much of each pool was acquired below today’s price?',
+  question: 'How much of each pool was acquired below the latest close?',
   group: 'costbasis',
   source: 'price',
   sourceNote: 'UTXO cost basis (transparent) · deposit model (shielded) · our node',
@@ -241,26 +241,35 @@ export const poolProfit: ChartDef = {
     {
       heading: 'What does in profit mean here?',
       paragraphs: [
-        'For each pool: the share of its coins whose **cost basis** — the price when they entered that pool — sits below today’s price. Blue bars left of the dashed line are in profit; orange bars right of it are under water.',
+        'For each pool: the share of its coins whose **cost basis** — the price when they entered that pool — sits below the latest daily close. Blue bars left of the dashed line are in profit; rust bars right of it are under water.',
         '**Only the transparent pool is exact.** Every transparent output carries a visible creation height, so its basis is a fact. Shielded notes are private, so each day’s inflow is recorded at that day’s price and deshielding is removed proportionally: those panels report the share of **deposits** in profit, an estimate of a population, not anyone’s position.',
         '**It is not anyone’s P&L.** A coin that entered Orchard below today’s price may have been bought far higher, mined or received as payment — a pool crossing is not a purchase.',
       ],
     },
-    { heading: 'Methodology', paragraphs: ['Ironwood has no per-pool flow columns, so its deposits are reconstructed from per-transaction migration attribution. The deposit model tracks its own balances, so the ZEC totals here can differ from the consensus pool balances on Shielded pool balances.'] },
+    { heading: 'Methodology', paragraphs: ['Ironwood has no per-pool flow columns, so its deposits are reconstructed from per-transaction migration attribution. The deposit model tracks its own balances, so the ZEC it histograms can differ from the consensus pool balance: each card shows the real balance, and the model’s total where they differ.', 'The price line is the latest complete daily close — the same price the pool acquisition chart uses. The in-profit shares come from the upstream model, which classifies against the newest price it has; no histogram bucket falls between the two.'] },
   ],
   async load() {
-    const [d, through] = await Promise.all([api<Pnl>('pool-pnl'), dataThrough()]);
+    const [d, through, prices, daily] = await Promise.all([api<Pnl>('pool-pnl'), dataThrough(), completePrices(), completeDaily()]);
+    const close = prices[prices.length - 1];
+    const end = daily[daily.length - 1];
     const order = POOLS.map((k) => d.pools.find((p) => p.pool.toLowerCase() === k)).filter((p): p is Pnl['pools'][number] => !!p);
-    const pools = order.map((p) => ({ pool: p.pool, color: POOL_COLOR[p.pool.toLowerCase() as Pool], exact: p.exact, zec: p.zec, realized: p.realized_price, mvrv: p.mvrv, pctProfit: p.pct_in_profit, hist: p.histogram.map((b) => ({ cost: b.cost, zec: b.zec, profit: b.in_profit })) }));
+    const pools = order.map((p) => {
+      const k = p.pool.toLowerCase() as Pool;
+      return { pool: p.pool, color: POOL_COLOR[k], exact: p.exact, zec: p.zec, balance: end[`end_${k}_zat`] / 1e8, realized: p.realized_price, mvrv: p.mvrv, pctProfit: p.pct_in_profit, hist: p.histogram.map((b) => ({ cost: b.cost, zec: b.zec, profit: b.cost < close.zec_usd })) };
+    });
+    const iwBal = pools.find((p) => p.pool === 'Ironwood');
     const t = order.find((p) => p.pool === 'Transparent');
     const iw = order.find((p) => p.pool === 'Ironwood');
     return {
-      panels: [{ kind: 'custom', component: 'a-pool-profit', props: { pools, priceNow: d.price_now } }],
-      headline: headline('Transparent ZEC in profit', `${t?.pct_in_profit.toFixed(0)}%`, through, `**${t?.pct_in_profit.toFixed(0)}% of transparent ZEC** was acquired below today’s ${fmt(d.price_now, 'usd0')}; in Ironwood, **${iw?.pct_in_profit.toFixed(0)}%** of deposits are in profit.`),
+      panels: [{ kind: 'custom', component: 'a-pool-profit', props: { pools, priceNow: close.zec_usd, priceLabel: `Close ${dateShort(close.date)}` } }],
+      headline: { ...headline('Transparent ZEC in profit', `${t?.pct_in_profit.toFixed(0)}%`, through, `**${t?.pct_in_profit.toFixed(0)}% of transparent ZEC** was acquired below the ${dateLong(close.date)} close of ${fmt(close.zec_usd, 'usd0')}; in Ironwood, **${iw?.pct_in_profit.toFixed(0)}%** of deposits are in profit.`), note: `vs the ${dateShort(close.date)} close` },
       indexValue: '5 histograms',
       ranges: false,
       dataThrough: through,
-      notes: [`Price line: ${fmt(d.price_now, 'usd')} (latest price). Transparent is exact; shielded pools use the deposit model.`],
+      notes: [
+        `Price line: ${fmt(close.zec_usd, 'usd')}, the ${dateLong(close.date)} close. Transparent is exact; shielded pools use the deposit model.`,
+        ...(iwBal && Math.abs(iwBal.zec - iwBal.balance) > iwBal.balance * 0.02 ? [`Ironwood holds ${num(iwBal.balance / 1e6, 2)}M ZEC on-chain (the consensus balance); the upstream deposit model keeps its own running balance and histograms ${num(iwBal.zec / 1e6, 2)}M, so read its shares, not its total.`] : []),
+      ],
     };
   },
 };

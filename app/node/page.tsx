@@ -27,15 +27,25 @@ export default async function NodePage() {
   const slowDays = last30.filter((s) => s.block_count < TARGET * 0.9).length;
   const ago = lastBlockAgo < 120 ? `${lastBlockAgo} s` : `${Math.round(lastBlockAgo / 60)} min`;
 
+  // snapshot indexes refresh in ~1,000-block batches, so a lag up to one batch (plus a little) is their normal state
   const indexes = [
-    { name: 'Block index (pools, flows, supply)', height: lb.height, pct: (lb.height / lb.node_estimated_height) * 100 },
-    { name: 'UTXO set', height: bf.utxo_backfill_height, pct: (bf.utxo_backfill_height / bf.chain_height) * 100 },
-    { name: 'Fees', height: bf.fee_backfill_height, pct: bf.fee_backfill_pct },
-    { name: 'Transparent addresses', height: bf.t_addr_backfill_height, pct: bf.t_addr_backfill_pct },
-    { name: 'UTXO depth snapshots', height: bf.depth_height, pct: bf.depth_pct },
-    { name: 'Coin survival snapshots', height: bf.survival_height, pct: bf.survival_pct },
+    { name: 'Block index (pools, flows, supply)', height: lb.height, pct: (lb.height / lb.node_estimated_height) * 100, batch: false },
+    { name: 'UTXO set', height: bf.utxo_backfill_height, pct: (bf.utxo_backfill_height / bf.chain_height) * 100, batch: false },
+    { name: 'Fees', height: bf.fee_backfill_height, pct: bf.fee_backfill_pct, batch: false },
+    { name: 'Transparent addresses', height: bf.t_addr_backfill_height, pct: bf.t_addr_backfill_pct, batch: false },
+    { name: 'UTXO depth snapshots', height: bf.depth_height, pct: bf.depth_pct, batch: true },
+    { name: 'Coin survival snapshots', height: bf.survival_height, pct: bf.survival_pct, batch: true },
   ];
-  const tone = (lag: number) => (lag <= 120 ? 'ok' : lag <= 2000 ? 'lag' : 'bad') as 'ok' | 'lag' | 'bad';
+  const BATCH = 1200;
+  const tone = (lag: number, batch: boolean) => (lag <= (batch ? BATCH : 120) ? 'ok' : lag <= 2000 + (batch ? BATCH : 0) ? 'lag' : 'bad') as 'ok' | 'lag' | 'bad';
+  const lagOf = (i: (typeof indexes)[number]) => Math.max(0, bf.chain_height - i.height);
+  const slowest = indexes.reduce((a, i) => (i.pct < a.pct ? i : a));
+  const allOk = indexes.every((i) => tone(lagOf(i), i.batch) === 'ok');
+  const blocks = (n: number) => `${num(n)} block${n === 1 ? '' : 's'}`;
+  // a line on a zoomed axis, not columns from zero: the question is the gap to the target, a few percent at most
+  const bpd = recent.map((x) => x.block_count);
+  const yLo = Math.floor((Math.min(...bpd, TARGET * 0.9) - 15) / 25) * 25, yHi = Math.ceil((Math.max(...bpd, TARGET) + 15) / 25) * 25;
+  const tx7 = stats.slice(-7).reduce((a, x) => a + x.tx_count - x.block_count, 0) / 7;
 
   return (
     <>
@@ -68,19 +78,24 @@ export default async function NodePage() {
         <Kpi k="Status" v={fresh.synced ? 'Synced' : 'Catching up'} s={NODE_VERSION} />
         <Kpi k="Indexed height" v={num(lb.height)} s={`${behind <= 0 ? 'at' : `${behind} below`} the network tip`} />
         <Kpi k="Blocks per day (30d)" v={num(avg30)} s={`target ${num(TARGET)} · ${pct((avg30 / TARGET) * 100, 1)} of target`} />
-        <Kpi k="Slowest indexes" v={pct(Math.min(...indexes.map((i) => i.pct)), 2)} s="every backfill above 99.9%" />
+        <Kpi k="Slowest index" v={pct(slowest.pct, 2)} s={`${slowest.name.toLowerCase()} · ${blocks(lagOf(slowest))} behind${allOk ? ', all current' : ''}`} />
       </KpiBand>
 
       <Card
         title="Is the chain producing blocks on schedule?"
         takeaway={<>Over the last 30 complete days the chain averaged <b>{num(avg30)}</b> blocks a day against a target of {num(TARGET)}; {slowDays ? <><b>{slowDays}</b> day{slowDays === 1 ? '' : 's'} came in more than 10% short.</> : <>no day came in more than 10% short.</>}</>}
         actions={<ChartActions api="daily-stats" name="blocks per day" />}
-        legend={<Legend items={[{ label: 'Blocks per day', color: 'var(--s2)' }, { label: '7-day average', color: 'var(--value)', line: true }]} />}
-        foot={`Blocks counted per UTC day from our node · target ${num(TARGET)} = 86,400 s ÷ 75 s · data through ${dateLong(fresh.dataThrough)}`}
+        legend={<Legend items={[{ label: 'Blocks per day', color: 'var(--other)', line: true }, { label: '7-day average', color: 'var(--s1)', line: true }, { label: `Target ${num(TARGET)}`, color: 'var(--text-2)', line: true, dashed: true }, { label: `10% short (${num(TARGET * 0.9)})`, color: 'var(--warn)', line: true, dashed: true }]} />}
+        foot={`Blocks counted per UTC day from our node · the axis starts at ${num(yLo)}, not zero, to show the gap to the target · target ${num(TARGET)} = 86,400 s ÷ 75 s · data through ${dateLong(fresh.dataThrough)}`}
       >
         <TimeSeriesChart
-          dates={recent.map((s) => s.date)} format="count" ranges={['1M', '3M']} defaultRange="3M" height={260} showLegend={false}
-          series={[{ key: 'b', label: 'Blocks', color: 'var(--s2)', type: 'bar', values: recent.map((s) => s.block_count), agg: 'mean' }, { key: 'avg', label: '7-day average', color: 'var(--value)', values: roll, width: 1.6 }]}
+          dates={recent.map((s) => s.date)} format="count" unit="blocks" yDomain={[yLo, yHi]} zeroBaseline={false} ranges={['1M', '3M']} defaultRange="3M" height={260} showLegend={false}
+          series={[
+            { key: 'b', label: 'Blocks per day', color: 'var(--other)', values: bpd, width: 1.2 },
+            { key: 'target', label: 'Target', color: 'var(--text-2)', values: recent.map(() => TARGET), dash: '6 4', width: 1.2 },
+            { key: 'short', label: '10% short', color: 'var(--warn)', values: recent.map(() => TARGET * 0.9), dash: '2 3', width: 1.2 },
+            { key: 'avg', label: '7-day average', color: 'var(--s1)', values: roll, width: 2.2 },
+          ]}
           events={[]}
           ariaLabel={`Blocks per day for the last 90 days, averaging ${num(avg30)} over the last 30 against a target of ${TARGET}.`}
         />
@@ -93,22 +108,22 @@ export default async function NodePage() {
             <thead><tr><th scope="col">Index</th><th scope="col">Height</th><th scope="col">Behind tip</th><th scope="col">Complete</th><th scope="col" style={{ textAlign: 'left' }}>State</th></tr></thead>
             <tbody>
               {indexes.map((i) => {
-                const lag = Math.max(0, bf.chain_height - i.height);
-                const t = tone(lag);
+                const lag = lagOf(i);
+                const t = tone(lag, i.batch);
                 return (
                   <tr key={i.name}>
                     <td className="l">{i.name}</td>
                     <td>{num(i.height)}</td>
-                    <td>{num(lag)} blocks</td>
+                    <td>{blocks(lag)}</td>
                     <td>{pct(Math.min(100, i.pct), 2)}</td>
-                    <td style={{ textAlign: 'left' }}><Pill tone={t}>{t === 'ok' ? 'Current' : t === 'lag' ? 'Hours behind' : 'Days behind'}</Pill></td>
+                    <td style={{ textAlign: 'left' }}><Pill tone={t}>{t === 'ok' ? (i.batch && lag > 120 ? 'Current · batch' : 'Current') : t === 'lag' ? 'Hours behind' : 'Days behind'}</Pill></td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
         </div>
-        <p className="small">“Current” = within 120 blocks (about 2.5 hours) of the tip. Snapshot-based indexes (depth, survival) refresh in batches of about 1,000 blocks, so a small lag there is normal.</p>
+        <p className="small">“Current” = within 120 blocks (about 2.5 hours) of the tip. Snapshot-based indexes (depth, survival) refresh in batches of about 1,000 blocks, so they count as current within {num(BATCH)} blocks (“Current · batch”).</p>
       </Section>
 
       <More summary="Why read from our own node at all?">
@@ -120,7 +135,7 @@ export default async function NodePage() {
         { href: '/network', title: 'Network nodes', desc: 'Every reachable node, by country and client.' },
         { href: '/chart/hashrate', title: 'Hashrate + difficulty', desc: 'How much mining power secures the chain.' },
         { href: '/chart/block-size', title: 'Average block size', desc: 'How full blocks are, day by day.' },
-        { href: '/chart/tx', title: 'Transactions per day', desc: 'How much the chain is used.', value: <>{num(stats.at(-1)!.tx_count - stats.at(-1)!.block_count)} / day</> },
+        { href: '/chart/tx', title: 'Transactions per day', desc: 'How much the chain is used.', value: <>{num(tx7)} / day, 7-day avg</> },
       ]} />
     </>
   );

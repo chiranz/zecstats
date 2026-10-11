@@ -5,14 +5,16 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { Icon } from '@/components/ui/Icon';
-import type { ChartGroupId, DataSourceKind } from '@/lib/charts/types';
+import { Sparkline } from '@/components/charts/Sparkline';
+import { delta } from '@/lib/format';
+import type { ChartGroupId, DataSourceKind, Headline } from '@/lib/charts/types';
 import s from './charts-index.module.css';
 
 export type UnitKind = 'ZEC' | 'USD' | 'Count' | '%' | 'Ratio';
 export type IndexItem = {
-  slug: string; group: ChartGroupId; title: string; built: boolean; value: string; spark: number[]; ext: boolean;
+  slug: string; group: ChartGroupId; title: string; built: boolean; value: string; spark: number[]; sparkWindow: string; ext: boolean;
   source?: DataSourceKind; unit?: UnitKind; pools: string[]; vsBtc: boolean; keywords: string;
-  feat?: { value: string; change: { pct: number; days: number } | null; caption: string; color: string; descriptor?: string };
+  feat?: { value: string; change: Headline['change']; caption: string; color: string; descriptor?: string };
 };
 type Group = { id: ChartGroupId; title: string; question: string; desc: string };
 
@@ -198,7 +200,7 @@ function Row({ it, also }: { it: IndexItem; also?: string }) {
         {pool && <i className={s.dot} style={{ background: `var(--p-${pool})` }} aria-hidden="true" />}
         <span>{it.title}{it.ext && <Ext />}{also && <span className={s.also}>also in {also}</span>}</span>
       </span>
-      <Spark values={it.spark} />
+      <Sparkline className={s.spark} values={it.spark} width={64} height={20} window={it.sparkWindow} label={it.title} empty={<span className={s.spark} aria-hidden="true" />} />
       <span className={`${s.v} ${descriptor || !it.built ? s.d : ''}`}>{it.built ? it.value : '—'}{!it.built && <span className="sr-only"> (coming soon)</span>}</span>
       <span className={s.go} aria-hidden="true">→</span>
     </Link>
@@ -208,49 +210,21 @@ function Row({ it, also }: { it: IndexItem; also?: string }) {
 function Feature({ it, also }: { it: IndexItem; also?: string }) {
   const f = it.feat;
   const ch = f?.change;
+  const d = ch && Number.isFinite(ch.pct) ? delta(ch.pct, ch.pts ? 2 : Math.abs(ch.pct) >= 100 ? 0 : 1, ch.pts ? ' pts' : '%', ch.good) : null;
   return (
     <Link className={s.feat} href={`/chart/${it.slug}`}>
       <span className={s.fk}><i aria-hidden="true" />Start here</span>
       <span className={s.ft}>{it.title}{it.ext && <Ext />}</span>
       <span className={s.fv}>
         <span className="num">{f ? f.value : '—'}</span>
-        {ch && Number.isFinite(ch.pct) ? (
-          <span className={`delta${ch.pct < 0 ? ' dn' : ''}`}>{ch.pct >= 0 ? '▲' : '▼'} {Math.abs(ch.pct) >= 100 ? Math.round(Math.abs(ch.pct)) : Math.abs(ch.pct).toFixed(1)}% <span className={s.dk}>{ch.days}d</span></span>
-        ) : f?.descriptor ? <span className={`delta ${s.neutral}`}>{f.descriptor}</span> : null}
+        {ch && d ? (
+          <span className={`delta${d.cls === 'dn' ? ' dn' : d.cls === 'muted' ? ' flat' : ''}`}>{d.text} <span className={s.dk}>{ch.days}d</span></span>
+        ) : f?.descriptor && f.descriptor !== f.value ? <span className={`delta ${s.neutral}`}>{f.descriptor}</span> : null}
       </span>
-      <Mini values={it.spark} color={f?.color ?? 'var(--zec)'} />
+      <Sparkline className={s.mini} values={it.spark} height={96} fluid color={f?.color ?? 'var(--text-2)'} window={it.sparkWindow} label={it.title} />
+      {it.spark.length > 1 && <span className={s.fw}>{it.sparkWindow} trend</span>}
       <span className={s.fc}>{f ? f.caption : 'Coming soon'}{also ? ` · also in ${also}` : ''}</span>
       <span className={s.fo}>Open chart <Icon name="arrow-right" size={13} /></span>
     </Link>
-  );
-}
-
-function path(values: number[], w: number, h: number, pad = 2) {
-  const xs = values.filter((v) => Number.isFinite(v));
-  if (xs.length < 2) return null;
-  const min = Math.min(...xs), max = Math.max(...xs), span = max - min || 1;
-  const pts = xs.map((v, i) => [(i / (xs.length - 1)) * w, h - pad - ((v - min) / span) * (h - pad * 2)] as const);
-  return { d: pts.map(([x, y], i) => `${i ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)}`).join(''), last: pts[pts.length - 1] };
-}
-
-function Spark({ values }: { values: number[] }) {
-  const p = path(values, 62, 20);
-  if (!p) return <span className={s.spark} aria-hidden="true" />;
-  return (
-    <svg className={s.spark} viewBox="0 0 64 20" aria-hidden="true">
-      <path d={p.d} />
-      <circle cx={p.last[0]} cy={p.last[1]} r="1.8" />
-    </svg>
-  );
-}
-
-function Mini({ values, color }: { values: number[]; color: string }) {
-  const p = path(values, 320, 96, 6);
-  return (
-    <svg className={s.mini} viewBox="0 0 320 96" preserveAspectRatio="none" aria-hidden="true">
-      <path className={s.mgl} d="M0 90.5H320M0 48.5H320M0 6.5H320" />
-      {p && <path d={`${p.d}L320 96L0 96Z`} style={{ fill: color, opacity: 0.1 }} />}
-      {p && <path d={p.d} style={{ stroke: color, strokeWidth: 1.6, fill: 'none' }} />}
-    </svg>
   );
 }

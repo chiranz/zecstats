@@ -4,7 +4,7 @@ import type { Series } from '@/components/charts/TimeSeriesChart';
 import { getCompleteDailyStats } from '@/lib/data/snapshot';
 import { getNearStats, getNearSwaps, getNearVolMcap, getExchangeVolume, getHyperliquid, type NearSwap, type HlDay } from '@/lib/data/charts-b';
 import { num, compact, usdCompact, dateLong, monthYear } from '@/lib/format';
-import { C, tint, bars, line, panel, rolling, changeOver, changeWords, spark, sum, weekStart, addDays, lastIndex } from './util';
+import { C, tint, bars, line, panel, rolling, changeOver, changePts, changeWords, spark, spanWord, sum, weekStart, addDays, lastIndex } from './util';
 
 /** Last complete UTC day: market data is cut there too, so every chart in the group ends on the same date. */
 const through = async () => (await getCompleteDailyStats()).at(-1)!.date;
@@ -73,7 +73,7 @@ const nearFlow: ChartDef = {
       ],
       headline: { label: 'Net flow into ZEC, last 30 days', value: `${net30 < 0 ? '−' : '+'}${usdCompact(Math.abs(net30))}`, date: dates[i], change: null,
         sentence: `Over the 30 days to ${dateLong(dates[i])}, ${usdCompact(in30)} was swapped into ZEC on NEAR Intents and ${usdCompact(out30)} out — a net ${net30 < 0 ? 'outflow' : 'inflow'} of **${usdCompact(Math.abs(net30))}**.` },
-      spark: spark(cum), indexValue: `${net30 < 0 ? '−' : '+'}${usdCompact(Math.abs(net30))} 30d`,
+      spark: spark(cum), sparkWindow: spanWord(dates[Math.max(0, dates.length - 365)], dates[i]), indexValue: `${net30 < 0 ? '−' : '+'}${usdCompact(Math.abs(net30))} 30d`,
       ranges: ['1M', '3M', '6M', '1Y', 'ALL'], defaultRange: '3M', dataThrough: dates[i],
       notes: [`Cumulative lines start at zero on ${dateLong(dates[0])}, the first day in the data. ZEC→ZEC routes are left out because they count on both sides.`],
     };
@@ -113,7 +113,7 @@ const nearBridge: ChartDef = {
       ],
       headline: { label: 'ZEC wrapped on NEAR', value: `${num(ws[i])} ZEC`, date: dates[i], change,
         sentence: `${num(ws[i])} ZEC sat wrapped on NEAR on ${dateLong(dates[i])}, ${changeWords(change)}.` },
-      spark: spark(ws), indexValue: `${compact(ws[i])} ZEC`,
+      spark: spark(ws), sparkWindow: spanWord(dates[Math.max(0, dates.length - 365)], dates[i]), indexValue: `${compact(ws[i])} ZEC`,
       ranges: ['1M', '3M', 'ALL'], defaultRange: 'ALL', dataThrough: dates[i],
     };
   },
@@ -252,7 +252,7 @@ const nearVolMcap: ChartDef = {
       ],
       headline: { label: 'ZEC swapped per $1M of market cap', value: `$${num(z.value)}`, date: dates[i], change: null,
         sentence: `Each $1M of ZEC market cap saw ${'$' + num(z.value)} a day of NEAR Intents swaps over the last 30 days — ${(z.value / next.value).toFixed(0)}× the next asset, ${next.label} (${'$' + next.value.toFixed(1)}).` },
-      spark: spark(zv), indexValue: `$${num(z.value)} / $1M`,
+      spark: spark(zv), sparkWindow: spanWord(dates[Math.max(0, dates.length - 365)], dates[i]), indexValue: `$${num(z.value)} / $1M`,
       ranges: ['1M', '3M', '6M', '1Y', 'ALL'], defaultRange: '6M', dataThrough: dates[i],
     };
   },
@@ -305,9 +305,9 @@ const exchVol: ChartDef = {
     const leadShare = ((last.vals[top[0]] ?? 0) / last.zec) * 100;
     return {
       panels: [panel({ dates: ws, format: 'usdCompact', stacked: true, shareToggle: true, series })],
-      headline: { label: 'ZEC spot volume, last full week', value: usdCompact(last.zec), date: addDays(ws.at(-1)!, 6), change: changeOver(ws, tot, 28),
+      headline: { label: 'ZEC spot volume, last full week', value: usdCompact(last.zec), date: addDays(ws.at(-1)!, 6), change: changeOver(ws, tot, 28), note: `week of ${dateLong(ws.at(-1)!)}`,
         sentence: `${usdCompact(last.zec)} of ZEC traded across ${d.exchanges.length} tracked venues in the week of ${dateLong(ws.at(-1)!)}; ${top[0]} carried ${leadShare.toFixed(0)}%.` },
-      spark: spark(tot), indexValue: `${usdCompact(last.zec)}/wk`,
+      spark: spark(tot), sparkWindow: spanWord(ws[Math.max(0, ws.length - 365)], addDays(ws.at(-1)!, 6)), indexValue: `${usdCompact(last.zec)}/wk`,
       ranges: ['3M', '6M', 'ALL'], defaultRange: 'ALL', dataThrough: d.complete_to,
       notes: [`Weeks start Monday; complete coverage ${dateLong(d.complete_from)} – ${dateLong(d.complete_to)}.`],
     };
@@ -344,10 +344,10 @@ const exchVolPct: ChartDef = {
     const filled = dates.map((t) => { const w = weeks.get(weekStart(t)); return w && w.days === 7 ? (w.zec / w.all) * 100 : null; });
     return {
       panels: [panel({ dates, format: 'pct2', zeroBaseline: true, step: true, series: [
-        line('daily', 'Daily', tint(C.zec, 45), daily, { width: 1.1 }), line('weekly', 'Weekly', C.zec, filled, { width: 2.2 })] })],
-      headline: { label: 'ZEC share of spot volume', value: `${share.toFixed(2)}%`, date: addDays(lastW, 6), change: changeOver(ws, wkSeries, 28),
+        line('daily', 'Daily', tint(C.muted, 70), daily, { width: 1.1 }), line('weekly', 'Weekly', C.zec, filled, { width: 2.2 })] })],
+      headline: { label: 'ZEC share of spot volume, last full week', value: `${share.toFixed(2)}%`, date: addDays(lastW, 6), change: changePts(ws, wkSeries, 28), note: `week of ${dateLong(lastW)}`,
         sentence: `ZEC was ${share.toFixed(2)}% of all spot trading on the tracked venues in the week of ${dateLong(lastW)}, against a peak of ${peak.toFixed(2)}% in the week of ${dateLong(peakW)}.` },
-      spark: spark(wkSeries), indexValue: `${share.toFixed(2)}%`,
+      spark: spark(wkSeries), sparkWindow: spanWord(ws[Math.max(0, ws.length - 365)], addDays(lastW, 6)), indexValue: `${share.toFixed(2)}%`,
       ranges: ['3M', '6M', 'ALL'], defaultRange: 'ALL', dataThrough: d.complete_to,
       notes: ['The axis starts at zero but is not fixed at 100%: ZEC is a low single-digit share, which a 0–100% frame would flatten.'],
     };
@@ -399,7 +399,7 @@ const hlFunding: ChartDef = {
       ],
       headline: { label: 'ZEC perp funding', value: `${z[i]!.toFixed(1)}%/yr`, date: dates[i], change: null,
         sentence: `ZEC longs paid **${z[i]!.toFixed(1)}% a year** on a 7-day average to ${dateLong(dates[i])}, against ${b[i]!.toFixed(1)}% for BTC — a spread of ${spread[i]! >= 0 ? '+' : '−'}${Math.abs(spread[i]!).toFixed(1)} points.` },
-      spark: spark(z), indexValue: `${z[i]!.toFixed(1)}%/yr`,
+      spark: spark(z), sparkWindow: spanWord(dates[Math.max(0, dates.length - 365)], dates[i]), indexValue: `${z[i]!.toFixed(1)}%/yr`,
       ranges: ['1M', '3M', '6M', 'ALL'], defaultRange: 'ALL', dataThrough: dates[i],
     };
   },
@@ -424,7 +424,7 @@ function perpDual(o: { slug: string; title: string; short: string; question: str
         ],
         headline: { label: `ZEC perp ${o.noun.toLowerCase()}`, value: usdCompact(z[i]!), date: dates[i], change,
           sentence: `ZEC ${o.noun.toLowerCase()} on Hyperliquid averaged ${usdCompact(z[i]!)} over the week to ${dateLong(dates[i])}, ${changeWords(change)} — ${ratio[i]!.toFixed(1)}% of BTC’s ${usdCompact(b[i]!)}.` },
-        spark: spark(z), indexValue: usdCompact(z[i]!),
+        spark: spark(z), sparkWindow: spanWord(dates[Math.max(0, dates.length - 365)], dates[i]), indexValue: usdCompact(z[i]!),
         ranges: ['1M', '3M', 'ALL'], defaultRange: 'ALL', dataThrough: dates[i],
         notes: [`Collected since ${dateLong(dates[0])}, when this data started being snapshotted; there is no earlier history.`],
       };

@@ -3,7 +3,7 @@ import type { ChartDef } from '../types';
 import { getCompleteDailyStats } from '@/lib/data/snapshot';
 import { getUtxoCohorts, getUtxoDepth, getUtxoSurvival, type UtxoCohortRow, type UtxoDepthRow } from '@/lib/data/charts-b';
 import { num, zat, compact, dateLong } from '@/lib/format';
-import { C, tint, ramp, bars, line, panel, rolling, changeOver, changeWords, spark, sum, addDays, UPGRADES } from './util';
+import { C, tint, ramp, bars, line, panel, rolling, changeOver, changePts, changeWords, spark, spanWord, sum, addDays, UPGRADES } from './util';
 
 const NOT_SOLD = 'A coin leaving is not a coin sold. Transparent ZEC that gets shielded exits this data entirely, and from here that is indistinguishable from a spend — check the shielding rate before reading a fall as distribution.';
 const MINORITY = 'It covers the transparent minority. Coins in a shielded pool carry no publicly readable age, so they are not left out by choice — they are uncountable. Nothing here describes how long Zcash holders as a whole have held.';
@@ -48,8 +48,8 @@ const utxoSet: ChartDef = {
     const change = changeOver(dates, set, 28);
     return {
       panels: [
-        panel({ title: 'Unspent transparent outputs', dates, format: 'countCompact', zeroBaseline: false, height: 300, series: [line('set', 'UTXO set', C.zec, set, { width: 2.2 })] }),
-        panel({ title: 'Net change per day', dates, format: 'count', zeroBaseline: true, height: 180, series: [bars('net', 'Net change', tint(C.s2, 70), net), line('net7', '7-day average', C.s2, rolling(net, 7), { width: 2 })] }),
+        panel({ title: 'Unspent transparent outputs', dates, format: 'countCompact', zeroBaseline: false, height: 300, unit: 'UTXOs', series: [line('set', 'UTXO set', C.zec, set, { width: 2.2 })] }),
+        panel({ title: 'Net change per day', dates, format: 'count', zeroBaseline: true, height: 180, unit: 'UTXOs', series: [bars('net', 'Net change', tint(C.s2, 70), net), line('net7', '7-day average', C.s2, rolling(net, 7), { width: 2 })] }),
       ],
       headline: { label: 'UTXO set', value: num(set[i]), date: dates[i], change,
         sentence: `${num(set[i])} unspent transparent outputs on ${dateLong(dates[i])}, ${changeWords(change)}; the last day added ${signed(net[i])}.` },
@@ -85,9 +85,9 @@ const utxo: ChartDef = {
     const week = sum(net.slice(-7));
     return {
       panels: [
-        panel({ title: 'Created and spent per day (7-day average)', dates, format: 'count', zeroBaseline: true, height: 280, series: [
+        panel({ title: 'Created and spent per day (7-day average)', dates, format: 'count', zeroBaseline: true, height: 280, unit: 'outputs', series: [
           line('created', 'Outputs created', C.s2, c7, { width: 2 }), line('spent', 'Inputs spent', C.s4, s7, { width: 2 })] }),
-        panel({ title: 'Net change (created − spent)', dates, format: 'count', zeroBaseline: true, height: 200, series: [
+        panel({ title: 'Net change (created − spent)', dates, format: 'count', zeroBaseline: true, height: 200, unit: 'outputs', series: [
           bars('net', 'Net change', tint(C.zec, 45), net), line('net7', '7-day average', C.zec, n7, { width: 2 })] }),
       ],
       headline: { label: 'Net change, last 7 days', value: signed(week), date: dates[i], change: null,
@@ -148,9 +148,9 @@ const utxoAge: ChartDef = {
     const old = cols[4], oldShare = dates.map((_, j) => pctOf(old[j], total[j]));
     return {
       panels: [panel({ dates, format: 'zecCompact', stacked: true, shareToggle: true, series: DORMANT_FIRST.map((k) => line(COHORTS[k], COHORT_LABEL[COHORTS[k]], AGE_RAMP[k], cols[k])) })],
-      headline: { label: 'Unmoved for 3+ years', value: `${oldShare[i].toFixed(1)}%`, date: dates[i], change: changeOver(dates, old, 28),
+      headline: { label: 'Unmoved for 3+ years', value: `${oldShare[i].toFixed(1)}%`, date: dates[i], change: changePts(dates, oldShare, 28),
         sentence: `${compact(old[i])} ZEC — ${oldShare[i].toFixed(1)}% of the ${compact(total[i])} transparent ZEC — had not moved in over three years on ${dateLong(dates[i])}; ${compact(cols[0][i])} ZEC moved in the last 30 days.` },
-      spark: spark(oldShare), indexValue: `${oldShare[i].toFixed(0)}% 3y+`,
+      spark: spark(oldShare), sparkWindow: spanWord(dates[Math.max(0, dates.length - 365)], dates[i]), indexValue: `${oldShare[i].toFixed(0)}% 3y+`,
       defaultRange: 'ALL', dataThrough: dates[i],
       notes: ['Snapshots are irregular before mid-2026 (every few weeks) and every few days since.'],
     };
@@ -187,12 +187,12 @@ const agePct: ChartDef = {
     return {
       panels: [
         panel({ title: 'Share of transparent ZEC by age band', dates, format: 'pct', stacked: true, yDomain: [0, 100], height: 300, series: DORMANT_FIRST.map((k) => line(COHORTS[k], COHORT_LABEL[COHORTS[k]], AGE_RAMP[k], shares[k])) }),
-        panel({ title: 'Share older than…', dates, format: 'pct', yDomain: [0, 100], height: 200, series: [
-          line('gt6m', 'Over 6 months', AGE_RAMP[1], gt6m), line('gt1y', 'Over 1 year', AGE_RAMP[2], gt1y, { width: 2.2 }), line('gt3y', 'Over 3 years', AGE_RAMP[4], gt3y)] }),
+        panel({ title: 'Share older than…', dates, format: 'pct', yDomain: [0, 100], height: 200, endLabel: true, series: [
+          line('gt6m', 'Over 6 months', AGE_RAMP[1], gt6m, { dash: '2 3' }), line('gt1y', 'Over 1 year', AGE_RAMP[2], gt1y, { width: 2.2 }), line('gt3y', 'Over 3 years', AGE_RAMP[4], gt3y, { dash: '7 3' })] }),
       ],
-      headline: { label: 'Older than 1 year', value: `${gt1y[i].toFixed(1)}%`, date: dates[i], change: changeOver(dates, gt1y, 28),
+      headline: { label: 'Older than 1 year', value: `${gt1y[i].toFixed(1)}%`, date: dates[i], change: changePts(dates, gt1y, 28),
         sentence: `${gt1y[i].toFixed(1)}% of transparent ZEC had sat for over a year on ${dateLong(dates[i])}; ${shares[0][i].toFixed(1)}% was under 30 days old.` },
-      spark: spark(gt1y), indexValue: `${gt1y[i].toFixed(0)}% > 1y`,
+      spark: spark(gt1y), sparkWindow: spanWord(dates[Math.max(0, dates.length - 365)], dates[i]), indexValue: `${gt1y[i].toFixed(0)}% > 1y`,
       defaultRange: 'ALL', dataThrough: dates[i],
     };
   },
@@ -229,7 +229,7 @@ const meanCoinAge: ChartDef = {
       panels: [panel({ dates, format: 'days', zeroBaseline: true, series: [line('mean', 'Mean coin age', C.zec, mean, { width: 2.2 })] })],
       headline: { label: 'Mean transparent coin age', value: `${num(mean[i]!)} days`, date: dates[i], change,
         sentence: `The average transparent ZEC on ${dateLong(dates[i])} had sat for ${num(mean[i]!)} days (${(mean[i]! / 365).toFixed(1)} years), ${changeWords(change)}.` },
-      spark: spark(mean), indexValue: `${num(mean[i]!)} d`,
+      spark: spark(mean), sparkWindow: spanWord(dates[Math.max(0, dates.length - 365)], dates[i]), indexValue: `${num(mean[i]!)} d`,
       defaultRange: 'ALL', events: [...UPGRADES], dataThrough: dates[i],
     };
   },
@@ -280,7 +280,7 @@ const utxoDepth: ChartDef = {
       panels: [panel({ dates, format: 'pct', stacked: true, yDomain: [0, 100], series: order.map((k) => line(DEPTHS[k].replace(/\W/g, ''), DEPTH_LABEL[DEPTHS[k]], DEPTH_RAMP[k], shares[k])) })],
       headline: { label: 'Four or more hops from mining', value: `${shares[3][i].toFixed(1)}%`, date: dates[i], change: null,
         sentence: `${shares[3][i].toFixed(1)}% of transparent ZEC (${compact(cols[3][i])}) was four or more transactions from its coinbase on ${dateLong(dates[i])}; ${shallow[i].toFixed(1)}% was unmoved or one hop out.` },
-      spark: spark(shallow), indexValue: `${shares[3][i].toFixed(0)}% 4+ hops`,
+      spark: spark(shares[3]), sparkWindow: spanWord(dates[Math.max(0, dates.length - 365)], dates[i]), indexValue: `${shares[3][i].toFixed(0)}% 4+ hops`,
       defaultRange: 'ALL', dataThrough: dates[i],
     };
   },
@@ -332,7 +332,7 @@ const dormant: ChartDef = {
       ],
       headline: { label: 'Unmoved for over a year', value: `${compact(oldSum)} ZEC`, date: snap, change: null,
         sentence: `${compact(oldSum)} ZEC created more than a year before the ${dateLong(snap)} snapshot has never moved; the largest single week is ${dateLong(ws[big])}, with ${compact(surv[big])} ZEC still in place.` },
-      spark: spark(surv, 520), indexValue: `${compact(oldSum)} > 1y`,
+      indexValue: `${compact(oldSum)} ZEC > 1y`,
       defaultRange: 'ALL', dataThrough: snap,
       notes: ['Weekly snapshots; the latest is the week of ' + dateLong(snap) + '. On long ranges a column adds up the weeks it covers.'],
     };

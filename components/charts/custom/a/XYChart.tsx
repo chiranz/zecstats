@@ -159,7 +159,7 @@ export function XYChart(p: XYChartProps) {
             ))}
             <line className="ax" x1={0} x2={iw} y1={ih} y2={ih} />
             {xTicks.map((t, i) => <text key={`x${i}`} x={x(t)} y={ih + 18} textAnchor={i === 0 && x(t) < 16 ? 'start' : 'middle'}>{fmtX(t, xFormat)}</text>)}
-            <text x={iw} y={ih + 34} textAnchor="end" style={{ fontSize: 11 }}>{xLabel}</text>
+            <text x={iw} y={ih + 34} textAnchor="end" style={{ fontSize: 12 }}>{xLabel}</text>
             <g clipPath={`url(#xy-${uid})`}>
               {vis.map((s) => {
                 const ln = d3line<[number, number]>().defined((d) => Number.isFinite(d[1]) && (!log || d[1] > 0)).x((d) => x(d[0])).y((d) => y(d[1])).curve(curve);

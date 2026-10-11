@@ -3,8 +3,8 @@ import type { ChartDef, ChartData } from '../types';
 import { api } from '@/lib/data/core';
 import type { ValueFormat } from '@/components/charts/valueFormat';
 import type { XYChartProps, YFormat } from '@/components/charts/custom/a/XYChart';
-import { NU_EVENTS, byDate, changePct, changeWords, completeDaily, completePrices, dataThrough, fmt, headline, lastIdx, sma, spark, wma } from './common';
-import { dateLong, num } from '@/lib/format';
+import { NU_EVENTS, byDate, changePct, changePtsH, changeWords, completeDaily, completePrices, dataThrough, fmt, headline, lastIdx, sma, spark, wma } from './common';
+import { dateLong, dateShort, num } from '@/lib/format';
 
 const ISSUANCE_X = {
   heading: 'What is the x-axis?',
@@ -192,7 +192,6 @@ export const fdvVsBtc: ChartDef = {
     const fdv = rows.map((r) => (r.zec_usd / r.btc_usd) * 100);
     const mc = rows.map((r) => (r.zec_supply > 0 && r.btc_supply > 0 ? ((r.zec_usd * r.zec_supply) / (r.btc_usd * r.btc_supply)) * 100 : null));
     const i = lastIdx(fdv);
-    const ch = changePct(fdv, 28);
     const v = fmt(fdv[i], 'pct2');
     return {
       panels: [{
@@ -202,7 +201,7 @@ export const fdvVsBtc: ChartDef = {
           { key: 'mcap', label: 'Market cap (mined so far)', color: 'var(--s2)', values: mc, type: 'line' },
         ],
       }],
-      headline: headline('ZEC FDV as % of BTC', v, dates[i], `Fully diluted, Zcash was worth **${v}** of Bitcoin on ${dateLong(dates[i])}; by coins mined so far, **${fmt(mc[i], 'pct2')}**.`, ch),
+      headline: { ...headline('ZEC FDV as % of BTC', v, dates[i], `Fully diluted, Zcash was worth **${v}** of Bitcoin on ${dateLong(dates[i])}; by coins mined so far, **${fmt(mc[i], 'pct2')}**.`), change: changePtsH(fdv, 28) },
       spark: spark(fdv),
       indexValue: v,
       defaultRange: '1Y',
@@ -325,6 +324,7 @@ export const etfHoldings: ChartDef = {
       ],
       headline: headline('ETF holdings', v, last.date, `The trust held **${v}** — **${last.pct_supply.toFixed(2)}%** of supply — at its latest filing (${last.form}, ${dateLong(last.date)}).`),
       spark: pts.map((p) => p.zec),
+      sparkWindow: `${Math.max(1, Math.round((Date.parse(last.date) - Date.parse(dates[0])) / 3.15576e10))}-year`,
       indexValue: v,
       ranges: ['5Y', 'ALL'],
       defaultRange: 'ALL',
@@ -391,7 +391,7 @@ export const volatility: ChartDef = {
           { key: 'b7', label: 'BTC 7d', color: 'var(--s5)', values: rollVol(br, 7), type: 'line', hidden: true, width: 1.2 },
         ],
       }],
-      headline: headline('ZEC 30-day volatility', v, dates[i], `ZEC’s 30-day volatility was **${v} a year** on ${dateLong(dates[i])} — **${mult.toFixed(1)}×** Bitcoin’s ${fmt(b30[i], 'pct0')}.`, changePct(z30, 28)),
+      headline: { ...headline('ZEC 30-day volatility', v, dates[i], `ZEC’s 30-day volatility was **${v} a year** on ${dateLong(dates[i])} — **${mult.toFixed(1)}×** Bitcoin’s ${fmt(b30[i], 'pct0')}.`), change: changePtsH(z30, 28) },
       spark: spark(z30),
       indexValue: `${v} / yr`,
       defaultRange: '1Y',
@@ -441,9 +441,9 @@ function issuanceDef(o: { slug: string; title: string; short: string; question: 
       };
       return {
         panels: [{ kind: 'custom', component: 'a-xy', props: props as unknown as Record<string, unknown> }],
-        headline: headline(`ZEC vs BTC ${o.noun} at equal issuance`, r, last.date, o.lead(fmt(last[o.metric], o.idxFormat), bAt == null ? '—' : fmt(bAt, o.idxFormat), r, dateLong(last.date))),
+        headline: { ...headline(`ZEC vs BTC ${o.noun} at equal issuance`, r, last.date, o.lead(fmt(last[o.metric], o.idxFormat), bAt == null ? '—' : fmt(bAt, o.idxFormat), r, dateLong(last.date))), note: `weekly sample, ${dateShort(last.date)}` },
         spark: hist,
-        indexValue: r,
+        indexValue: `${r} · wk ${dateShort(last.date)}`,
         ranges: false,
         dataThrough: last.date,
         notes: ['The x-axis is coins issued, so the range control does not apply. Where the lines overlap (~3–17M coins) you are comparing Zcash’s recent years with Bitcoin’s 2010–2016.'],
