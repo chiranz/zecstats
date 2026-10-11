@@ -1,0 +1,57 @@
+.bar{display:flex;align-items:stretch;min-height:52px;background:var(--bg-2);border-bottom:1px solid var(--line);min-width:0}
+
+/* pinned lead: the one neon thing */
+.pin{flex:none;display:flex;align-items:center;gap:12px;padding:8px clamp(12px,3vw,24px);border-right:1px solid var(--line);color:var(--text)!important;text-decoration:none!important;background:var(--accent-wash)}
+.pin:hover .pinLabel{text-decoration:underline;text-underline-offset:3px}
+.hotTag{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:5px;background:var(--accent);color:var(--accent-ink);font:700 12px var(--mono);letter-spacing:.08em;text-transform:uppercase}
+.pinBody{display:flex;flex-direction:column;gap:5px;min-width:0}
+.pinTop{display:flex;align-items:baseline;gap:10px}
+.pinLabel{font:500 13px var(--mono);color:var(--value);white-space:nowrap}
+.pinValue{font:700 17px/1 var(--mono);color:var(--accent);font-variant-numeric:tabular-nums}
+.pinBar{display:flex;width:100%;min-width:160px}
+.pinDelta{white-space:nowrap}
+
+/* rotating slot */
+.roll{flex:1;min-width:0;display:flex;align-items:center;gap:12px;padding:0 clamp(12px,3vw,24px) 0 16px}
+.rollLead{flex:none;font:500 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.slot{position:relative;flex:1;min-width:0;height:36px;overflow:hidden;display:flex;align-items:center}
+.item{display:flex;align-items:center;gap:9px;min-width:0;max-width:100%;color:var(--text)!important;text-decoration:none!important;border-radius:6px}
+.item:hover .text{color:var(--value);text-decoration:underline;text-underline-offset:3px}
+.item:focus-visible{outline-offset:-2px}
+.text{font:400 13.5px var(--sans);color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:9ch;flex:0 1 auto}
+.item>:not(.text){flex:none}
+.value{font:600 13px var(--mono);color:var(--value);white-space:nowrap}
+.when{font:400 12px var(--mono);color:var(--muted);white-space:nowrap}
+.enter{animation:rollIn .45s cubic-bezier(.2,.7,.2,1) both}
+@keyframes rollIn{from{transform:translateY(100%);opacity:0}to{transform:none;opacity:1}}
+.track{position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--line);overflow:hidden}
+.prog{display:block;height:100%;background:var(--line-strong);transform-origin:0 50%;animation-name:fill;animation-timing-function:linear;animation-fill-mode:forwards}
+@keyframes fill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.ctls{flex:none;display:flex;align-items:center;gap:6px}
+.count{font:500 12px var(--mono);color:var(--muted);min-width:34px;text-align:right}
+
+/* stacked: used inside a landing hero card (pin on top, roll below) */
+.stacked{flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);overflow:visible}
+.stacked .pin{border-right:0;border-bottom:1px solid var(--line);border-radius:var(--r-lg) var(--r-lg) 0 0;padding:12px 14px}
+.stacked .pin{flex-wrap:wrap;row-gap:6px}
+.stacked .pinBody{flex:1 1 220px;min-width:auto}
+.stacked .roll{flex-wrap:wrap;row-gap:4px}
+.stacked .slot{flex:1 1 100%}
+.stacked .ctls{margin-left:auto}
+.stacked .roll{padding:6px 10px 6px 14px}
+.stacked .rollLead,.stacked .count{display:none}
+@media (max-width:900px){
+  .bar{flex-direction:column}
+  .pin{border-right:0;border-bottom:1px solid var(--line);flex-wrap:wrap;row-gap:6px}
+  .pinBody{flex:1 1 200px;min-width:auto}
+  .roll{padding-block:6px;padding-left:clamp(12px,3vw,24px)}
+}
+@media (max-width:560px){
+  .rollLead,.count,.when{display:none}
+  .roll{gap:4px 8px;flex-wrap:wrap}
+  .slot{height:40px;flex:1 1 100%}
+  .ctls{margin-left:auto}
+  .pin{gap:10px}
+  .pinBar{min-width:0}
+}
+@media (prefers-reduced-motion:reduce){.enter{animation:none}}
