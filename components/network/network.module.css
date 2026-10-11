@@ -1,0 +1,29 @@
+.mapControls { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
+.lgf { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.lgf b { color: var(--value); font-weight: 600; }
+.lgf :global(.chip)[aria-pressed="false"] { color: var(--muted) !important; border-style: dashed; }
+.lgf :global(.chip)[aria-pressed="false"] .lblx { text-decoration: line-through; }
+.lblx { display: inline; }
+.ring { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
+.map { border-radius: var(--r); background: var(--inset); border: 1px solid var(--line); padding: 8px 6px 4px; }
+.bub { cursor: pointer; outline: none; }
+.bub:focus-visible circle:first-child { stroke: var(--accent); stroke-width: 2px; }
+.bubN { fill: var(--value) !important; font-weight: 600; pointer-events: none; }
+.lat { fill: var(--muted); font-size: 11px; }
+.trow { display: grid; grid-template-columns: 10px 1fr auto; gap: 8px; align-items: center; }
+.tdiv { height: 1px; background: var(--line); margin: 2px 0; }
+.tcl { display: flex; flex-wrap: wrap; gap: 4px 10px; color: var(--text); }
+.tcl span { display: inline-flex; align-items: center; gap: 5px; }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
+@media (max-width: 560px) { .bubN { display: none; } }
+
+.crawl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.crawl div { padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--r); background: var(--inset); font-size: 14px; color: var(--text-2); }
+.crawl b { display: block; font: 600 16px var(--mono); color: var(--value); margin-bottom: 2px; }
+@media (max-width: 900px) { .crawl { grid-template-columns: minmax(0, 1fr); } }
+
+.countries { display: flex; flex-direction: column; gap: 16px; }
+.countries details > summary { cursor: pointer; list-style: none; }
+.countries details > summary::-webkit-details-marker { display: none; }
+.countries details[open] > summary .showAll { display: none; }
+.countries details:not([open]) > summary .hideAll { display: none; }
