@@ -13,7 +13,7 @@ pnpm install
 pnpm dev          # http://localhost:3000
 ```
 
-Node 22+ and pnpm 10.
+Node 20.9+ and pnpm 10.
 
 ## Data
 
