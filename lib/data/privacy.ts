@@ -69,6 +69,8 @@ export const getPrivacy = cache(async () => {
   // share of user transactions (coinbase excluded, as tx/day and the tx-types chart count them)
   const txShare = (r: DailyStat) => (r.tx_count > r.block_count ? (r.shielded_tx_count / (r.tx_count - r.block_count)) * 100 : null);
   const fourWeeks = complete[complete.length - 1 - 28];
+  // 7-day average of the daily share ending on row i: the figure /chart/tx-types and /metrics headline
+  const share7 = (i: number) => { const xs = complete.slice(i - 6, i + 1).map(txShare).filter((v): v is number => v != null); return xs.reduce((a, v) => a + v, 0) / xs.length; };
 
   // 5-year shielded share (daily) for the hero chart.
   const five = all.slice(-(365 * 5 + 1));
@@ -109,8 +111,8 @@ export const getPrivacy = cache(async () => {
     shieldedUsd: now.shielded * price,
     marketCap: now.supply * price,
     last,
-    txShareLast: txShare(last)!,
-    txShareFourWeeks: txShare(fourWeeks)!,
+    txShareLast: share7(complete.length - 1),
+    txShareFourWeeks: share7(complete.length - 1 - 28),
     fourWeeksDate: fourWeeks.date,
     shareSeries,
     weekly,

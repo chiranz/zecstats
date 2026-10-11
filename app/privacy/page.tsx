@@ -141,7 +141,7 @@ export default async function PrivacyPage() {
       <KpiBand label="Privacy key figures">
         <Kpi href="/chart/pools" k="Shielded supply" v={compact(now.shielded)} unit="ZEC" s={`${num(now.shielded)} ZEC in Sprout, Sapling, Orchard and Ironwood`} />
         <Kpi k="Shielded value" v={money(p.shieldedUsd)} s={`At ${usd(p.price)} a ZEC (${pct(now.shieldedPct)} of the ${money(p.marketCap)} market cap)`} />
-        <Kpi href="/chart/tx-types" k="Shielded share of txs" v={pct(p.txShareLast)} s={`On ${dateShort(p.last.date)}, the last full day; ${pct(p.txShareFourWeeks)} four weeks earlier`} />
+        <Kpi href="/chart/tx-types" k="Shielded share of txs" v={pct(p.txShareLast)} s={`7-day average to ${dateShort(p.last.date)}; ${pct(p.txShareFourWeeks)} four weeks earlier`} />
         <Kpi href="/chart/flow-compare" k="Net shielding, 7 days" v={<span className={delta(p.net7.net, 0, '').cls}>{signed(p.net7.net)}</span>} unit="ZEC" s={`${num(p.net7.in)} in − ${num(p.net7.out)} out, 7 days to ${dateShort(p.dataThrough)} · week before ${signed(p.net7.prior)}`} />
         <Kpi href="/ironwood" k="Shielded into Ironwood" v={compact(iw.fromTransparent)} unit="ZEC" s={`Straight from transparent addresses since launch; ${compact(iw.fromSapling)} more came from Sapling`} />
         <Kpi href="/ironwood" k="Orchard still to cross" v={num(iw.orchardNow)} unit="ZEC" s="Still in Orchard today. Less than its launch balance minus what crossed, because some left to transparent addresses instead" />
@@ -322,13 +322,13 @@ export default async function PrivacyPage() {
             <div className="card-head">
               <div className={s.chHead}>
                 <h3 className="h3">What share of transactions is shielded?</h3>
-                <p className="takeaway">{p.txShareLast > 52 ? 'More than half' : p.txShareLast >= 48 ? 'About half' : 'Under half'}: <b>{pct(p.txShareLast)}</b> of transactions on {dateShort(p.last.date)} touched a shielded pool, {p.txShareLast < p.txShareFourWeeks ? 'down' : 'up'} from {pct(p.txShareFourWeeks)} four weeks earlier.</p>
+                <p className="takeaway">{p.txShareLast > 52 ? 'More than half' : p.txShareLast >= 48 ? 'About half' : 'Under half'}: <b>{pct(p.txShareLast)}</b> of transactions touched a shielded pool in the 7 days to {dateShort(p.last.date)} (daily average), {p.txShareLast < p.txShareFourWeeks ? 'down' : 'up'} from {pct(p.txShareFourWeeks)} four weeks earlier.</p>
               </div>
               <ChartActions api="daily-stats" name="Shielded share of transactions" />
             </div>
             <Legend items={[{ label: 'Share of daily transactions touching a shielded pool', color: 'var(--s5)', line: true }]} />
             <TimeSeriesChart dates={p.usage.dates} series={[{ key: 'sh', label: 'Shielded share', color: 'var(--s5)', values: p.usage.txShare }]} format="pct" yDomain={[0, 100]} ranges={false} showLegend={false} height={220}
-              ariaLabel={`Share of daily transactions touching a shielded pool, last three months; ${pct(p.txShareLast)} on the last full day`} />
+              ariaLabel={`Share of daily transactions touching a shielded pool, last three months; 7-day average ${pct(p.txShareLast)} to ${dateShort(p.last.date)}`} />
             <p className="small">Last 3 months · fixed 0–100% axis · last full day {dateLong(p.last.date)}</p>
           </article>
           <article className="card">

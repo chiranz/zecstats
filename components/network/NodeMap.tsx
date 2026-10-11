@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { WORLD_DOTS, WORLD_H, WORLD_W } from './worldDots';
+import { useWidth } from '@/components/tools/useWidth';
 import s from './network.module.css';
 
 export type MapBubble = {
@@ -26,6 +27,9 @@ export function NodeMap({ bubbles, unreachable, clients, totals }: {
   const [mode, setMode] = useState<'sync' | 'software'>('sync');
   const [hidden, setHidden] = useState<Set<string>>(() => new Set(['unreachable']));
   const [hover, setHover] = useState<string | null>(null);
+  // the map scales with its box, so text is sized in map units to land at 12px+ on screen (k = map units per px)
+  const [box, boxW] = useWidth<HTMLDivElement>(WORLD_W);
+  const k = WORLD_W / boxW;
   const keys = mode === 'sync' ? STATUS : clients;
 
   const toggle = (k: string) => setHidden((h) => { const n = new Set(h); if (n.has(k)) n.delete(k); else n.add(k); return n; });
@@ -58,7 +62,7 @@ export function NodeMap({ bubbles, unreachable, clients, totals }: {
         </div>
       </div>
       <p className="small" style={{ marginTop: -4 }}>Click a {mode === 'sync' ? 'status' : 'client'} to show or hide it · bubble size = nodes · hover or tab to a bubble for its breakdown</p>
-      <div className={`chart ${s.map}`} onPointerLeave={() => setHover(null)}>
+      <div ref={box} className={`chart ${s.map}`} onPointerLeave={() => setHover(null)}>
         <svg viewBox={`0 0 ${WORLD_W} ${WORLD_H}`} role="img" aria-label={`World map, 60°S to 75°N, with one bubble per country sized by reachable nodes (${reachable} in all). Largest: ${bubbles.slice(0, 6).map((b) => `${b.country} ${b.nodes}`).join(', ')}.`}>
           <path d={WORLD_DOTS} stroke="var(--line-strong)" strokeOpacity={0.45} strokeWidth={2.6} strokeLinecap="round" fill="none" />
           {mode === 'sync' && !hidden.has('unreachable') && (
@@ -91,12 +95,12 @@ export function NodeMap({ bubbles, unreachable, clients, totals }: {
                   off += len;
                   return el;
                 })}
-                <text x={b.x} y={b.y} dy="0.36em" textAnchor="middle" className={s.bubN} style={{ fontSize: n >= 10 ? 13 : 12 }}>{n}</text>
+                {rr * 2 >= (n >= 10 ? 20 : 13) * k && <text x={b.x} y={b.y} dy="0.36em" textAnchor="middle" className={s.bubN} style={{ fontSize: (n >= 10 ? 13 : 12) * k }}>{n}</text>}
               </g>
             );
           })}
-          <text x={8} y={WORLD_H - 8} className={s.lat}>60°S</text>
-          <text x={8} y={14} className={s.lat}>75°N</text>
+          <text x={8} y={WORLD_H - 8} className={s.lat} style={{ fontSize: 12 * k }}>60°S</text>
+          <text x={8} y={14 * k} className={s.lat} style={{ fontSize: 12 * k }}>75°N</text>
         </svg>
         {hb && (
           <div className="tip" aria-hidden="true" style={{ left: `min(calc(${(hb.x / WORLD_W) * 100}% + 18px), calc(100% - 230px))`, top: `calc(${(hb.y / WORLD_H) * 100}% + 12px)`, minWidth: 210, pointerEvents: 'none' }}>

@@ -161,7 +161,7 @@ export default async function Home() {
         <Kpi href="/chart/fdv-vs-btc" k="FDV vs Bitcoin" v={pct(h.fdvPct, 2)} s={`${usdCompact(h.fdvUsd, 1)} fully diluted, of Bitcoin's ${money(h.btcCap)}`} />
         <Kpi href="/chart/inflation" k="Inflation" v={pct(h.inflation, 2)} unit="/yr" s={`${num(h.coinbasePerDay)} new ZEC per day, 30-day average`} />
         <Kpi href="/chart/supply" k="Supply issued" v={<>{pct(h.issuedPct)}<span className={s.meter + ' ' + s.n} role="img" aria-label={`${pct(h.issuedPct)} of 21 million issued`} style={{ display: 'block', marginLeft: 0 }}><i style={{ width: `${h.issuedPct}%` }} /></span></>} s={`${compact(pools.supply)} of 21M ZEC`} />
-        <Kpi href="/chart/hashrate" k="Network hashrate" v={num(h.hashrate / 1e9, 2)} unit="GSol/s" s="Equihash proof of work, in solutions per second" />
+        <Kpi href="/chart/hashrate" k="Network hashrate" v={num(h.hashrate / 1e9, 2)} unit="GSol/s" s="7-day average · Equihash proof of work, in solutions per second" />
         <Kpi href="/chart/total-fees" k="Monthly fees" v={money(h.feeUsd)} s={`${num(h.feeZec)} ZEC paid by users, last 30 days`} />
       </KpiBand>
 
@@ -176,7 +176,7 @@ export default async function Home() {
               <div>
                 <p className="note">In dollars that is {usd(h.price)} a coin and a market cap of {money(h.marketCap)}; fully diluted, ZEC is worth {pct(h.fdvPct, 2)} of Bitcoin. Spot sits {times(h.mvrv, 2)} above the realized price of {usd(h.realizedPrice, 0)} — the average price at which a ZEC last crossed a pool boundary — so the typical coin is held at a gain.</p>
                 <p className="note">Behind it: {pct(pools.shieldedPct)} of all ZEC — {compact(pools.shielded)} ZEC, {money(pools.shielded * h.price)} — sits in shielded pools, against {pct(h.yearAgo.shieldedPct)} a year ago and {pct(h.fiveAgo.shieldedPct)} five years ago. Ironwood, the newest pool, holds {compact(pools.ironwood)} ZEC; {num(pools.orchard)} ZEC is still in Orchard, its predecessor.</p>
-                <p className="note">{compact(pools.supply)} of 21M ZEC has been issued ({pct(h.issuedPct)}). Hashrate is {num(h.hashrate / 1e9, 2)} GSol/s.</p>
+                <p className="note">{compact(pools.supply)} of 21M ZEC has been issued ({pct(h.issuedPct)}). Hashrate averaged {num(h.hashrate / 1e9, 2)} GSol/s over the last 7 days.</p>
               </div>
             </details>
           </article>
@@ -243,8 +243,8 @@ export default async function Home() {
               <span className={s.k}>Shielded transactions</span>
               <span className={`${s.v} num`}>{pct(h.shieldedTxShare)}<span>of tx</span></span>
               <StackBar height={10} label="User transactions by whether they touched a shielded pool" fmt={(v) => num(v)}
-                parts={[{ key: 'sh', label: 'Touched a shielded pool', value: h.last.shielded_tx_count, color: 'var(--s5)' }, { key: 't', label: 'Transparent only', value: h.txDay - h.last.shielded_tx_count, color: 'var(--other)' }]} />
-              <span className="small">{num(h.last.shielded_tx_count)} of {num(h.txDay)} user transactions on {dayMonth(h.last.date)} touched a shielded pool.</span>
+                parts={[{ key: 'sh', label: 'Touched a shielded pool', value: h.shieldedTx, color: 'var(--s5)' }, { key: 't', label: 'Transparent only', value: h.txDay - h.shieldedTx, color: 'var(--other)' }]} />
+              <span className="small">{num(h.shieldedTx)} of {num(h.txDay)} user transactions a day touched a shielded pool (7-day average to {dayMonth(h.last.date)}).</span>
             </article>
             <article className={`card ${s.cmp}`}>
               <span className={s.k}>Shield vs deshield · 7 days</span>
@@ -288,11 +288,11 @@ export default async function Home() {
       {/* ---------- Network & security ---------- */}
       <Section id="network" title="Network & security" aside={<Link className={s.go} href="/network">Network nodes →</Link>}>
         <KpiBand six label="Network figures">
-          <Kpi href="/chart/hashrate" k="Hashrate" v={num(h.hashrate / 1e9, 2)} unit="GSol/s" s={`Equihash · ~75 s blocks · ${num(h.last.block_count)} blocks on ${dayMonth(h.last.date)}`} />
+          <Kpi href="/chart/hashrate" k="Hashrate" v={num(h.hashrate / 1e9, 2)} unit="GSol/s" s={`7-day average · ~75 s blocks · ${num(h.last.block_count)} blocks on ${dayMonth(h.last.date)}`} />
           <Kpi href="/network" k="Reachable nodes" v={num(h.nodes.reachable)} unit="nodes" s={`in ${h.nodes.countries} countries`} />
           <Kpi href="/node" k="Our node" v={<span className={`${s.liveV}${node.cls ? ` ${s[node.cls]}` : ''}`}><i aria-hidden="true" />{node.text}</span>} s={`Zebra ${ZEBRA_VERSION} · block ${num(h.height)}`} />
           <Kpi href="/halving" k="Next halving" v={`~${num(h.halving.days)}`} unit="days" s={<><span className={`${s.meter} ${s.n}`} role="img" aria-label={`${pct(h.halving.eraPct)} of the current halving era elapsed`} style={{ display: 'block' }}><i style={{ width: `${h.halving.eraPct}%` }} /></span>~{dateLong(h.halving.date)} · {reward(hv.reward)} → {reward(hv.next.rewardAfter)} ZEC a block</>} />
-          <Kpi href="/chart/tx" k="Transactions / day" v={num(h.txDay)} unit="txs" s={`user transactions on ${dayMonth(h.last.date)}, coinbase excluded`} />
+          <Kpi href="/chart/tx" k="Transactions / day" v={num(h.txDay)} unit="txs" s={`7-day average to ${dayMonth(h.last.date)}, coinbase excluded`} />
           <Kpi href="/chart/block-size" k="Avg block" v={num(h.avgBlockKb)} unit="KB" s={`average block size, ${dayMonth(h.last.date)}`} />
         </KpiBand>
       </Section>

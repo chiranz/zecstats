@@ -57,7 +57,7 @@
 .stats div{display:flex;flex-direction:column;gap:2px;min-width:0}
 .stats dt{font:500 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .stats dd{margin:0;font:600 19px var(--mono);color:var(--value);font-variant-numeric:tabular-nums}
-.stats dd span{font-size:.68em;color:var(--text-2);font-weight:500;margin-left:3px}
+.stats dd span{font-size:max(12px,.68em);color:var(--text-2);font-weight:500;margin-left:3px}
 
 .tblPools td :global(.sw){margin-right:9px;vertical-align:-1px}
 .tblPools td small{display:block;font-size:12px;color:var(--muted)}

@@ -28,7 +28,7 @@
 .pcH{display:flex;justify-content:space-between;align-items:center;gap:8px;font:600 13.5px var(--mono);color:var(--value)}
 .pcH span{display:inline-flex;align-items:center;gap:8px}
 .pcV{font:600 22px/1.15 var(--mono);color:var(--value);letter-spacing:-.01em}
-.pcV span{font-size:.6em;color:var(--text-2);font-weight:500;margin-left:3px}
+.pcV span{font-size:max(12px,.6em);color:var(--text-2);font-weight:500;margin-left:3px}
 .pcS{font:400 12px var(--mono);color:var(--muted)}
 .pcD{font-size:13px;color:var(--text-2);line-height:1.4}
 .spark{display:block;width:100%;height:44px}

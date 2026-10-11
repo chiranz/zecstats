@@ -1,7 +1,7 @@
 import 'server-only';
 import { cache } from 'react';
 import { api } from './core';
-import { getCompleteDailyStats, getDailyPrices, getDailyStats, getLatestBlock, getLive, poolsFromRow } from './snapshot';
+import { getCompleteDailyStats, getDailyPrices, getDailyStats, getLatestBlock, getLive, poolsFromRow, type DailyStat } from './snapshot';
 import { getNet7, getTurnstileIndex } from './privacy';
 import { getIronwoodSources } from './ironwood';
 import { zat } from '../format';
@@ -73,15 +73,19 @@ export const getHome = cache(async () => {
   const l30 = complete.slice(-30);
   const coinbasePerDay = l30.reduce((a, r) => a + zat(r.coinbase_zat), 0) / 30;
   const inflation = ((coinbasePerDay * 365) / pools.supply) * 100;
-  const hashrate = (last.avg_difficulty * 8192) / BLOCK_SECS;
+  // hashrate and transactions: 7-day averages over complete days, as the chart pages and /metrics headline them
+  const l7 = complete.slice(-7);
+  const avg7 = (f: (r: DailyStat) => number) => l7.reduce((a, r) => a + f(r), 0) / l7.length;
+  const hashrate = avg7((r) => (r.avg_difficulty * 8192) / BLOCK_SECS);
 
   const feeDays = fees.days.filter((d) => d.complete).slice(-30);
   const feeZec = feeDays.reduce((a, d) => a + (d.mean_fee_zat * d.tx_count) / 1e8, 0);
   const feeUsd = feeDays.reduce((a, d) => a + ((d.mean_fee_zat * d.tx_count) / 1e8) * d.zec_usd, 0);
 
   // Transactions: user-initiated (coinbase excluded), as the live "Transactions per Day" chart does.
-  const txDay = last.tx_count - last.block_count;
-  const shieldedTxShare = (last.shielded_tx_count / txDay) * 100;
+  const txDay = avg7((r) => r.tx_count - r.block_count);
+  const shieldedTx = avg7((r) => r.shielded_tx_count);
+  const shieldedTxShare = avg7((r) => (r.shielded_tx_count / (r.tx_count - r.block_count)) * 100);
 
   // Halving.
   const blocksLeft = NEXT_HALVING_HEIGHT - lb.height;
@@ -107,7 +111,9 @@ export const getHome = cache(async () => {
   // Shielded ZEC by pool, 5 years weekly (stacked area).
   const fiveRows = weekly(all.slice(-(365 * 5 + 1))).map(poolsFromRow);
 
-  const events = news.items.filter((n) => !n.live).sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : b.importance - a.importance)).slice(0, 3);
+  // the feed's copy says "GH/s"; Equihash counts solutions (same rename as lib/data/news.ts)
+  const sol = (t: string) => t.replace(/\bGH\/s\b/g, 'GSol/s');
+  const events = news.items.filter((n) => !n.live).map((n) => ({ ...n, headline: sol(n.headline), body: sol(n.body) })).sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : b.importance - a.importance)).slice(0, 3);
 
   return {
     price, live, height: lb.height, pools, yearAgo, fiveAgo, last,
@@ -123,7 +129,7 @@ export const getHome = cache(async () => {
     issuedPct: (pools.supply / MAX_SUPPLY) * 100,
     hashrate,
     feeZec, feeUsd,
-    txDay, shieldedTxShare,
+    txDay, shieldedTx, shieldedTxShare,
     avgBlockKb: last.total_block_bytes / last.block_count / 1000,
     halving: { blocksLeft, days: halvingDays, date: new Date(lb.time * 1000 + blocksLeft * BLOCK_SECS * 1000), eraPct },
     // Nodes, not addresses: reachable_total (124) counts dual-stack nodes twice; the geo list (as /network uses) has one
