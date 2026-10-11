@@ -221,7 +221,7 @@ details.more>div{padding:0 16px 16px}
 </style>
 </helmet>
 <div class="site" data-theme="{{theme}}"><main class="shell page board"><header class="bh"><p class="kicker">Iteration 3 · route loading state</p><h1 class="h1">Loading: the answer skeleton</h1><ul class="rules">
-<li><b>While a page is on its way</b>, the page area shows that page’s own layout with every line of text as a shimmering bar. It appears at once: it has the page’s shape, so nothing jumps when the page lands.</li>
+<li><b>After a click, while the next page is on its way</b>, the page area shows that page’s own layout with every line of text as a shimmering bar. It appears only if the page takes longer than a moment (120 ms), so pages that are ready never flash it, and a page opened directly paints straight away. It has the page’s shape, so nothing jumps when the page lands.</li>
 <li><b>Built from the pages’ own layout classes</b>, so it changes at the same widths as the page: 560, 640, 900, 980, 1000 and 1020 px (KPI bands 4 → 2, key figure hidden on phones, rails folded).</li>
 <li><b>Six shapes</b>, chosen by the address being opened: dashboard, chart page, report, news, charts index, and one for every other page.</li>
 <li><b>Below:</b> the real page on the left and its skeleton on the right, same window, same top bar, at laptop, tablet and phone widths.</li>
