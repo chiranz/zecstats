@@ -345,6 +345,14 @@
    "h": 6078,
    "title": "Nav D · every state (built) — mobile",
    "expand": "fill"
+  },
+  "Ticker-compact.dc.html": {
+   "x": 1990,
+   "y": 67065,
+   "w": 1440,
+   "h": 1098,
+   "title": "Event tape: symbol, value, change (built)",
+   "expand": "fill"
   }
  },
  "order": [
@@ -389,7 +397,8 @@
   "Nav-E-thumb.dc.html",
   "Nav-E-thumb-mobile.dc.html",
   "Nav-D-states.dc.html",
-  "Nav-D-states-mobile.dc.html"
+  "Nav-D-states-mobile.dc.html",
+  "Ticker-compact.dc.html"
  ],
  "notes": {
   "t_system": {
@@ -460,7 +469,7 @@
    "y": 66765,
    "text": "Iteration 3 — navigation D, every state + event-tape hover card",
    "kind": "title1",
-   "maxW": 1910
+   "maxW": 3430
   }
  },
  "designSystems": []
