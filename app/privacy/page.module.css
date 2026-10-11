@@ -16,7 +16,6 @@
 /* hero */
 .heroGrid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:24px 44px;align-items:stretch}
 .hl{display:flex;flex-direction:column;gap:10px;justify-content:center}
-.xl{font-size:clamp(64px,10vw,116px)!important}
 .hsub{font:500 clamp(15px,1.7vw,18px) var(--mono);color:var(--text)}
 .hsub b{color:var(--value);font-weight:600}
 .deltas{display:flex;flex-wrap:wrap;gap:8px}
@@ -144,3 +143,11 @@
   .cv{grid-column:2;text-align:left}
 }
 :global(.card)>.chHead{flex:none}
+
+/* Ironwood hero: the one accent label on the page */
+.accentKicker{color:var(--accent)!important}
+.iwHero{grid-template-columns:minmax(0,5fr) minmax(0,7fr);align-items:center}
+.iwFig{font-size:clamp(56px,7.5vw,100px)!important;white-space:nowrap}
+@media (max-width:900px){.iwHero{grid-template-columns:minmax(0,1fr)}}
+/* the shielded share supports the Ironwood hero, so it sits a size below it */
+.shareFig{font-size:clamp(48px,6vw,80px)!important}

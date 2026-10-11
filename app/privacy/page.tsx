@@ -9,7 +9,7 @@ import { Spark } from '@/components/home/Spark';
 import { Subnav } from '@/components/privacy/Subnav';
 import { AmountLookup } from '@/components/privacy/AmountLookup';
 import { getHopMedian, getPrivacy, getTurnstileIndex, ROUND_AMOUNTS, ROUND_TRIPS } from '@/lib/data/privacy';
-import { getIronwood, IRONWOOD_ACTIVATION_HEIGHT } from '@/lib/data/ironwood';
+import { getIronwood } from '@/lib/data/ironwood';
 import { getChartIndex } from '@/lib/data/home';
 import { POOL_COLOR, POOL_LABEL } from '@/lib/data/snapshot';
 import { compact, dateLong, dateShort, delta, num, pct, usd } from '@/lib/format';
@@ -20,11 +20,12 @@ export const metadata: Metadata = {
   description: 'How private Zcash is right now: shielded supply, pools, flows, the Ironwood migration, integrity checks and privacy hygiene.',
 };
 
+// Ironwood leads: it holds most of the shielded supply, so the hub opens on it and the shielded share follows.
 const SECTIONS = [
-  { id: 'overview', label: 'Overview' },
+  { id: 'ironwood', label: 'Ironwood' },
+  { id: 'overview', label: 'Shielded share' },
   { id: 'pools', label: 'Pools' },
   { id: 'flows', label: 'Flows' },
-  { id: 'ironwood', label: 'Ironwood' },
   { id: 'integrity', label: 'Integrity' },
   { id: 'hygiene', label: 'Privacy hygiene' },
   { id: 'usage', label: 'Usage' },
@@ -86,19 +87,53 @@ export default async function PrivacyPage() {
   const dis = ti.disclosure;
   const accel = dis.post_deshield_rate_zec_day / dis.pre_deshield_rate_zec_day;
   const k = (v: number) => `${num(v / 1000)}k`;
+  const iwShare = (now.ironwood / now.shielded) * 100;
+  const shieldedParts = (['sprout', 'sapling', 'orchard', 'ironwood'] as const).map((k2) => ({ k: k2, v: now[k2] }));
 
   return (
     <div className={`stack ${s.page}`} style={{ gap: 32 }}>
       <Masthead crumbs={[{ label: 'Privacy' }]} kicker="Zcash privacy" title="How private is Zcash right now?"
-        lede={`${pct(now.shieldedPct)} of all ZEC sits in shielded pools — up from ${pct(p.yearAgo.shieldedPct)} a year ago and ${pct(p.fiveAgo.shieldedPct)} five years ago.`} />
+        lede={<>Most of it now lives in Ironwood: <b>{compact(now.ironwood)} ZEC</b> — {num(iwShare)}% of all shielded ZEC — in the pool that went live {iw.liveDays} days ago. In all, {pct(now.shieldedPct)} of ZEC is shielded, up from {pct(p.yearAgo.shieldedPct)} a year ago.</>} />
       <Subnav items={SECTIONS} label="Privacy sections" />
+
+      {/* ---------- ironwood: the current shielded pool leads the hub ---------- */}
+      <section className="hero" id="ironwood" aria-label="Ironwood, the current shielded pool">
+        <div className={`${s.iwGrid} ${s.iwHero}`}>
+          <div className="stack" style={{ gap: 8 }}>
+            <span className={`kicker ${s.accentKicker}`}>Ironwood · the current shielded pool · live since {dateLong(iw.activationTime * 1000)}</span>
+            <div className={`figure num ${s.iwFig}`}>{num(now.ironwood / 1e6, 2)}<small>M ZEC</small></div>
+            <p className={s.hsub}><b>{num(iwShare)}%</b> of all shielded ZEC · <b>{pct(share(now.ironwood))}</b> of supply · <b>{money(now.ironwood * p.price)}</b></p>
+            <p className="note">Orchard, its predecessor, is draining into it through the turnstile, and coins from Sapling and transparent addresses shield straight in.</p>
+            <div className="row" style={{ gap: 10, flexWrap: 'wrap', marginTop: 6 }}>
+              <Link className="btn primary" href="/ironwood">Open the Ironwood tracker <Arrow /></Link>
+              <Link className="btn" href="/orchard-turnstile">Is the turnstile sound?</Link>
+            </div>
+          </div>
+          <div className="stack" style={{ gap: 16, minWidth: 0 }}>
+            <Gate size="sm" pct={iw.pct} pinLabel={`${num(iw.pct, 2)}%`} label={`${num(iw.pct, 2)} percent of Orchard's activation balance has crossed into Ironwood`}>
+              <p className={s.gateCap}><span className="kicker">Orchard → Ironwood migration</span> · <b>{num(iw.fromOrchard)} ZEC</b> of <b>{num(iw.base)} ZEC</b> in Orchard at activation have crossed</p>
+            </Gate>
+            <div className="stack" style={{ gap: 8 }}>
+              <span className="kicker">Shielded ZEC by pool · {compact(now.shielded)}</span>
+              <div className={s.stackbar} role="img" aria-label={`Of ${compact(now.shielded)} shielded ZEC: ${shieldedParts.map((x) => `${POOL_LABEL[x.k]} ${pct((x.v / now.shielded) * 100)}`).join(', ')}`}>
+                {shieldedParts.map((x) => <i key={x.k} style={{ flex: x.v, background: POOL_COLOR[x.k] }} />)}
+              </div>
+            </div>
+            <dl className={s.mini}>
+              <div><dt>Orchard still to cross</dt><dd>{num(iw.orchardNow)} ZEC</dd></div>
+              <div><dt>Live for</dt><dd>{iw.liveDays} days</dd></div>
+              <div><dt>Busiest day</dt><dd>{dateShort(iw.busiest.date)} · {num(iw.busiest.orchard / 1000, 1)}k</dd></div>
+            </dl>
+          </div>
+        </div>
+      </section>
 
       {/* ---------- overview ---------- */}
       <section className="hero" id="overview" aria-label="Shielded share of supply">
         <div className={s.heroGrid}>
           <div className={s.hl}>
             <span className="kicker">Shielded share of all ZEC · {dateLong(now.date)}</span>
-            <div className={`figure num ${s.xl}`}>{num(now.shieldedPct, 1)}<small>%</small></div>
+            <div className={`figure num ${s.shareFig}`}>{num(now.shieldedPct, 1)}<small>%</small></div>
             <p className={s.hsub}><b>{num(now.shielded)} ZEC</b> shielded · <b>{money(p.shieldedUsd)}</b></p>
             <div className={s.deltas}>
               <span className={`delta${yrPts < 0 ? ' dn' : ''}`}>{delta(yrPts, 1, ' pts').text} vs a year ago</span>
@@ -132,7 +167,7 @@ export default async function PrivacyPage() {
         <Kpi k="Shielded value" v={money(p.shieldedUsd)} s={`At ${usd(p.price)} (${pct(now.shieldedPct)} of the ${money(p.marketCap)} market cap)`} />
         <Kpi href="/chart/tx-types" k="Shielded share of txs" v={pct(p.txShareLast)} s={`On ${dateShort(p.last.date)}, the last full day; ${pct(p.txShareFourWeeks)} four weeks earlier`} />
         <Kpi href="/chart/flow-compare" k="Net shielding, 7 days" v={<span className={p.net7.net >= 0 ? s.up : 'dn'}>{p.net7.net >= 0 ? '▲ +' : '▼ −'}{num(Math.abs(p.net7.net))}</span>} unit="ZEC" s={`${num(p.net7.in)} in − ${num(p.net7.out)} out · prior week ${p.net7.prior >= 0 ? '+' : '−'}${num(Math.abs(p.net7.prior))}`} />
-        <Kpi href="/ironwood" k="Ironwood migration" v={`${num(iw.pct, 2)}%`} s="Of Orchard's activation balance has crossed" />
+        <Kpi href="/ironwood" k="Shielded into Ironwood" v={compact(iw.fromTransparent)} unit="ZEC" s={`Straight from transparent addresses since launch; ${compact(iw.fromSapling)} more came from Sapling`} />
         <Kpi href="/ironwood" k="Orchard still to cross" v={num(iw.orchardNow)} unit="ZEC" s={`Orchard's live balance, i.e. what can still cross — not activation − crossed (${num(iw.base - iw.fromOrchard)})`} />
         <Kpi href="/shield-hops" k="Shield-bound hop" v={num(hop.median, 2)} unit="ZEC" s={`Median of daily medians, last ${hop.days} days, sweeps removed`} />
         <Kpi href="/orchard-turnstile" k="Turnstile suspicion" v={Math.round(ti.isi)} unit="/100" s={`${ti.verdict} — signals confounded`} />
@@ -223,30 +258,6 @@ export default async function PrivacyPage() {
             <Link className={s.lnk} href="/activity">Open the transparent activity report <Arrow /></Link>
           </article>
         </div>
-      </Section>
-
-      {/* ---------- ironwood ---------- */}
-      <Section id="ironwood" title="Ironwood" aside={<p className="small">The Orchard → Ironwood turnstile migration</p>}>
-        <article className="card">
-          <div className={s.iwGrid}>
-            <div className="stack" style={{ gap: 8 }}>
-              <span className="kicker">Live since block {num(IRONWOOD_ACTIVATION_HEIGHT)} · {dateLong(iw.activationTime * 1000)}</span>
-              <div className="figure md num">{num(iw.pct, 2)}<small>%</small></div>
-              <p className="note">of Orchard&apos;s coins have crossed the turnstile into Ironwood, the newest shielded pool, in {iw.liveDays} days.</p>
-            </div>
-            <div className="stack" style={{ gap: 14, minWidth: 0 }}>
-              <Gate size="sm" pct={iw.pct} pinLabel={`${num(iw.pct, 2)}%`} label={`${num(iw.pct, 2)} percent of Orchard's activation balance has crossed into Ironwood`}>
-                <p className={s.gateCap}><b>{num(iw.fromOrchard)} ZEC</b> of <b>{num(iw.base)} ZEC</b> in Orchard at activation have crossed</p>
-              </Gate>
-              <dl className={s.mini}>
-                <div><dt>Orchard still to cross</dt><dd>{num(iw.orchardNow)} ZEC</dd></div>
-                <div><dt>Ironwood balance</dt><dd>{compact(iw.ironwoodNow)} ZEC</dd></div>
-                <div><dt>Busiest day</dt><dd>{dateShort(iw.busiest.date)} · {num(iw.busiest.orchard / 1000, 1)}k</dd></div>
-              </dl>
-              <Link className="btn" href="/ironwood" style={{ alignSelf: 'flex-start' }}>Open the Ironwood tracker <Arrow /></Link>
-            </div>
-          </div>
-        </article>
       </Section>
 
       {/* ---------- integrity ---------- */}
