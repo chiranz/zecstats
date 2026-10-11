@@ -39,3 +39,5 @@
 .mini{position:relative;display:inline-block;width:44px;height:6px;border-radius:999px;background:var(--inset);border:1px solid var(--line-strong);overflow:hidden;flex:none}
 .mini.miniWide{width:100%;height:8px}
 .mini>i{position:absolute;inset:0 auto 0 0;background:var(--accent);border-radius:999px}
+/* the item whose hover card is open (ItemTip.tsx sets aria-describedby only then) */
+.inline[aria-describedby]{height:30px;border-radius:7px;background:var(--raised);box-shadow:0 0 0 4px var(--raised),0 0 0 5px var(--line-strong)}

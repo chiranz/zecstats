@@ -8,7 +8,7 @@ import s from './ticker.module.css';
 /* Small building blocks of the event tape. */
 
 /** Client-side navigation to a hash on the page you are already on fires no hashchange; send one so /news opens the card. */
-const nudgeHash = (href: string) => { if (href.includes('#')) window.setTimeout(() => window.dispatchEvent(new HashChangeEvent('hashchange')), 60); };
+export const nudgeHash = (href: string) => { if (href.includes('#')) window.setTimeout(() => window.dispatchEvent(new HashChangeEvent('hashchange')), 60); };
 
 export function Tag({ item }: { item: Pick<TickerItem, 'tag' | 'hot'> }) {
   return <span className={`${s.tag} ${item.hot ? s.hot : ''}`}>{item.tag}</span>;
@@ -86,9 +86,9 @@ export function EventList({ items, label = 'All events' }: { items: TickerItem[]
 }
 
 /** One-line item used by the strip tickers. */
-export function InlineItem({ it, tabIndex }: { it: TickerItem; tabIndex?: number }) {
+export function InlineItem({ it, tabIndex, tip }: { it: TickerItem; tabIndex?: number; tip?: Partial<React.ComponentProps<'a'>> }) {
   return (
-    <Link href={it.href} className={s.inline} tabIndex={tabIndex} onClick={() => nudgeHash(it.href)}>
+    <Link href={it.href} className={s.inline} tabIndex={tabIndex} {...tip} onClick={(e) => { tip?.onClick?.(e); nudgeHash(it.href); }}>
       <Tag item={it} />
       <span className={s.label}>{it.label}</span>
       {it.value && <b className={s.value}>{it.value}</b>}

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'rea
 import type { TickerItem } from '@/lib/data/ticker';
 import { useMotion } from './useMotion';
 import { EventList, InlineItem, PauseButton, StepButton } from './parts';
+import { useItemTips } from './ItemTip';
 import m from './Marquee.module.css';
 
 /* ───────────────────────── the tape engine ─────────────────────────
@@ -68,17 +69,24 @@ const pageBy = (el: HTMLDivElement | null, dir: 1 | -1, reduced: boolean) => el?
 
 /* ───────────────────────── the site-wide tape (under the top bar on every page) ───────────────────────── */
 
+/** Per-item tooltips (ItemTip.tsx). true: the tape keeps moving under the pointer and holds only while an item's card
+ *  is open. false: the previous behaviour — the whole tape holds while the pointer is anywhere on it. */
+const TAPE_TOOLTIPS = true;
+
 export function Marquee({ items, label = 'Zcash events ticker', speed = 42 }: { items: TickerItem[]; label?: string; speed?: number }) {
   const mo = useMotion();
   const th = useTouchHold();
-  const tape = useTape(mo.running && !th.touch, speed);
+  const tips = useItemTips();
+  // with tooltips, pointer-over no longer holds the tape (an open card does); keyboard focus still holds it
+  const hold = TAPE_TOOLTIPS ? { onFocus: mo.hold.onFocus, onBlur: mo.hold.onBlur } : mo.hold;
+  const tape = useTape(mo.running && !th.touch && !(TAPE_TOOLTIPS && tips.open), speed);
   const manual = mo.reduced || mo.userPaused;
   return (
     <section className={m.strip} aria-label={label}>
       <div className={m.inner}>
         <span className={m.lead} aria-hidden="true">Events</span>
-        <TapeViewport tape={tape} reduced={mo.reduced} hold={mo.hold} touch={th.bind}>
-          {(copy) => items.map((it) => <li key={it.id}><InlineItem it={it} tabIndex={copy ? -1 : undefined} /></li>)}
+        <TapeViewport tape={tape} reduced={mo.reduced} hold={hold} touch={th.bind}>
+          {(copy) => items.map((it) => <li key={it.id}><InlineItem it={it} tabIndex={copy ? -1 : undefined} tip={TAPE_TOOLTIPS ? tips.bind(it) : undefined} /></li>)}
         </TapeViewport>
         <div className={m.ctls}>
           {manual && <StepButton dir="prev" onClick={() => pageBy(tape.vp.current, -1, mo.reduced)} label="Scroll events back" />}
@@ -86,6 +94,7 @@ export function Marquee({ items, label = 'Zcash events ticker', speed = 42 }: { 
           <PauseButton paused={mo.userPaused} onToggle={mo.toggle} held={mo.held} reduced={mo.reduced} compact />
           <EventList items={items} label="All" />
         </div>
+        {TAPE_TOOLTIPS && tips.card}
       </div>
     </section>
   );
