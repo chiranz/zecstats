@@ -61,11 +61,11 @@ export default async function FoundersRewardPage() {
           <div className="tbl-wrap">
             <table className="t">
               <caption className="sr-only">Founders' Reward schedule</caption>
-              <thead><tr><th scope="col">Blocks</th><th scope="col" style={{ textAlign: 'left' }}>Dates</th><th scope="col">Founders’ share per block</th><th scope="col">Total</th></tr></thead>
+              <thead><tr><th scope="col">Blocks</th><th scope="col" style={{ textAlign: 'left' }}>Dates</th><th scope="col" className={r.wrapCell}>Founders’ share per block</th><th scope="col">Total</th></tr></thead>
               <tbody>
-                <tr><td>1 – {num(fr.era.slow_start_interval - 1)}</td><td className="l" style={{ textAlign: 'left' }}>Oct–Nov 2016</td><td>20% of a ramp to {st.pre_blossom_subsidy_zec} ZEC</td><td>{num(stage1)} ZEC</td></tr>
-                <tr><td>{num(fr.era.slow_start_interval)} – {num(fr.era.blossom_height - 1)}</td><td className="l" style={{ textAlign: 'left' }}>Nov 2016 – Dec 2019</td><td>{st.pre_blossom_fr_zec} of {st.pre_blossom_subsidy_zec} ZEC</td><td>{num(stage2)} ZEC</td></tr>
-                <tr><td>{num(fr.era.blossom_height)} – {num(fr.era.last_height)}</td><td className="l" style={{ textAlign: 'left' }}>Dec 2019 – Nov 2020</td><td>{st.post_blossom_fr_zec} of {st.post_blossom_subsidy_zec} ZEC</td><td>{num(stage3)} ZEC</td></tr>
+                <tr><td>1 – {num(fr.era.slow_start_interval - 1)}</td><td className="l" style={{ textAlign: 'left' }}>Oct–Nov 2016</td><td className={r.wrapCell}>20% of a ramp to {st.pre_blossom_subsidy_zec} ZEC</td><td>{num(stage1)} ZEC</td></tr>
+                <tr><td>{num(fr.era.slow_start_interval)} – {num(fr.era.blossom_height - 1)}</td><td className="l" style={{ textAlign: 'left' }}>Nov 2016 – Dec 2019</td><td className={r.wrapCell}>{st.pre_blossom_fr_zec} of {st.pre_blossom_subsidy_zec} ZEC</td><td>{num(stage2)} ZEC</td></tr>
+                <tr><td>{num(fr.era.blossom_height)} – {num(fr.era.last_height)}</td><td className="l" style={{ textAlign: 'left' }}>Dec 2019 – Nov 2020</td><td className={r.wrapCell}>{st.post_blossom_fr_zec} of {st.post_blossom_subsidy_zec} ZEC</td><td>{num(stage3)} ZEC</td></tr>
                 <tr className={r.rgrp}><td>Total</td><td /><td /><td>{num(fr.schedule_zec)} ZEC</td></tr>
               </tbody>
             </table>

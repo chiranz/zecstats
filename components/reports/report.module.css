@@ -113,3 +113,6 @@
 .heroGrid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 20px 40px; align-items: start; }
 @media (max-width: 900px) { .heroGrid { grid-template-columns: minmax(0, 1fr); } }
 .panelLbl { font: 500 11.5px var(--mono); color: var(--muted); }
+
+/* founders-reward schedule: the long "share per block" column wraps on desktop, scrolls on phones */
+@media (min-width: 900px) { .wrapCell { white-space: normal !important; } }
