@@ -412,7 +412,7 @@ section[id],details[id]{scroll-margin-top:120px}
       <nav class="crumbs" aria-label="Breadcrumb"><a href="Main.dc.html">ZEC Stats</a><span aria-hidden="true">›</span><span>Privacy</span></nav>
       <span class="kicker">Zcash privacy</span>
       <h1 class="h1">How private is Zcash right now?</h1>
-      <p class="lede">29.3% of all ZEC sits in shielded pools — up from 23.5% a year ago and 7.9% five years ago.</p>
+      <p class="lede">Most of it now lives in Ironwood: <b>4.11M ZEC</b> — 83% of all shielded ZEC — in the pool that went live 74 days ago. In all, 29.3% of ZEC is shielded, up from 23.5% a year ago.</p>
     </div>
     <div class="fresh">
       <span class="live"><i aria-hidden="true"></i>Node synced · block <span class="num">3,513,512</span></span>
@@ -423,17 +423,47 @@ section[id],details[id]{scroll-margin-top:120px}
 
   <nav class="subnav" aria-label="Privacy sections">
     <ul>
-      <li><a href="#overview" aria-current="true">Overview</a></li>
+      <li><a href="#ironwood" aria-current="true">Ironwood</a></li>
+      <li><a href="#overview">Shielded share</a></li>
       <li><a href="#pools">Pools</a></li>
       <li><a href="#flows">Flows</a></li>
-      <li><a href="#ironwood">Ironwood</a></li>
       <li><a href="#integrity">Integrity</a></li>
       <li><a href="#hygiene">Privacy hygiene</a></li>
       <li><a href="#usage">Usage</a></li>
     </ul>
   </nav>
 
-  <section class="hero" id="overview" aria-label="Shielded share of supply">
+  <section class="hero" id="ironwood" aria-label="Ironwood, the current shielded pool">
+    <div class="iw-grid">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <span class="kicker" style="color:var(--accent)">Ironwood · the current shielded pool · live since 28 Jul 2026</span>
+        <div class="figure xl">4.11<small>M ZEC</small></div>
+        <p class="hsub"><b>83%</b> of all shielded ZEC · <b>24.2%</b> of supply · <b>$5.02B</b></p>
+        <p class="note">Orchard, its predecessor, is draining into it through the turnstile, and coins from Sapling and transparent addresses shield straight in.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px"><a class="btn primary" href="Ironwood.dc.html">Open the Ironwood tracker <svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><a class="btn" href="Turnstile.dc.html">Is the turnstile sound?</a></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+        <div class="gate">
+          <span class="kicker">Orchard → Ironwood migration</span>
+          <div class="gate-pin" aria-hidden="true"><span style="left:89.24%">89.24%</span></div>
+          <div class="track" role="img" aria-label="89.24 percent of Orchard's activation balance has crossed into Ironwood"><span style="width:89.24%"></span><b style="left:25%"></b><b style="left:50%"></b><b style="left:75%"></b></div>
+          <div class="scale" aria-hidden="true"><span style="left:0">0%</span><span style="left:25%">25%</span><span style="left:50%">50%</span><span style="left:75%">75%</span><span style="left:100%">100%</span></div>
+          <p class="gate-cap"><b>3,267,319 ZEC</b> of <b>3,661,233 ZEC</b> in Orchard at activation have crossed</p>
+        </div>
+        <div>
+          <span class="kicker">Shielded ZEC by pool · 4.97M</span>
+          <div class="stackbar" role="img" aria-label="Of 4.97 million shielded ZEC: Sprout 0.4 percent, Sapling 9.6, Orchard 7.3, Ironwood 82.7" style="margin-top:8px"><i style="flex:0.45;background:var(--p-sprout)"></i><i style="flex:9.58;background:var(--p-sapling)"></i><i style="flex:7.28;background:var(--p-orchard)"></i><i style="flex:82.69;background:var(--p-ironwood)"></i></div>
+        </div>
+        <dl class="mini">
+          <div><dt>Orchard still to cross</dt><dd>361,823 ZEC</dd></div>
+          <div><dt>Live for</dt><dd>74 days</dd></div>
+          <div><dt>Busiest day</dt><dd>Aug 7 · 249.7k</dd></div>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <section class="hero" id="overview" aria-label="Shielded share of supply" style="margin-top:4px">
     <div class="hero-grid">
       <div class="hl">
         <span class="kicker">Shielded share of all ZEC · 11 Oct 2026</span>
@@ -463,7 +493,7 @@ section[id],details[id]{scroll-margin-top:120px}
     <div class="kpi"><span class="k">Shielded value</span><span class="v">$6.08B</span><span class="s">Snapshot value, 11 Oct 2026 (29.3% of the $20.78B market cap)</span></div>
     <div class="kpi"><span class="k">Shielded share of txs</span><span class="v">~50%</span><span class="s">48.6% on 9 Oct, the last full day; 54.2% four weeks earlier</span></div>
     <div class="kpi"><span class="k">Net shielding, 7 days</span><span class="v up">+91,282<span>ZEC</span></span><span class="s">99,468 in − 8,186 out · prior week +111,040</span></div>
-    <div class="kpi"><span class="k">Ironwood migration</span><span class="v">89.24%</span><span class="s">Of Orchard's activation balance has crossed</span></div>
+    <div class="kpi"><span class="k">Shielded into Ironwood</span><span class="v">1.51M<span>ZEC</span></span><span class="s">Straight from transparent addresses since launch; 106k more came from Sapling</span></div>
     <div class="kpi"><span class="k">Orchard still to cross</span><span class="v">361,823<span>ZEC</span></span><span class="s">Orchard's live balance, i.e. what can still cross — not activation − crossed (393,914)</span></div>
     <div class="kpi"><span class="k">Shield-bound hop</span><span class="v">1.25<span>ZEC</span></span><span class="s">Median of daily medians, last 364 days, sweeps removed</span></div>
     <div class="kpi"><span class="k">Turnstile suspicion</span><span class="v">32<span>/100</span></span><span class="s">Inconclusive — signals confounded</span></div>
@@ -574,33 +604,6 @@ section[id],details[id]{scroll-margin-top:120px}
         <a class="lnk" href="#">Open the transparent activity report <svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
       </article>
     </div>
-  </section>
-
-  <section class="sec" id="ironwood">
-    <div class="sec-h"><h2 class="h2">Ironwood</h2><p class="small">The Orchard → Ironwood turnstile migration</p></div>
-    <article class="card">
-      <div class="iw-grid">
-        <div style="display:flex;flex-direction:column;gap:8px">
-          <span class="kicker">Live since block 3,428,143 · 28 Jul 2026</span>
-          <div class="figure md">89.24<small>%</small></div>
-          <p class="note">of Orchard's coins have crossed the turnstile into Ironwood, the newest shielded pool, in 74 days.</p>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
-          <div class="gate">
-            <div class="gate-pin" aria-hidden="true"><span style="left:89.24%">89.24%</span></div>
-            <div class="track" role="img" aria-label="89.24 percent of Orchard's activation balance has crossed into Ironwood"><span style="width:89.24%"></span><b style="left:25%"></b><b style="left:50%"></b><b style="left:75%"></b></div>
-            <div class="scale" aria-hidden="true"><span style="left:0">0%</span><span style="left:25%">25%</span><span style="left:50%">50%</span><span style="left:75%">75%</span><span style="left:100%">100%</span></div>
-            <p class="gate-cap"><b>3,267,319 ZEC</b> of <b>3,661,233 ZEC</b> in Orchard at activation have crossed</p>
-          </div>
-          <dl class="mini">
-            <div><dt>Orchard still to cross</dt><dd>361,823 ZEC</dd></div>
-            <div><dt>Ironwood balance</dt><dd>4.11M ZEC</dd></div>
-            <div><dt>Busiest day</dt><dd>Aug 7 · 249.7k</dd></div>
-          </dl>
-          <a class="btn" href="Ironwood.dc.html" style="align-self:flex-start">Open the Ironwood tracker <svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
-        </div>
-      </div>
-    </article>
   </section>
 
   <section class="sec" id="integrity">
